@@ -3,7 +3,9 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -53,12 +55,13 @@ func main() {
 		// Default to localhost for development
 		allowedOrigins = "http://localhost:3000,http://localhost:5173,http://localhost:1420"
 	}
+	originList := strings.Split(allowedOrigins, ",")
 	r.Use(func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
-		// Simple check if origin is in allowed list
+		// Check if origin is in allowed list
 		allowed := false
-		for _, allowedOrigin := range []string{"http://localhost:3000", "http://localhost:5173", "http://localhost:1420"} {
-			if origin == allowedOrigin {
+		for _, allowedOrigin := range originList {
+			if origin == strings.TrimSpace(allowedOrigin) {
 				allowed = true
 				break
 			}
@@ -66,6 +69,16 @@ func main() {
 		if allowed {
 			c.Header("Access-Control-Allow-Origin", origin)
 			c.Header("Access-Control-Allow-Credentials", "true")
+		} else if origin != "" {
+			// Reject requests from non-allowed origins (except for same-origin requests without Origin header)
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"error": gin.H{
+					"code":    "FORBIDDEN",
+					"message": "Origin not allowed",
+				},
+			})
+			return
 		}
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization")
