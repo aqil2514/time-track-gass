@@ -1,3 +1,5 @@
+import { ApiError, UnauthorizedError, ValidationError, NotFoundError } from './errors'
+
 const API_BASE = '/api/v1'
 
 class ApiClient {
@@ -42,7 +44,25 @@ class ApiClient {
     const data = await response.json()
 
     if (!response.ok) {
-      throw new Error(data.error?.message || 'Request failed')
+      // Map HTTP status codes to appropriate error types
+      switch (response.status) {
+        case 401:
+          throw new UnauthorizedError(data.error?.message || 'Unauthorized')
+        case 403:
+          throw new ApiError(data.error?.message || 'Forbidden', 403, data.error?.code)
+        case 404:
+          throw new NotFoundError(data.error?.message || 'Not found')
+        case 409:
+          throw new ApiError(data.error?.message || 'Conflict', 409, data.error?.code)
+        case 400:
+          throw new ValidationError(data.error?.message || 'Validation error')
+        default:
+          throw new ApiError(
+            data.error?.message || 'Request failed',
+            response.status,
+            data.error?.code
+          )
+      }
     }
 
     return data

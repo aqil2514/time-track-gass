@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiClient } from '../lib/api-client'
+import { UnauthorizedError } from '../lib/errors'
 import { useAuthStore } from '../hooks/use-auth'
 import { formatTime, formatTimeRange } from '../lib/utils'
 import { Button } from '../components/Button'
@@ -32,7 +33,7 @@ export const DashboardPage: React.FC = () => {
     } catch (error) {
       console.error('Failed to load data:', error)
       // If unauthorized, redirect to login
-      if (error instanceof Error && error.message.includes('401')) {
+      if (error instanceof UnauthorizedError) {
         clearAuth()
         navigate('/login')
       }
