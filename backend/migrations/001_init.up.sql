@@ -61,11 +61,25 @@ CREATE TABLE sessions (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Shared Links
+CREATE TABLE shared_links (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    slug            VARCHAR(50) UNIQUE NOT NULL,
+    name            VARCHAR(100),
+    expires_at      TIMESTAMPTZ,
+    is_public       BOOLEAN DEFAULT FALSE,
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    views           INT DEFAULT 0
+);
+
 -- Indexes
 CREATE INDEX idx_activities_user ON activities (user_id, captured_at DESC);
 CREATE INDEX idx_activities_category ON activities (user_id, category);
 CREATE INDEX idx_shares_owner ON shares (owner_id);
 CREATE INDEX idx_shares_viewer ON shares (viewer_id);
+CREATE INDEX idx_shared_links_user ON shared_links (user_id);
+CREATE INDEX idx_shared_links_slug ON shared_links (slug);
 CREATE INDEX idx_sessions_expires ON sessions (expires_at);
 CREATE INDEX idx_sessions_token ON sessions (token);
 

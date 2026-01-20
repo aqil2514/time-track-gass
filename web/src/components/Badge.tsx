@@ -1,8 +1,10 @@
 import React from 'react'
+import { cn } from '../lib/utils'
 
 interface BadgeProps {
   children: React.ReactNode
   variant?: 'default' | 'secondary' | 'outline' | 'coding' | 'meeting' | 'browsing' | 'communication' | 'design' | 'other'
+  className?: string
 }
 
 const categoryColors: Record<string, string> = {
@@ -17,14 +19,15 @@ const categoryColors: Record<string, string> = {
   other: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
 }
 
-export const Badge: React.FC<BadgeProps> = ({ children, variant = 'default' }) => {
+export const Badge: React.FC<BadgeProps> = ({ children, variant = 'default', className }) => {
   const baseStyles = 'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2'
 
   const style = categoryColors[variant] || categoryColors.default
 
   return (
-    <div className={`${baseStyles} ${style}`}>
+    <div className={cn(baseStyles, style, className)}>
       {children}
     </div>
   )
 }
+

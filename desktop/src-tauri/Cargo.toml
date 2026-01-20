@@ -1,0 +1,26 @@
+[package]
+name = "timetrack-desktop"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "timetrack_app"
+crate-type = ["rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.1", features = [] }
+
+[dependencies]
+tauri = { version = "2.1", features = ["tray-icon"] }
+tauri-plugin-shell = "2.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+tokio = { version = "1", features = ["sync"] }
+open = "5"
+
+[target.'cfg(windows)'.dependencies]
+screenshots = "0.7"
+
+[features]
+default = []

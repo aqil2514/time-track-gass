@@ -245,6 +245,18 @@ CREATE TABLE shares (
     UNIQUE(owner_id, viewer_id)
 );
 
+-- Shared Links
+CREATE TABLE shared_links (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    slug VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(100),
+    expires_at TIMESTAMPTZ,
+    is_public BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    views INT DEFAULT 0
+);
+
 -- Sessions table
 CREATE TABLE sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

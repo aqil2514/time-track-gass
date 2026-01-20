@@ -150,13 +150,34 @@ class ApiClient {
     return this.request(`/share/${shareId}`, { method: 'DELETE' })
   }
 
+  // Share Links
+  async createShareLink(data: { name: string; expires_at?: string; is_public?: boolean }) {
+    return this.request<{ data: any }>('/share/link', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async getShareLinks() {
+    return this.request<{ data: any[] }>('/share/link')
+  }
+
+  async deleteShareLink(id: string) {
+    return this.request(`/share/link/${id}`, { method: 'DELETE' })
+  }
+
+  async getPublicStats(slug: string) {
+    return this.request<{ data: any }>(`/s/${slug}`)
+  }
+
   // Supervisor
-  async getUserActivity(userId: string, params?: { from?: string; to?: string; category?: string; page?: number }) {
+  async getUserActivity(userId: string, params?: { from?: string; to?: string; category?: string; page?: number; per_page?: number }) {
     const searchParams = new URLSearchParams()
     if (params?.from) searchParams.set('from', params.from)
     if (params?.to) searchParams.set('to', params.to)
     if (params?.category) searchParams.set('category', params.category)
     if (params?.page) searchParams.set('page', params.page.toString())
+    if (params?.per_page) searchParams.set('per_page', params.per_page.toString())
 
     const query = searchParams.toString()
     return this.request<{ data: import('../types').Activity[] }>(

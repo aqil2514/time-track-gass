@@ -6,6 +6,7 @@ vendor/
 dist/
 target/
 build/
+bin/
 *.exe
 
 # Environment

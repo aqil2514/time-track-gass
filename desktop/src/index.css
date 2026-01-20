@@ -3,11 +3,13 @@
 @theme {
   --color-background: oklch(4% 0 0);
   --color-foreground: oklch(98% 0 0);
-  --color-card: oklch(12% 0.01 250 / 0.4); /* Translucent */
+  --color-card: oklch(12% 0.01 250 / 0.4);
+  /* Translucent */
   --color-card-foreground: oklch(98% 0 0);
   --color-popover: oklch(8% 0 0);
   --color-popover-foreground: oklch(98% 0 0);
-  --color-primary: oklch(65% 0.25 260); /* Vibrant Blue */
+  --color-primary: oklch(65% 0.25 260);
+  /* Vibrant Blue */
   --color-primary-foreground: oklch(100% 0 0);
   --color-secondary: oklch(15% 0.02 250 / 0.5);
   --color-secondary-foreground: oklch(90% 0 0);
@@ -32,7 +34,7 @@
 
 body {
   background-color: var(--color-background);
-  background-image: 
+  background-image:
     radial-gradient(at 0% 0%, oklch(30% 0.2 260 / 0.15) 0px, transparent 50%),
     radial-gradient(at 100% 100%, oklch(40% 0.3 300 / 0.1) 0px, transparent 50%);
   color: var(--color-foreground);
@@ -42,8 +44,17 @@ body {
 
 /* Animations */
 @keyframes pulse-soft {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(0.98); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
 }
 
 .animate-pulse-soft {

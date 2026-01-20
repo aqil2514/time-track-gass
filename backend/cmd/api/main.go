@@ -37,11 +37,13 @@ func main() {
 	aiService := services.NewAIService(cfg.ZAIAPIKey, cfg.ZAIBaseURL)
 	activityService := services.NewActivityService(db, aiService)
 	shareService := services.NewShareService(db, authService)
+	linkService := services.NewShareLinkService(db)
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService)
 	activityHandler := handlers.NewActivityHandler(activityService)
 	shareHandler := handlers.NewShareHandler(shareService, activityService)
+	linkHandler := handlers.NewShareLinkHandler(linkService, activityService)
 
 	// Setup Gin
 	if os.Getenv("GIN_MODE") == "" {
@@ -104,6 +106,9 @@ func main() {
 			auth.POST("/login", authHandler.Login)
 		}
 
+		// Public Shared Links
+		v1.GET("/s/:slug", linkHandler.GetPublicStats)
+
 		// Protected routes
 		protected := v1.Group("")
 		protected.Use(middleware.AuthMiddleware(authService))
@@ -122,6 +127,11 @@ func main() {
 			protected.GET("/share/viewers", shareHandler.GetViewers)
 			protected.GET("/share/watching", shareHandler.GetWatching)
 			protected.DELETE("/share/:id", shareHandler.Delete)
+
+			// Share Links
+			protected.POST("/share/link", linkHandler.Create)
+			protected.GET("/share/link", linkHandler.List)
+			protected.DELETE("/share/link/:id", linkHandler.Delete)
 
 			// Supervisor
 			protected.GET("/supervise/:user_id/activity", shareHandler.GetUserActivity)

@@ -106,6 +106,18 @@ CREATE TABLE shares (
     UNIQUE(owner_id, viewer_id)
 );
 
+-- Shared Links (Public/Secret)
+CREATE TABLE shared_links (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         UUID NOT NULL REFERENCES users(id),
+    slug            VARCHAR(50) UNIQUE NOT NULL, -- Random string
+    name            VARCHAR(100), -- e.g. "Link for Boss"
+    expires_at      TIMESTAMPTZ,
+    is_public       BOOLEAN DEFAULT FALSE,
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    views           INT DEFAULT 0
+);
+
 -- Sessions
 CREATE TABLE sessions (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -162,7 +174,10 @@ GET    /activity/stats       Get aggregated stats
 POST   /share                Invite supervisor
 GET    /share/viewers        List siapa yang bisa lihat saya
 GET    /share/watching       List siapa yang saya supervise
-DELETE /share/:id            Revoke access
+GET    /share/watching       List siapa yang saya supervise
+POST   /share/link           Create public/secret share link
+DELETE /share/link/:id       Revoke link
+DELETE /share/:id            Revoke access (email invite)
 
 ── Supervisor View ──────────────────────────────────
 GET    /supervise/:user_id/activity    Lihat activity user lain
