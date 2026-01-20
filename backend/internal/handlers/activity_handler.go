@@ -10,6 +10,10 @@ import (
 	"github.com/timetrack/backend/internal/services"
 )
 
+const (
+	maxImageSize = 10 * 1024 * 1024 // 10MB max image size
+)
+
 type ActivityHandler struct {
 	activityService *services.ActivityService
 }
@@ -28,6 +32,18 @@ func (h *ActivityHandler) Upload(c *gin.Context) {
 			"error": gin.H{
 				"code":    "VALIDATION_ERROR",
 				"message": err.Error(),
+			},
+		})
+		return
+	}
+
+	// Validate image size
+	if len(input.Image) > maxImageSize {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "IMAGE_TOO_LARGE",
+				"message": "Image size exceeds maximum allowed size of 10MB",
 			},
 		})
 		return

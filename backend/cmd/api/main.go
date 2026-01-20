@@ -47,9 +47,26 @@ func main() {
 	}
 	r := gin.Default()
 
-	// CORS middleware
+	// CORS middleware - configure allowed origins from environment
+	allowedOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
+	if allowedOrigins == "" {
+		// Default to localhost for development
+		allowedOrigins = "http://localhost:3000,http://localhost:5173,http://localhost:1420"
+	}
 	r.Use(func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "*")
+		origin := c.GetHeader("Origin")
+		// Simple check if origin is in allowed list
+		allowed := false
+		for _, allowedOrigin := range []string{"http://localhost:3000", "http://localhost:5173", "http://localhost:1420"} {
+			if origin == allowedOrigin {
+				allowed = true
+				break
+			}
+		}
+		if allowed {
+			c.Header("Access-Control-Allow-Origin", origin)
+			c.Header("Access-Control-Allow-Credentials", "true")
+		}
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization")
 		if c.Request.Method == "OPTIONS" {

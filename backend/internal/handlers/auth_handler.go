@@ -104,8 +104,29 @@ func (h *AuthHandler) Login(c *gin.Context) {
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
-	token, _ := c.Get("token")
-	if err := h.authService.Logout(c.Request.Context(), token.(string)); err != nil {
+	token, exists := c.Get("token")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INTERNAL_ERROR",
+				"message": "Failed to logout",
+			},
+		})
+		return
+	}
+	tokenStr, ok := token.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INTERNAL_ERROR",
+				"message": "Failed to logout",
+			},
+		})
+		return
+	}
+	if err := h.authService.Logout(c.Request.Context(), tokenStr); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error": gin.H{
@@ -123,9 +144,30 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 }
 
 func (h *AuthHandler) Me(c *gin.Context) {
-	user, _ := c.Get("user")
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INTERNAL_ERROR",
+				"message": "Failed to get user",
+			},
+		})
+		return
+	}
+	userModel, ok := user.(*models.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INTERNAL_ERROR",
+				"message": "Failed to get user",
+			},
+		})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"data":    user.(*models.User).ToResponse(),
+		"data":    userModel.ToResponse(),
 	})
 }
