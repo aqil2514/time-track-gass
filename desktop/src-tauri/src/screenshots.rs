@@ -36,7 +36,7 @@ impl CaptureState {
     }
 }
 
-use tauri::{AppHandle, Manager, Emitter};
+use tauri::{AppHandle, Emitter};
 
 /// Start automatic screenshot capture
 pub async fn start_capture(app_handle: AppHandle, interval_minutes: u32) -> Result<(), String> {
@@ -95,37 +95,103 @@ pub async fn capture_screen() -> Result<String, String> {
 }
 
 /// Blocking version of capture_screen for use in threads
-/// Blocking version of capture_screen for use in threads
+/// Captures all monitors and combines them into a single image
 fn capture_screen_blocking() -> Result<String, String> {
     #[cfg(target_os = "windows")]
     {
         use screenshots::Screen;
+        use image::{RgbaImage, ImageBuffer};
 
         let screens = Screen::all().map_err(|e| e.to_string())?;
-        let screen = screens.first().ok_or("No screen found")?;
         
-        let image = screen.capture().map_err(|e| e.to_string())?;
-        let buffer = image.to_png(None).map_err(|e| e.to_string())?;
-        
-        let base64 = base64::engine::general_purpose::STANDARD.encode(&buffer);
-        Ok(base64)
+        if screens.is_empty() {
+            return Err("No screens found".to_string());
+        }
+
+        // If only one screen, optimize by not creating a combined canvas
+        if screens.len() == 1 {
+            let screen = &screens[0];
+            let image = screen.capture().map_err(|e| e.to_string())?;
+            let buffer = image.to_png(None).map_err(|e| e.to_string())?;
+            return Ok(base64::engine::general_purpose::STANDARD.encode(&buffer));
+        }
+
+        // Calculate the bounding box for all screens
+        let mut min_x = i32::MAX;
+        let mut min_y = i32::MAX;
+        let mut max_x = i32::MIN;
+        let mut max_y = i32::MIN;
+
+        for screen in &screens {
+            let info = screen.display_info;
+            min_x = min_x.min(info.x);
+            min_y = min_y.min(info.y);
+            max_x = max_x.max(info.x + info.width as i32);
+            max_y = max_y.max(info.y + info.height as i32);
+        }
+
+        let total_width = (max_x - min_x) as u32;
+        let total_height = (max_y - min_y) as u32;
+
+        // Create a blank canvas for the combined screenshot
+        let mut canvas: RgbaImage = ImageBuffer::new(total_width, total_height);
+
+        // Capture each screen and paste onto the canvas
+        for screen in &screens {
+            let info = screen.display_info;
+            let capture = screen.capture().map_err(|e| format!("Failed to capture screen {}: {}", info.id, e))?;
+            
+            // Calculate position on canvas (offset by min_x, min_y to handle negative coords)
+            let x_offset = (info.x - min_x) as u32;
+            let y_offset = (info.y - min_y) as u32;
+
+            // Get raw RGBA pixels from the capture
+            let rgba_data = capture.rgba();
+            let width = capture.width();
+            let height = capture.height();
+
+            // Copy pixels to canvas
+            for py in 0..height {
+                for px in 0..width {
+                    let idx = ((py * width + px) * 4) as usize;
+                    if idx + 3 < rgba_data.len() {
+                        let pixel = image::Rgba([
+                            rgba_data[idx],
+                            rgba_data[idx + 1],
+                            rgba_data[idx + 2],
+                            rgba_data[idx + 3],
+                        ]);
+                        let canvas_x = x_offset + px;
+                        let canvas_y = y_offset + py;
+                        if canvas_x < total_width && canvas_y < total_height {
+                            canvas.put_pixel(canvas_x, canvas_y, pixel);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Encode the combined image to PNG
+        let mut png_buffer: Vec<u8> = Vec::new();
+        {
+            use image::codecs::png::PngEncoder;
+            use image::ImageEncoder;
+            let encoder = PngEncoder::new(&mut png_buffer);
+            encoder
+                .write_image(
+                    canvas.as_raw(),
+                    total_width,
+                    total_height,
+                    image::ColorType::Rgba8,
+                )
+                .map_err(|e| format!("Failed to encode PNG: {}", e))?;
+        }
+
+        Ok(base64::engine::general_purpose::STANDARD.encode(&png_buffer))
     }
 
     #[cfg(not(target_os = "windows"))]
     {
-        // Fallback for non-windows (though dependecy is windows only in cargo.toml currently)
         Err("Screenshot capture only supported on Windows for now".to_string())
     }
-}
-
-/// Get the application name of the active window
-pub async fn get_active_window() -> Result<String, String> {
-    // Real implementation would query active window
-    Ok("TimeTrack Desktop".to_string())
-}
-
-/// Get the window title of the active window
-pub async fn get_window_title() -> Result<String, String> {
-    // Real implementation would query active window title
-    Ok("TimeTrack Desktop App".to_string())
 }

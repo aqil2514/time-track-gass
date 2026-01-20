@@ -4,6 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "kill-port": "node scripts/kill-port.js 1420",
+    "predev": "npm run kill-port",
     "dev": "vite",
     "build": "tauri build",
     "tauri": "tauri dev"

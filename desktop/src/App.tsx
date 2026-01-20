@@ -1,9 +1,10 @@
+import { useState } from 'react'
 import { useCapture } from './hooks/useCapture'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './components/Card'
 import { Button } from './components/Button'
 import { StatusIndicator } from './components/StatusIndicator'
 import { ActivityTimeline } from './components/ActivityTimeline'
-import { LoadingSpinner } from './components/Loading'
+import { SettingsPanel } from './components/SettingsPanel'
 import { Settings, Play, Pause, Camera, Clock, Activity } from 'lucide-react'
 import { formatTime } from './lib/utils'
 
@@ -18,6 +19,8 @@ function App() {
     startCapture,
     stopCapture
   } = useCapture()
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   // Dashboard summary stats
   const todayStats = {
@@ -51,7 +54,7 @@ function App() {
           <div className="flex items-center gap-6">
             <StatusIndicator active={isCapturing} />
             <div className="h-6 w-px bg-border/50" />
-            <Button variant="ghost" size="sm" className="text-muted-foreground">
+            <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setIsSettingsOpen(true)}>
               <Settings className="w-5 h-5" />
             </Button>
           </div>
@@ -164,6 +167,8 @@ function App() {
 
         </div>
       </div>
+
+      <SettingsPanel isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import type { Screenshot } from '../types'
+import { logger } from '../lib/logger'
 
 export function useCapture() {
     const [screenshots, setScreenshots] = useState<Screenshot[]>([])
@@ -13,7 +14,7 @@ export function useCapture() {
             setError(null)
             const base64 = await invoke<string>('capture_screenshot')
             const screenshot: Screenshot = {
-                id: Date.now().toString(),
+                id: crypto.randomUUID(),
                 timestamp: new Date().toISOString(),
                 data: base64,
             }
@@ -52,14 +53,14 @@ export function useCapture() {
                 const { listen } = await import('@tauri-apps/api/event')
                 unlisten = await listen<string>('screenshot-captured', (event) => {
                     const screenshot: Screenshot = {
-                        id: Date.now().toString(),
+                        id: crypto.randomUUID(),
                         timestamp: new Date().toISOString(),
                         data: event.payload,
                     }
                     setScreenshots((prev) => [screenshot, ...prev])
                 })
             } catch (e) {
-                console.error("Failed to setup listener", e)
+                logger.error("Failed to setup event listener", e)
             }
         }
 
