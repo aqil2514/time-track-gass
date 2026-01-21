@@ -81,8 +81,26 @@ export function Dashboard() {
                 </header>
 
                 {error && (
-                    <div className="bg-destructive/10 border border-destructive/20 text-destructive-foreground px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-                        <span className="font-bold">Error:</span> {error}
+                    <div className="bg-destructive/10 border border-destructive/20 text-destructive-foreground px-4 py-3 rounded-lg text-sm">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="font-bold">Error:</span> {error}
+                        </div>
+                        {error.includes('Tauri') && (
+                            <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 dark:text-yellow-400 px-3 py-2 rounded mt-2 text-xs">
+                                <div className="font-semibold mb-1">⚠️ Aplikasi sedang berjalan di browser!</div>
+                                <div className="space-y-1">
+                                    <div>• Tutup browser ini</div>
+                                    <div>• Jalankan aplikasi dengan: <code className="bg-black/20 px-1 rounded">pnpm dev:desktop</code></div>
+                                    <div>• Tauri window akan terbuka otomatis</div>
+                                    <div>• Jangan buka http://localhost:1420 di browser secara manual!</div>
+                                </div>
+                            </div>
+                        )}
+                        {!error.includes('Tauri') && (
+                            <div className="text-xs text-muted-foreground mt-2">
+                                💡 Tips: Pastikan backend API sudah running di localhost:8080
+                            </div>
+                        )}
                     </div>
                 )}
 

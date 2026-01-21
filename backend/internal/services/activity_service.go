@@ -161,10 +161,15 @@ func (s *ActivityService) List(ctx context.Context, userID uuid.UUID, from, to t
 
 	query += ` ORDER BY captured_at DESC`
 
-	// Count total
+	// Count total with same filters
 	countQuery := `SELECT COUNT(*) FROM activities WHERE user_id = $1 AND captured_at >= $2 AND captured_at < $3`
+	countArgs := []interface{}{userID, from, to}
+	if category != "" {
+		countQuery += fmt.Sprintf(" AND category = $%d", len(countArgs)+1)
+		countArgs = append(countArgs, category)
+	}
 	var total int
-	err := s.db.QueryRow(ctx, countQuery, userID, from, to).Scan(&total)
+	err := s.db.QueryRow(ctx, countQuery, countArgs...).Scan(&total)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to count activities: %w", err)
 	}
@@ -184,12 +189,14 @@ func (s *ActivityService) List(ctx context.Context, userID uuid.UUID, from, to t
 	var activities []*models.Activity
 	for rows.Next() {
 		a := &models.Activity{}
+		var retryQueueID *uuid.UUID
 		err := rows.Scan(&a.ID, &a.UserID, &a.CapturedAt, &a.AppName, &a.WindowTitle,
-			&a.Category, &a.Summary, &a.AIStatus, &a.RetryQueueID, &a.CreatedAt)
+			&a.Category, &a.Summary, &a.AIStatus, &retryQueueID, &a.CreatedAt)
 		if err != nil {
 			rows.Close()
 			return nil, 0, fmt.Errorf("failed to scan activity: %w", err)
 		}
+		a.RetryQueueID = retryQueueID
 		activities = append(activities, a)
 	}
 

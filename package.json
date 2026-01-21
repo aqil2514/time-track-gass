@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev:backend": "cd backend && go run .",
+    "build:backend": "cd backend && go build -o bin/api ./cmd/api/main.go",
     "dev:web": "cd web && pnpm dev",
     "dev:desktop": "cd desktop && pnpm tauri dev"
   }

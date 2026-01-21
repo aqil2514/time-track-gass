@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "com.timetrack.app",
   "build": {
-    "beforeDevCommand": "pnpm dev",
+    "beforeDevCommand": "node scripts/dev-with-kill-port.js",
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "pnpm build",
     "frontendDist": "../dist"
@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "TimeTrack",
         "width": 1200,
         "height": 800,
@@ -19,7 +20,8 @@
         "fullscreen": false,
         "transparent": false,
         "alwaysOnTop": false,
-        "skipTaskbar": false
+        "skipTaskbar": false,
+        "visible": true
       }
     ],
     "security": {

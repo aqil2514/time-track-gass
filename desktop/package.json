@@ -8,7 +8,8 @@
     "predev": "npm run kill-port",
     "dev": "vite",
     "build": "tauri build",
-    "tauri": "tauri dev"
+    "tauri": "powershell -ExecutionPolicy Bypass -File scripts/tauri-dev.ps1",
+    "tauri:direct": "tauri dev"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.1.0",

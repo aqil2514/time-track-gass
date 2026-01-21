@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 try {
                     // Verify token and get user info
                     const response = await api.get('/auth/me');
-                    setUser(response.data.user);
+                    setUser(response.data.data);
                     setToken(storedToken);
                 } catch (error) {
                     console.error("Failed to restore session:", error);
@@ -52,10 +52,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async () => {
         try {
             // Attempt to stop capture if running
-            // We dynamic import or use the invoke directly if possible, but here we can't easily use hooks.
-            // Best effort using direct invoke
-            const { invoke } = await import('@tauri-apps/api/core');
-            await invoke('stop_capture');
+            // Only if Tauri is available
+            if (typeof window !== 'undefined' && '__TAURI__' in window) {
+                const { invoke } = await import('@tauri-apps/api/core');
+                await invoke('stop_capture');
+            }
         } catch (e) {
             console.error("Failed to stop capture during logout:", e);
         }

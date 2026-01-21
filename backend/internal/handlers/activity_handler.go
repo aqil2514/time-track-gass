@@ -134,6 +134,8 @@ func (h *ActivityHandler) List(c *gin.Context) {
 
 	activities, total, err := h.activityService.List(c.Request.Context(), user.ID, from, to, input.Category, input.Page, input.PerPage)
 	if err != nil {
+		// Log error for debugging
+		c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error": gin.H{
