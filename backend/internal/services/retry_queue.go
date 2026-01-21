@@ -13,10 +13,10 @@ import (
 )
 
 type RetryQueueService struct {
-	db             *pgxpool.Pool
-	aiService      *AIService
-	activitySvc    *ActivityService
-	maxRetries     int
+	db          *pgxpool.Pool
+	aiService   *AIService
+	activitySvc *ActivityService
+	maxRetries  int
 }
 
 func NewRetryQueueService(db *pgxpool.Pool, aiService *AIService, maxRetries int) *RetryQueueService {
@@ -321,12 +321,13 @@ func (s *RetryQueueService) CleanupDeadLetters(ctx context.Context) error {
 // RecoverStuckTasks resets tasks that have been in 'processing' status for too long
 // This prevents tasks from being stuck if a worker crashes after claiming but before completing
 func (s *RetryQueueService) RecoverStuckTasks(ctx context.Context, olderThan time.Duration) error {
+	cutoff := time.Now().Add(-olderThan)
 	result, err := s.db.Exec(ctx,
 		`UPDATE retry_queue
 		 SET status = 'pending', updated_at = NOW()
 		 WHERE status = 'processing'
-		 AND updated_at < NOW() - $1`,
-		olderThan,
+		 AND updated_at < $1`,
+		cutoff,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to recover stuck tasks: %w", err)

@@ -5,7 +5,9 @@ ALTER TABLE activities ADD COLUMN IF NOT EXISTS ai_status VARCHAR(20) DEFAULT 's
 -- Possible values: 'success', 'queued', 'failed', 'processing'
 
 -- Add retry queue reference (nullable, only for queued items)
-ALTER TABLE activities ADD COLUMN IF NOT EXISTS retry_queue_id UUID REFERENCES retry_queue(id) ON DELETE SET NULL;
+-- Note: Cannot add FK constraint to TimescaleDB hypertable with columnstore
+-- Manual cleanup needed if retry_queue entry is deleted
+ALTER TABLE activities ADD COLUMN IF NOT EXISTS retry_queue_id UUID;
 
 -- Index for querying queued items
 CREATE INDEX IF NOT EXISTS idx_activities_ai_status ON activities (user_id, ai_status, captured_at DESC);

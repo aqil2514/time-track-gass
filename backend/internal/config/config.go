@@ -4,6 +4,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -27,12 +28,12 @@ type Config struct {
 	ZAIMaxQueueRetries  int
 
 	// Queue workers
-	RetryQueueWorkers    int
-	RetryQueueInterval   time.Duration
+	RetryQueueWorkers  int
+	RetryQueueInterval time.Duration
 
 	// Feature flags
-	EnableSessions      bool
-	EnableDailySummary  bool
+	EnableSessions     bool
+	EnableDailySummary bool
 }
 
 func Load() *Config {
@@ -41,11 +42,11 @@ func Load() *Config {
 		DatabaseURL: getEnv("DATABASE_URL", "postgres://timetrack:timetrack123@localhost:5432/timetrack?sslmode=disable"),
 		JWTSecret:   getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
 		ZAIAPIKey:   getEnv("ZAI_API_KEY", ""),
-		ZAIBaseURL:  getEnv("ZAI_BASE_URL", "https://api.z.ai/api/paas/v4/"),
+		ZAIBaseURL:  getEnv("ZAI_BASE_URL", "https://open.bigmodel.cn/api/coding/paas/v4/"),
 
 		// Vision models
-		ZAIVisionModelPrimary:  getEnv("ZAI_VISION_MODEL_PRIMARY", "glm-4.6v-flashx"),
-		ZAIVisionModelFallback: getEnv("ZAI_VISION_MODEL_FALLBACK", "glm-4.6v"),
+		ZAIVisionModelPrimary:  getEnv("ZAI_VISION_MODEL_PRIMARY", "glm-4.6v"),
+		ZAIVisionModelFallback: getEnv("ZAI_VISION_MODEL_FALLBACK", "glm-4-flash"),
 
 		// Text models
 		ZAITextModelFast:  getEnv("ZAI_TEXT_MODEL_FAST", "glm-4.7-flashx"),
@@ -67,7 +68,7 @@ func Load() *Config {
 
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
-		return value
+		return strings.TrimSpace(value)
 	}
 	return defaultValue
 }

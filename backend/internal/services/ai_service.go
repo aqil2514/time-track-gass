@@ -9,19 +9,20 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/timetrack/backend/internal/config"
 )
 
 type AIService struct {
-	apiKey   string
-	baseURL  string
-	client   *http.Client
-	visionPrimary  string
-	visionFallback string
-	textFast       string
-	textSmart      string
+	apiKey           string
+	baseURL          string
+	client           *http.Client
+	visionPrimary    string
+	visionFallback   string
+	textFast         string
+	textSmart        string
 	maxInlineRetries int
 }
 
@@ -51,10 +52,10 @@ type SessionSummary struct {
 }
 
 type DailySummary struct {
-	Overview     string   `json:"overview"`
+	Overview      string   `json:"overview"`
 	TopCategories []string `json:"top_categories"`
-	TotalHours   float64  `json:"total_hours"`
-	Highlights   []string `json:"highlights"`
+	TotalHours    float64  `json:"total_hours"`
+	Highlights    []string `json:"highlights"`
 }
 
 type zaiRequest struct {
@@ -87,8 +88,8 @@ type zaiResponse struct {
 
 func NewAIService(cfg *config.Config) *AIService {
 	return &AIService{
-		apiKey:   cfg.ZAIAPIKey,
-		baseURL:  cfg.ZAIBaseURL,
+		apiKey:  cfg.ZAIAPIKey,
+		baseURL: cfg.ZAIBaseURL,
 		client: &http.Client{
 			Timeout: 30 * time.Second,
 			Transport: &http.Transport{
@@ -126,18 +127,17 @@ func (s *AIService) AnalyzeScreenshotWithRetry(ctx context.Context, imageBase64 
 	var lastErr error
 
 	// Try primary model first (FlashX - faster and cheaper)
-	analysis, err := s.analyzeScreenshotWithModel(ctx, imageBase64, s.visionPrimary, 500*time.Millisecond)
+	analysis, err := s.analyzeScreenshotWithModel(ctx, imageBase64, s.visionPrimary, 30*time.Second)
 	if err == nil {
 		return analysis, nil
 	}
 	lastErr = err
 
 	// Primary failed, try fallback model (full model)
-	analysis, err = s.analyzeScreenshotWithModel(ctx, imageBase64, s.visionFallback, 1*time.Second)
+	analysis, err = s.analyzeScreenshotWithModel(ctx, imageBase64, s.visionFallback, 60*time.Second)
 	if err == nil {
 		return analysis, nil
 	}
-	lastErr = err
 
 	// Both failed - return error to trigger retry queue
 	// The caller should enqueue for background retry
@@ -151,15 +151,13 @@ func (s *AIService) analyzeScreenshotWithModel(ctx context.Context, imageBase64,
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	prompt := `Analyze this screenshot and extract the following information in JSON format:
-{
-  "app_name": "the application name visible (e.g., VS Code, Chrome, Slack)",
-  "window_title": "the window title or tab name",
-  "category": "one of: coding, meeting, browsing, communication, design, other",
-  "summary": "brief 1-sentence description of what the user is doing"
-}
+	fmt.Printf("[DEBUG] Analyzing screenshot with model: '%s' (timeout: %s)\n", model, timeout)
+	if len(s.apiKey) > 5 {
+		fmt.Printf("[DEBUG] API Key (truncated): %s...\n", s.apiKey[:5])
+	}
 
-Only respond with valid JSON, no other text.`
+	// Simple prompt for debugging to match Python script
+	prompt := "Analyze this screenshot and identify the app name, window title, category (coding, meeting, browsing, communication, design, other), and a brief summary. Respond in JSON."
 
 	reqBody := zaiRequest{
 		Model: model,
@@ -167,19 +165,29 @@ Only respond with valid JSON, no other text.`
 			{
 				Role: "user",
 				Content: []zaiContent{
+					{Type: "image_url", ImageURL: &imageURL{URL: s.ensureDataURI(imageBase64)}},
 					{Type: "text", Text: prompt},
-					{Type: "image_url", ImageURL: &imageURL{URL: "data:image/png;base64," + imageBase64}},
 				},
 			},
 		},
 	}
 
-	body, err := json.Marshal(reqBody)
-	if err != nil {
+	var body bytes.Buffer
+	enc := json.NewEncoder(&body)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(reqBody); err != nil {
 		return nil, fmt.Errorf("marshal error: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", s.baseURL+"chat/completions", bytes.NewReader(body))
+	// Debug log
+	bodyBytes := body.Bytes()
+	if len(bodyBytes) > 1000 {
+		fmt.Printf("[DEBUG] Request Body (truncated): %s...}\n", string(bodyBytes[:500]))
+	} else {
+		fmt.Printf("[DEBUG] Request Body: %s\n", string(bodyBytes))
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", s.baseURL+"/chat/completions", &body)
 	if err != nil {
 		return nil, fmt.Errorf("request creation error: %w", err)
 	}
@@ -195,7 +203,12 @@ Only respond with valid JSON, no other text.`
 
 	if resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(respBody))
+		// Truncate request body for error message
+		reqBodyStr := body.String()
+		if len(reqBodyStr) > 200 {
+			reqBodyStr = reqBodyStr[:200] + "..."
+		}
+		return nil, fmt.Errorf("API error (status %d) for model '%s': %s. Request: %s", resp.StatusCode, model, string(respBody), reqBodyStr)
 	}
 
 	var zaiResp zaiResponse
@@ -250,10 +263,10 @@ func (s *AIService) GenerateSessionSummary(ctx context.Context, input *SessionSu
 func (s *AIService) GenerateDailySummary(ctx context.Context, activities []ActivitySummary, totalHours float64) (*DailySummary, error) {
 	if s.apiKey == "" {
 		return &DailySummary{
-			Overview:     "Daily summary not available (AI not configured)",
+			Overview:      "Daily summary not available (AI not configured)",
 			TopCategories: []string{},
-			TotalHours:   totalHours,
-			Highlights:   []string{},
+			TotalHours:    totalHours,
+			Highlights:    []string{},
 		}, nil
 	}
 
@@ -262,19 +275,19 @@ func (s *AIService) GenerateDailySummary(ctx context.Context, activities []Activ
 	summary, err := s.generateTextSummary(ctx, prompt, s.textSmart)
 	if err != nil {
 		return &DailySummary{
-			Overview:     "Unable to generate daily summary",
+			Overview:      "Unable to generate daily summary",
 			TopCategories: []string{},
-			TotalHours:   totalHours,
-			Highlights:   []string{},
+			TotalHours:    totalHours,
+			Highlights:    []string{},
 		}, nil
 	}
 
 	// Convert session summary to daily summary
 	return &DailySummary{
-		Overview:     summary.Overview,
+		Overview:      summary.Overview,
 		TopCategories: summary.Categories,
-		TotalHours:   totalHours,
-		Highlights:   summary.KeyPoints,
+		TotalHours:    totalHours,
+		Highlights:    summary.KeyPoints,
 	}, nil
 }
 
@@ -328,7 +341,7 @@ func (s *AIService) generateTextSummary(ctx context.Context, prompt, model strin
 		return nil, fmt.Errorf("marshal error: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", s.baseURL+"chat/completions", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, "POST", s.baseURL+"/chat/completions", bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("request creation error: %w", err)
 	}
@@ -367,4 +380,11 @@ func (s *AIService) generateTextSummary(ctx context.Context, prompt, model strin
 	}
 
 	return &summary, nil
+}
+
+func (s *AIService) ensureDataURI(data string) string {
+	if strings.HasPrefix(data, "data:image/") {
+		return data
+	}
+	return "data:image/png;base64," + data
 }
