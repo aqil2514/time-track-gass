@@ -156,8 +156,38 @@ func (s *AIService) analyzeScreenshotWithModel(ctx context.Context, imageBase64,
 		fmt.Printf("[DEBUG] API Key (truncated): %s...\n", s.apiKey[:5])
 	}
 
-	// Simple prompt for debugging to match Python script
-	prompt := "Analyze this screenshot and identify the app name, window title, category (coding, meeting, browsing, communication, design, other), and a brief summary. Respond in JSON."
+	// Enhanced prompt for raw context extraction
+	prompt := `Extract activity context from this screenshot.
+
+**Capture visible information:**
+1. App/Tool: What application is active?
+2. Visible paths/URLs: File paths, URLs, terminal directories
+3. Specific content: Error messages, code being edited, article titles, queries
+4. Action: editing, reading, running, debugging, querying, etc.
+
+**Category** (pick one):
+- coding: Writing/editing code files
+- debugging: Analyzing errors, logs, stack traces
+- research: Reading docs, StackOverflow, articles
+- database: SQL queries, DB tools
+- devops: Docker, CI/CD, deployment, monitoring
+- review: Code/PR review
+- meeting: Video calls
+- communication: Chat apps, email
+- design: Design tools
+- planning: Task management, notes
+- other: None of the above
+
+**Summary format:**
+- Include project name ONLY if visible in paths/titles
+- Focus on WHAT is being done specifically
+- Examples:
+  - "Editing retry_queue.go error handling logic"
+  - "Reading PostgreSQL INTERVAL documentation"
+  - "Running go build with compilation errors"
+
+JSON output (no markdown):
+{"app_name": "...", "window_title": "...", "category": "...", "summary": "..."}`
 
 	reqBody := zaiRequest{
 		Model: model,
@@ -308,18 +338,27 @@ Respond in JSON format:
 }
 
 func (s *AIService) buildDailySummaryPrompt(activities []ActivitySummary, totalHours float64) string {
-	return fmt.Sprintf(`Generate a daily work summary for %.1f hours of activity across %d activities.
-Provide:
-1. A brief overview of the day
-2. Top categories worked on
-3. Key highlights
+	var activityList strings.Builder
+	for _, a := range activities {
+		activityList.WriteString(fmt.Sprintf("- %s [%s]: %s\n", a.Time, a.Category, a.Summary))
+	}
 
-Respond in JSON format:
+	return fmt.Sprintf(`Analyze this day's work activities and synthesize a meaningful summary.
+
+**Activity Log (%.1f hours, %d entries):**
+%s
+
+**Instructions:**
+1. Group related activities by project/topic (infer from paths or context)
+2. Identify what was actually accomplished, not just categories
+3. Connect research → coding → debugging as unified tasks when related
+
+**Output JSON:**
 {
-  "overview": "brief overview",
-  "categories": ["category1", "category2"],
-  "key_points": ["highlight1", "highlight2"]
-}`, totalHours, len(activities))
+  "overview": "1-2 sentence summary of the day's work",
+  "categories": ["top category 1", "top category 2"],
+  "key_points": ["specific accomplishment 1", "specific accomplishment 2"]
+}`, totalHours, len(activities), activityList.String())
 }
 
 func (s *AIService) generateTextSummary(ctx context.Context, prompt, model string) (*SessionSummary, error) {
