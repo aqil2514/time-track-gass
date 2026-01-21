@@ -25,6 +25,15 @@ export function Login() {
             const { token, user } = response.data.data;
 
             login(token, user);
+
+            // Sync token with Tauri backend for offline sync worker
+            try {
+                const { invoke } = await import('@tauri-apps/api/core')
+                await invoke('set_auth_token', { token })
+            } catch (e) {
+                console.error('Failed to sync auth token with Tauri:', e)
+            }
+
             navigate('/');
         } catch (err: any) {
             console.error('Login error:', err);

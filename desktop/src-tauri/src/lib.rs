@@ -5,8 +5,10 @@ use tauri::Manager;
 
 
 mod screenshots;
+mod offline_queue;
+mod sync;
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 fn start_capture(app_handle: tauri::AppHandle, interval_minutes: u32) -> Result<(), String> {
     tauri::async_runtime::block_on(screenshots::start_capture(app_handle, interval_minutes))
 }
@@ -31,6 +33,23 @@ fn get_capture_interval() -> Result<u32, String> {
     tauri::async_runtime::block_on(screenshots::get_capture_interval())
 }
 
+#[tauri::command]
+fn set_auth_token(token: String) -> Result<(), String> {
+    sync::set_auth_token(token);
+    Ok(())
+}
+
+#[tauri::command]
+fn clear_auth_token() -> Result<(), String> {
+    sync::clear_auth_token();
+    Ok(())
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn save_offline_screenshot(app_handle: tauri::AppHandle, user_id: String, image_b64: String) -> Result<(), String> {
+    screenshots::save_offline_screenshot(app_handle, user_id, image_b64)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -40,9 +59,14 @@ pub fn run() {
             stop_capture,
             capture_screenshot,
             is_capturing,
-            get_capture_interval
+            get_capture_interval,
+            set_auth_token,
+            clear_auth_token,
+            save_offline_screenshot
         ])
         .setup(|app| {
+            // Start sync worker
+            sync::start_sync_worker(app.handle().clone());
             #[cfg(desktop)]
             {
                 use tauri::menu::{Menu, MenuItem};

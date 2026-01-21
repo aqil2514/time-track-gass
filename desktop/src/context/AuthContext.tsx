@@ -32,6 +32,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     const response = await api.get('/auth/me');
                     setUser(response.data.data);
                     setToken(storedToken);
+
+                    // Sync token with Tauri backend
+                    try {
+                        const { invoke } = await import('@tauri-apps/api/core')
+                        await invoke('set_auth_token', { token: storedToken })
+                    } catch (e) {
+                        console.error('Failed to sync auth token with Tauri:', e)
+                    }
                 } catch (error) {
                     console.error("Failed to restore session:", error);
                     logout();
@@ -51,14 +59,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         try {
-            // Attempt to stop capture if running
-            // Only if Tauri is available
-            if (typeof window !== 'undefined' && '__TAURI__' in window) {
+            // Attempt to stop capture if running and clear auth token
+            // Only if Tauri is available (using centralized detection)
+            const { isTauriSync } = await import('../lib/tauri')
+            if (isTauriSync()) {
                 const { invoke } = await import('@tauri-apps/api/core');
                 await invoke('stop_capture');
+                await invoke('clear_auth_token');
             }
         } catch (e) {
-            console.error("Failed to stop capture during logout:", e);
+            console.error("Failed to cleanup during logout:", e);
         }
 
         localStorage.removeItem('token');

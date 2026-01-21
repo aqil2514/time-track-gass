@@ -425,5 +425,16 @@ func (s *AIService) ensureDataURI(data string) string {
 	if strings.HasPrefix(data, "data:image/") {
 		return data
 	}
+
+	// Detect format from base64 data
+	// WebP magic bytes: "RIFF" (base64 "UklGR")
+	if strings.HasPrefix(data, "UklGR") {
+		return "data:image/webp;base64," + data
+	}
+	// PNG magic bytes: 0x89 0x50 0x4E 0x47 (base64 "iVBOR")
+	if strings.HasPrefix(data, "iVBOR") {
+		return "data:image/png;base64," + data
+	}
+	// Default to PNG for legacy compatibility if unknown
 	return "data:image/png;base64," + data
 }

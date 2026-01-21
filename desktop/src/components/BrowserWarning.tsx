@@ -1,41 +1,21 @@
-import { AlertTriangle, X } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import { Button } from './Button'
 import { useState, useEffect } from 'react'
+import { waitForTauri } from '../lib/tauri'
 
 export function BrowserWarning() {
-    // #region agent log
-    const [isTauri, setIsTauri] = useState(() => {
-        const windowExists = typeof window !== 'undefined'
-        const hasTauri = windowExists && '__TAURI__' in window
-        const tauriValue = windowExists ? (window as any).__TAURI__ : null
-        fetch('http://127.0.0.1:7250/ingest/6a1f26f2-0da9-4b94-a40d-9d8ab5a20d66',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BrowserWarning.tsx:12',message:'Initial Tauri check',data:{windowExists,hasTauri,tauriType:typeof tauriValue,tauriKeys:tauriValue?Object.keys(tauriValue):null,userAgent:windowExists?navigator.userAgent:null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{})
-        return hasTauri
-    })
+    const [isTauri, setIsTauri] = useState<boolean | null>(null) // null = loading
 
     useEffect(() => {
-        // #region agent log
-        const checkTauri = () => {
-            const windowExists = typeof window !== 'undefined'
-            const hasTauri = windowExists && '__TAURI__' in window
-            const tauriValue = windowExists ? (window as any).__TAURI__ : null
-            fetch('http://127.0.0.1:7250/ingest/6a1f26f2-0da9-4b94-a40d-9d8ab5a20d66',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BrowserWarning.tsx:20',message:'Dynamic Tauri check',data:{windowExists,hasTauri,tauriType:typeof tauriValue,tauriKeys:tauriValue?Object.keys(tauriValue):null,currentIsTauri:isTauri},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{})
-            if (hasTauri !== isTauri) {
-                fetch('http://127.0.0.1:7250/ingest/6a1f26f2-0da9-4b94-a40d-9d8ab5a20d66',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BrowserWarning.tsx:23',message:'Tauri state changed',data:{oldValue:isTauri,newValue:hasTauri},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{})
-                setIsTauri(hasTauri)
-            }
-        }
-        // #endregion
-        checkTauri()
-        const interval = setInterval(checkTauri, 500)
-        return () => clearInterval(interval)
-    }, [isTauri])
+        waitForTauri(5000).then(setIsTauri)
+    }, [])
 
-    // #region agent log
-    useEffect(() => {
-        fetch('http://127.0.0.1:7250/ingest/6a1f26f2-0da9-4b94-a40d-9d8ab5a20d66',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BrowserWarning.tsx:33',message:'Render decision',data:{isTauri,willShowWarning:!isTauri},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{})
-    }, [isTauri])
-    // #endregion
+    // Still loading
+    if (isTauri === null) {
+        return null
+    }
 
+    // Running in Tauri - no warning needed
     if (isTauri) {
         return null
     }

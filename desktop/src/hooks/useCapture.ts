@@ -2,30 +2,11 @@ import { useState, useEffect, useCallback } from 'react'
 import type { Screenshot } from '../types'
 import { logger } from '../lib/logger'
 import { api } from '../lib/api'
-
-// #region agent log
-const checkTauriAtModuleLoad = () => {
-    const windowExists = typeof window !== 'undefined'
-    const hasTauri = windowExists && '__TAURI__' in window
-    const tauriValue = windowExists ? (window as any).__TAURI__ : null
-    fetch('http://127.0.0.1:7250/ingest/6a1f26f2-0da9-4b94-a40d-9d8ab5a20d66',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useCapture.ts:6',message:'Module load Tauri check',data:{windowExists,hasTauri,tauriType:typeof tauriValue,tauriKeys:tauriValue?Object.keys(tauriValue):null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{})
-    return hasTauri
-}
-const isTauriAvailable = checkTauriAtModuleLoad()
-// #endregion
-
-// Helper to check if running in Tauri and show warning if not
-export function checkTauriEnvironment(): boolean {
-    if (!isTauriAvailable) {
-        console.error('⚠️ WARNING: Aplikasi sedang berjalan di browser, bukan di Tauri desktop app!')
-        console.error('⚠️ Untuk menggunakan fitur screenshot capture, jalankan aplikasi dengan: pnpm tauri dev')
-        console.error('⚠️ Jangan buka http://localhost:1420 di browser secara manual!')
-    }
-    return isTauriAvailable
-}
+import { isTauriSync, waitForTauri } from '../lib/tauri'
+import { useAuth } from '../context/AuthContext'
 
 async function safeInvoke<T>(command: string, args?: any): Promise<T> {
-    if (!isTauriAvailable) {
+    if (!isTauriSync()) {
         throw new Error('Tauri API is not available in browser environment')
     }
     try {
@@ -34,20 +15,27 @@ async function safeInvoke<T>(command: string, args?: any): Promise<T> {
         logger.info(`Tauri command '${command}' succeeded`, { args, result })
         return result
     } catch (e: any) {
-        logger.error(`Tauri command '${command}' failed`, { 
-            command, 
-            args, 
-            error: e?.message || e?.toString() || e 
+        logger.error(`Tauri command '${command}' failed`, {
+            command,
+            args,
+            error: e?.message || e?.toString() || e
         })
         throw e
     }
 }
 
 export function useCapture() {
+    const { user } = useAuth()
     const [screenshots, setScreenshots] = useState<Screenshot[]>([])
     const [isCapturing, setIsCapturing] = useState(false)
     const [interval, setInterval] = useState(5) // minutes
     const [error, setError] = useState<string | null>(null)
+    const [isTauriReady, setIsTauriReady] = useState(false)
+
+    // Initialize Tauri detection
+    useEffect(() => {
+        waitForTauri().then(setIsTauriReady)
+    }, [])
 
     // Fetch activities from backend
     const fetchActivities = useCallback(async () => {
@@ -92,6 +80,21 @@ export function useCapture() {
                 status: e.response?.status,
                 detail: e.response?.data
             });
+
+            // If upload fails and we are in Tauri, save to offline queue
+            if (isTauriSync() && user) {
+                try {
+                    logger.info("Saving screenshot to offline queue...");
+                    await safeInvoke('save_offline_screenshot', {
+                        user_id: user.id,
+                        image_b64: base64Data
+                    });
+                    logger.info("Saved to offline queue successfully");
+                } catch (saveError) {
+                    logger.error("Failed to save to offline queue", saveError);
+                }
+            }
+
             if (e.response?.status === 401 || e.response?.status === 403) {
                 // Stop capturing if auth fails
                 logger.warn("Stopping capture due to auth failure");
@@ -104,7 +107,7 @@ export function useCapture() {
     const captureScreenshot = useCallback(async () => {
         try {
             setError(null)
-            if (!isTauriAvailable) {
+            if (!isTauriReady) {
                 logger.warn('Screenshot capture is only available in Tauri desktop app')
                 return
             }
@@ -118,18 +121,18 @@ export function useCapture() {
         } catch (e) {
             setError(String(e))
         }
-    }, [])
+    }, [isTauriReady])
 
     const startCapture = useCallback(async () => {
         try {
             setError(null)
-            if (!isTauriAvailable) {
+            if (!isTauriReady) {
                 const errorMsg = 'Screenshot capture is only available in Tauri desktop app'
                 logger.warn(errorMsg)
                 setError(errorMsg)
                 return
             }
-            
+
             logger.info(`Starting capture with interval: ${interval} minutes`)
             // Tauri converts camelCase to snake_case automatically, but we can be explicit
             const result = await safeInvoke('start_capture', { interval_minutes: interval })
@@ -141,12 +144,12 @@ export function useCapture() {
             setError(errorMsg)
             setIsCapturing(false)
         }
-    }, [interval])
+    }, [interval, isTauriReady])
 
     const stopCapture = useCallback(async () => {
         try {
             setError(null)
-            if (!isTauriAvailable) {
+            if (!isTauriReady) {
                 setIsCapturing(false)
                 return
             }
@@ -155,7 +158,7 @@ export function useCapture() {
         } catch (e) {
             setError(String(e))
         }
-    }, [])
+    }, [isTauriReady])
 
     // Fetch activities on mount
     useEffect(() => {
@@ -167,7 +170,7 @@ export function useCapture() {
         let unlisten: (() => void) | undefined
 
         const setupListener = async () => {
-            if (!isTauriAvailable) {
+            if (!isTauriReady) {
                 return
             }
 
@@ -180,7 +183,6 @@ export function useCapture() {
                     logger.error("Failed to sync capture state", e)
                 }
 
-                // @ts-ignore - types might be missing for now
                 const { listen } = await import('@tauri-apps/api/event')
                 unlisten = await listen<string>('screenshot-captured', async (event) => {
                     const base64 = event.payload;
@@ -205,7 +207,7 @@ export function useCapture() {
         return () => {
             if (unlisten) unlisten()
         }
-    }, [])
+    }, [isTauriReady])
 
     // Keyboard Shortcuts
     useEffect(() => {

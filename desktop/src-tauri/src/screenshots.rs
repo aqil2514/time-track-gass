@@ -2,6 +2,11 @@ use base64::Engine;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::thread;
 use std::time::Duration;
+use xcap::Monitor;
+use image::{DynamicImage, imageops::FilterType};
+use webp::Encoder;
+use tauri::{AppHandle, Emitter};
+use crate::offline_queue;
 
 /// Global screenshot capture service state
 static CAPTURE_STATE: CaptureState = CaptureState::new();
@@ -36,7 +41,73 @@ impl CaptureState {
     }
 }
 
-use tauri::{AppHandle, Emitter};
+const TARGET_WIDTH: u32 = 1440;
+const TARGET_HEIGHT: u32 = 900;
+const WEBP_QUALITY: f32 = 80.0;
+
+/// Resize image maintaining aspect ratio
+fn resize_image(img: DynamicImage) -> DynamicImage {
+    let (width, height) = (img.width(), img.height());
+
+    // Calculate scale factor to fit within target dimensions
+    let scale = f32::min(
+        TARGET_WIDTH as f32 / width as f32,
+        TARGET_HEIGHT as f32 / height as f32,
+    );
+
+    // Only downscale, never upscale
+    if scale >= 1.0 {
+        return img;
+    }
+
+    let new_width = (width as f32 * scale) as u32;
+    let new_height = (height as f32 * scale) as u32;
+
+    img.resize(new_width, new_height, FilterType::Lanczos3)
+}
+
+/// Encode image to WebP format
+fn encode_webp(img: &DynamicImage) -> Result<Vec<u8>, String> {
+    let encoder = Encoder::from_image(img)
+        .map_err(|e| format!("Failed to create WebP encoder: {}", e))?;
+
+    let webp_data = encoder.encode(WEBP_QUALITY);
+    Ok(webp_data.to_vec())
+}
+
+/// Capture a screenshot - cross-platform (Windows, macOS, Linux)
+/// Returns (image_data, base64_string)
+fn capture_screen_blocking_raw() -> Result<(Vec<u8>, String), String> {
+    let monitors = Monitor::all().map_err(|e| format!("Failed to get monitors: {}", e))?;
+
+    if monitors.is_empty() {
+        return Err("No monitors found".to_string());
+    }
+
+    // Find primary monitor, fallback to first
+    let monitor = monitors
+        .into_iter()
+        .find(|m| m.is_primary())
+        .or_else(|| Monitor::all().ok()?.into_iter().next())
+        .ok_or("No monitor available")?;
+
+    // Capture the screen
+    let image = monitor
+        .capture_image()
+        .map_err(|e| format!("Failed to capture screen: {}", e))?;
+
+    // Convert to DynamicImage for processing
+    let dynamic_img = DynamicImage::ImageRgba8(image);
+
+    // Resize to target dimensions
+    let resized = resize_image(dynamic_img);
+
+    // Encode to WebP
+    let webp_data = encode_webp(&resized)?;
+
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&webp_data);
+    Ok((webp_data, b64))
+}
 
 /// Start automatic screenshot capture
 pub async fn start_capture(app_handle: AppHandle, interval_minutes: u32) -> Result<(), String> {
@@ -47,19 +118,21 @@ pub async fn start_capture(app_handle: AppHandle, interval_minutes: u32) -> Resu
     CAPTURE_STATE.set_interval(interval_minutes);
     CAPTURE_STATE.set_capturing(true);
 
-    let interval = Duration::from_secs(interval_minutes as u64 * 60);
+    let interval_secs = interval_minutes as u64 * 60;
     // Clone app handle for the thread
-    let app_handle = app_handle.clone();
+    let app_handle_clone = app_handle.clone();
 
     thread::spawn(move || loop {
+        // Check stop flag before capturing
         if !CAPTURE_STATE.is_capturing() {
             break;
         }
-        // Capture screenshot (blocking version)
-        match capture_screen_blocking() {
-            Ok(base64_data) => {
-                // Emit event to frontend
-                if let Err(e) = app_handle.emit("screenshot-captured", &base64_data) {
+        
+        // Capture screenshot
+        match capture_screen_blocking_raw() {
+            Ok((_data, b64)) => {
+                // Emit to frontend to handle the upload
+                if let Err(e) = app_handle_clone.emit("screenshot-captured", &b64) {
                     eprintln!("Failed to emit screenshot event: {}", e);
                 }
             }
@@ -67,7 +140,15 @@ pub async fn start_capture(app_handle: AppHandle, interval_minutes: u32) -> Resu
                 eprintln!("Screenshot capture failed: {}", e);
             }
         }
-        thread::sleep(interval);
+        
+        // Sleep in short increments to allow responsive stop
+        // Check every second if we should stop
+        for _ in 0..interval_secs {
+            if !CAPTURE_STATE.is_capturing() {
+                return; // Exit the thread immediately
+            }
+            thread::sleep(Duration::from_secs(1));
+        }
     });
 
     Ok(())
@@ -89,109 +170,16 @@ pub async fn get_capture_interval() -> Result<u32, String> {
     Ok(CAPTURE_STATE.get_interval())
 }
 
-/// Capture a screenshot and return as base64 encoded PNG
+/// Capture a screenshot and return as base64 encoded WebP
 pub async fn capture_screen() -> Result<String, String> {
-    capture_screen_blocking()
+    let (_data, b64) = capture_screen_blocking_raw()?;
+    Ok(b64)
 }
 
-/// Blocking version of capture_screen for use in threads
-/// Captures all monitors and combines them into a single image
-fn capture_screen_blocking() -> Result<String, String> {
-    #[cfg(target_os = "windows")]
-    {
-        use screenshots::Screen;
-        use image::{RgbaImage, ImageBuffer};
-
-        let screens = Screen::all().map_err(|e| e.to_string())?;
-        
-        if screens.is_empty() {
-            return Err("No screens found".to_string());
-        }
-
-        // If only one screen, optimize by not creating a combined canvas
-        if screens.len() == 1 {
-            let screen = &screens[0];
-            let image = screen.capture().map_err(|e| e.to_string())?;
-            let buffer = image.to_png(None).map_err(|e| e.to_string())?;
-            return Ok(base64::engine::general_purpose::STANDARD.encode(&buffer));
-        }
-
-        // Calculate the bounding box for all screens
-        let mut min_x = i32::MAX;
-        let mut min_y = i32::MAX;
-        let mut max_x = i32::MIN;
-        let mut max_y = i32::MIN;
-
-        for screen in &screens {
-            let info = screen.display_info;
-            min_x = min_x.min(info.x);
-            min_y = min_y.min(info.y);
-            max_x = max_x.max(info.x + info.width as i32);
-            max_y = max_y.max(info.y + info.height as i32);
-        }
-
-        let total_width = (max_x - min_x) as u32;
-        let total_height = (max_y - min_y) as u32;
-
-        // Create a blank canvas for the combined screenshot
-        let mut canvas: RgbaImage = ImageBuffer::new(total_width, total_height);
-
-        // Capture each screen and paste onto the canvas
-        for screen in &screens {
-            let info = screen.display_info;
-            let capture = screen.capture().map_err(|e| format!("Failed to capture screen {}: {}", info.id, e))?;
-            
-            // Calculate position on canvas (offset by min_x, min_y to handle negative coords)
-            let x_offset = (info.x - min_x) as u32;
-            let y_offset = (info.y - min_y) as u32;
-
-            // Get raw RGBA pixels from the capture
-            let rgba_data = capture.rgba();
-            let width = capture.width();
-            let height = capture.height();
-
-            // Copy pixels to canvas
-            for py in 0..height {
-                for px in 0..width {
-                    let idx = ((py * width + px) * 4) as usize;
-                    if idx + 3 < rgba_data.len() {
-                        let pixel = image::Rgba([
-                            rgba_data[idx],
-                            rgba_data[idx + 1],
-                            rgba_data[idx + 2],
-                            rgba_data[idx + 3],
-                        ]);
-                        let canvas_x = x_offset + px;
-                        let canvas_y = y_offset + py;
-                        if canvas_x < total_width && canvas_y < total_height {
-                            canvas.put_pixel(canvas_x, canvas_y, pixel);
-                        }
-                    }
-                }
-            }
-        }
-
-        // Encode the combined image to PNG
-        let mut png_buffer: Vec<u8> = Vec::new();
-        {
-            use image::codecs::png::PngEncoder;
-            use image::ImageEncoder;
-            let encoder = PngEncoder::new(&mut png_buffer);
-            encoder
-                .write_image(
-                    canvas.as_raw(),
-                    total_width,
-                    total_height,
-                    image::ColorType::Rgba8,
-                )
-                .map_err(|e| format!("Failed to encode PNG: {}", e))?;
-        }
-
-        Ok(base64::engine::general_purpose::STANDARD.encode(&png_buffer))
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        Err("Screenshot capture only supported on Windows for now".to_string())
-    }
+pub fn save_offline_screenshot(app_handle: AppHandle, user_id: String, image_b64: String) -> Result<(), String> {
+    let data = base64::engine::general_purpose::STANDARD.decode(image_b64)
+        .map_err(|e| format!("Failed to decode base64: {}", e))?;
+    
+    offline_queue::save_to_queue(&app_handle, user_id, &data)?;
+    Ok(())
 }
