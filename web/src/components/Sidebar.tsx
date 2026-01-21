@@ -18,7 +18,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedUserId, onSelectUser, 
     const fetchWatching = async () => {
       try {
         const response = await apiClient.getWatching()
-        setWatching(response.data)
+        setWatching(response.data || [])
       } catch (error) {
         console.error('Failed to fetch team members:', error)
       } finally {
@@ -44,7 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedUserId, onSelectUser, 
           )}
         >
           <div className="w-8 h-8 rounded-full bg-primary-foreground/10 flex items-center justify-center font-bold">
-            {currentUser?.name?.[0] || currentUser?.email[0].toUpperCase()}
+            {currentUser?.name?.[0] || currentUser?.email?.[0]?.toUpperCase()}
           </div>
           <div className="text-left overflow-hidden">
             <p className="font-medium truncate">My Dashboard</p>

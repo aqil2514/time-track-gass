@@ -3,7 +3,7 @@ import { Card } from './Card'
 import { Badge } from './Badge'
 import { formatTimeRange } from '../lib/utils'
 import type { Screenshot } from '../types'
-import { Clock, Image as ImageIcon } from 'lucide-react'
+import { Clock, Monitor } from 'lucide-react'
 
 interface ActivityTimelineProps {
     screenshots: Screenshot[]
@@ -20,39 +20,38 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ screenshots 
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {screenshots.map((shot) => (
                 <Card key={shot.id} className="group overflow-hidden border-border/50 bg-card/40 hover:bg-card/60 transition-colors">
                     <div className="flex items-start gap-4 p-4">
                         <div className="flex-shrink-0 mt-1">
-                            <div className="w-2 h-full absolute left-4 top-0 bottom-0 bg-border/50 -z-10 hidden" />
-                            {/* Timeline line could be added here for visual flair */}
                             <div className="p-2 rounded-full bg-primary/10 text-primary">
-                                <ImageIcon className="w-4 h-4" />
+                                <Monitor className="w-4 h-4" />
                             </div>
                         </div>
 
                         <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-start mb-1">
-                                <h4 className="font-medium truncate text-foreground/90">
-                                    Screen Capture
-                                </h4>
-                                <span className="text-xs font-mono text-muted-foreground">
-                                    {formatTimeRange(shot.timestamp)}
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium truncate text-foreground/90">
+                                        {shot.app_name || 'Unknown App'}
+                                    </h4>
+                                    <p className="text-sm text-muted-foreground truncate mt-0.5">
+                                        {shot.window_title || 'No window title'}
+                                    </p>
+                                </div>
+                                <span className="text-xs font-mono text-muted-foreground ml-2 whitespace-nowrap">
+                                    {formatTimeRange(shot.captured_at)}
                                 </span>
                             </div>
 
-                            <div className="flex items-center gap-2 mb-3">
-                                <Badge variant="other">Uncategorized</Badge>
-                            </div>
-
-                            <div className="relative rounded-md overflow-hidden border border-border/50 bg-black/20 aspect-video group-hover:border-primary/20 transition-colors">
-                                <img
-                                    src={`data:image/png;base64,${shot.data}`}
-                                    alt="Screenshot"
-                                    className="w-full h-full object-cover"
-                                    loading="lazy"
-                                />
+                            <div className="flex items-center gap-2">
+                                <Badge variant={getCategoryVariant(shot.category)}>{shot.category || 'Uncategorized'}</Badge>
+                                {shot.summary && (
+                                    <span className="text-xs text-muted-foreground truncate ml-2">
+                                        {shot.summary}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -60,4 +59,12 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ screenshots 
             ))}
         </div>
     )
+}
+
+function getCategoryVariant(category: string): 'productive' | 'distracting' | 'neutral' | 'other' {
+    const c = category.toLowerCase()
+    if (['work', 'coding', 'development', 'productivity', 'meeting'].some(x => c.includes(x))) return 'productive'
+    if (['social', 'entertainment', 'game', 'youtube', 'video'].some(x => c.includes(x))) return 'distracting'
+    if (['neutral', 'utility', 'system'].some(x => c.includes(x))) return 'neutral'
+    return 'other'
 }

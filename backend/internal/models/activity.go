@@ -8,32 +8,34 @@ import (
 )
 
 type Activity struct {
-	ID          uuid.UUID `json:"id"`
-	UserID      uuid.UUID `json:"user_id"`
-	CapturedAt  time.Time `json:"captured_at"`
-	AppName     string    `json:"app_name"`
-	WindowTitle string    `json:"window_title"`
-	Category    string    `json:"category"`
-	Summary     string    `json:"summary"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID          uuid.UUID  `json:"id"`
+	UserID      uuid.UUID  `json:"user_id"`
+	CapturedAt  time.Time  `json:"captured_at"`
+	AppName     string     `json:"app_name"`
+	WindowTitle string     `json:"window_title"`
+	Category    string     `json:"category"`
+	Summary     string     `json:"summary"`
+	AIStatus    AIStatus   `json:"ai_status"`
+	RetryQueueID *uuid.UUID `json:"retry_queue_id,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
 }
 
 type UploadActivityInput struct {
-	Image      string    `json:"image" binding:"required"` // base64 encoded
-	CapturedAt time.Time `json:"captured_at"`
+	Image      string  `json:"image" binding:"required"` // base64 encoded
+	CapturedAt *string `json:"captured_at"`              // optional ISO string
 }
 
 type ActivityListInput struct {
-	From     time.Time `form:"from"`
-	To       time.Time `form:"to"`
-	Category string    `form:"category"`
-	Page     int       `form:"page,default=1"`
-	PerPage  int       `form:"per_page,default=20"`
+	From     string `form:"from"`
+	To       string `form:"to"`
+	Category string `form:"category"`
+	Page     int    `form:"page,default=1"`
+	PerPage  int    `form:"per_page,default=20"`
 }
 
 type ActivityStats struct {
-	TotalMinutes int                    `json:"total_minutes"`
-	TotalHours   float64                `json:"total_hours"`
+	TotalMinutes int                     `json:"total_minutes"`
+	TotalHours   float64                 `json:"total_hours"`
 	ByCategory   map[string]CategoryStat `json:"by_category"`
 }
 

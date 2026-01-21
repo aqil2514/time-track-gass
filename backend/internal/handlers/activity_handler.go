@@ -27,6 +27,8 @@ func (h *ActivityHandler) Upload(c *gin.Context) {
 
 	var input models.UploadActivityInput
 	if err := c.ShouldBindJSON(&input); err != nil {
+		// Log validation error for debugging
+		println("[VALIDATION ERROR]", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error": gin.H{
@@ -89,7 +91,48 @@ func (h *ActivityHandler) List(c *gin.Context) {
 		input.PerPage = 20
 	}
 
-	activities, total, err := h.activityService.List(c.Request.Context(), user.ID, &input)
+	var from, to time.Time
+	var err error
+
+	if input.From != "" {
+		from, err = time.Parse("2006-01-02", input.From)
+		if err != nil {
+			// Try RFC3339 as fallback
+			from, err = time.Parse(time.RFC3339, input.From)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"success": false,
+					"error": gin.H{
+						"code":    "VALIDATION_ERROR",
+						"message": "Invalid from date format (use YYYY-MM-DD or RFC3339)",
+					},
+				})
+				return
+			}
+		}
+	}
+
+	if input.To != "" {
+		to, err = time.Parse("2006-01-02", input.To)
+		if err != nil {
+			// Try RFC3339 as fallback
+			to, err = time.Parse(time.RFC3339, input.To)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"success": false,
+					"error": gin.H{
+						"code":    "VALIDATION_ERROR",
+						"message": "Invalid to date format (use YYYY-MM-DD or RFC3339)",
+					},
+				})
+				return
+			}
+		} else {
+			to = to.Add(24 * time.Hour) // If string was YYYY-MM-DD, include whole day
+		}
+	}
+
+	activities, total, err := h.activityService.List(c.Request.Context(), user.ID, from, to, input.Category, input.Page, input.PerPage)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,

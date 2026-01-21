@@ -3,7 +3,7 @@ import { cn } from '../lib/utils'
 
 interface BadgeProps {
     children: React.ReactNode
-    variant?: 'default' | 'secondary' | 'outline' | 'coding' | 'meeting' | 'browsing' | 'communication' | 'design' | 'other'
+    variant?: 'default' | 'secondary' | 'outline' | 'coding' | 'meeting' | 'browsing' | 'communication' | 'design' | 'other' | 'productive' | 'distracting' | 'neutral'
     className?: string
 }
 
@@ -17,6 +17,9 @@ const categoryColors: Record<string, string> = {
     communication: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
     design: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
     other: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
+    productive: 'bg-green-500/20 text-green-300 border-green-500/30',
+    distracting: 'bg-red-500/20 text-red-300 border-red-500/30',
+    neutral: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
 }
 
 export const Badge: React.FC<BadgeProps> = ({ children, variant = 'default', className }) => {

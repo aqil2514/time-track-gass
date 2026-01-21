@@ -1,27 +1,29 @@
-import { invoke } from '@tauri-apps/api/core'
-import type { Screenshot, CaptureSettings } from '../types'
+import axios from 'axios';
 
-export async function captureScreenshot(): Promise<string> {
-  return await invoke<string>('capture_screenshot')
-}
+const API_URL = 'http://localhost:8080/api/v1';
 
-export async function startCapture(intervalMinutes: number): Promise<void> {
-  await invoke('start_capture', { intervalMinutes })
-}
+export const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-export async function stopCapture(): Promise<void> {
-  await invoke('stop_capture')
-}
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-export async function isCapturing(): Promise<boolean> {
-  return await invoke<boolean>('is_capturing')
-}
-
-export async function getCaptureInterval(): Promise<number> {
-  return await invoke<number>('get_capture_interval')
-}
-
-export async function uploadScreenshot(base64Data: string, timestamp: string): Promise<void> {
-  // TODO: Implement API upload to backend
-  console.log('Uploading screenshot...', timestamp)
-}
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);

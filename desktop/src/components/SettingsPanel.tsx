@@ -74,6 +74,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                         )}
                     </div>
 
+                    {/* SHORTCUTS SECTION */}
+                    <div className="space-y-2 pt-4 border-t border-border/50">
+                        <h3 className="text-sm font-medium text-foreground/80">Keyboard Shortcuts</h3>
+                        <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                            <div className="flex justify-between">
+                                <span>Start/Pause Tracking</span>
+                                <kbd className="px-1 py-0.5 rounded bg-muted border border-border font-mono text-[10px]">Ctrl+Shift+S</kbd>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Capture Now</span>
+                                <kbd className="px-1 py-0.5 rounded bg-muted border border-border font-mono text-[10px]">Ctrl+Shift+C</kbd>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* INFO SECTION */}
                     <div className="space-y-2 pt-4 border-t border-border/50">
                         <h3 className="text-sm font-medium text-foreground/80">About</h3>

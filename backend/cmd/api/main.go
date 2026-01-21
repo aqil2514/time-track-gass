@@ -2,10 +2,14 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -34,16 +38,31 @@ func main() {
 	// Initialize services
 	db := database.GetPool()
 	authService := services.NewAuthService(db)
-	aiService := services.NewAIService(cfg.ZAIAPIKey, cfg.ZAIBaseURL)
+	aiService := services.NewAIService(cfg)
+	retryQueue := services.NewRetryQueueService(db, aiService, cfg.ZAIMaxQueueRetries)
 	activityService := services.NewActivityService(db, aiService)
 	shareService := services.NewShareService(db, authService)
 	linkService := services.NewShareLinkService(db)
+
+	// Wire up circular dependencies
+	activityService.SetRetryQueue(retryQueue)
+	retryQueue.SetActivityService(activityService)
+
+	// Initialize worker pool
+	var workerPool *services.WorkerPool
+	if cfg.RetryQueueWorkers > 0 {
+		workerPool = services.NewWorkerPool(retryQueue, cfg.RetryQueueWorkers, cfg.RetryQueueInterval)
+	}
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService)
 	activityHandler := handlers.NewActivityHandler(activityService)
 	shareHandler := handlers.NewShareHandler(shareService, activityService)
 	linkHandler := handlers.NewShareLinkHandler(linkService, activityService)
+	var healthHandler *handlers.HealthHandler
+	if workerPool != nil {
+		healthHandler = handlers.NewHealthHandler(workerPool)
+	}
 
 	// Setup Gin
 	if os.Getenv("GIN_MODE") == "" {
@@ -95,6 +114,9 @@ func main() {
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
+	if healthHandler != nil {
+		r.GET("/health/detailed", healthHandler.DetailedHealth)
+	}
 
 	// API v1 routes
 	v1 := r.Group("/api/v1")
@@ -139,9 +161,65 @@ func main() {
 		}
 	}
 
-	// Start server
-	log.Printf("Server starting on port %s", cfg.Port)
-	if err := r.Run(":" + cfg.Port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	// Create context for graceful shutdown
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Start worker pool if configured
+	var cleanupDone, recoveryDone chan struct{}
+	if workerPool != nil {
+		workerPool.Start(ctx)
+
+		// Start cleanup job (runs every hour)
+		cleanupDone = services.StartCleanupJob(ctx, retryQueue, 1*time.Hour)
+
+		// Start recovery job (runs every 5 minutes, recovers tasks stuck for >10 minutes)
+		recoveryDone = services.StartRecoveryJob(ctx, retryQueue, 5*time.Minute, 10*time.Minute)
 	}
+
+	// Start server in goroutine
+	serverErr := make(chan error, 1)
+	go func() {
+		log.Printf("Server starting on port %s", cfg.Port)
+		if err := r.Run(":" + cfg.Port); err != nil && err != http.ErrServerClosed {
+			serverErr <- err
+		}
+	}()
+
+	// Wait for shutdown signal or server error
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	case <-sigCh:
+		log.Println("Shutdown signal received")
+	case err := <-serverErr:
+		log.Fatalf("Server error: %v", err)
+	}
+
+	// Graceful shutdown
+	log.Println("Shutting down gracefully...")
+	cancel() // Cancel context to stop workers
+
+	// Shutdown worker pool with timeout
+	if workerPool != nil {
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer shutdownCancel()
+
+		if err := workerPool.Shutdown(shutdownCtx); err != nil {
+			log.Printf("Worker pool shutdown error: %v", err)
+		}
+
+		// Wait for cleanup and recovery jobs to finish
+		if cleanupDone != nil {
+			log.Println("Waiting for cleanup job to finish...")
+			<-cleanupDone
+		}
+		if recoveryDone != nil {
+			log.Println("Waiting for recovery job to finish...")
+			<-recoveryDone
+		}
+	}
+
+	log.Println("Shutdown complete")
 }

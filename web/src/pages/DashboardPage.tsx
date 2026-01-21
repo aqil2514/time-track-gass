@@ -44,8 +44,8 @@ export const DashboardPage: React.FC = () => {
 
       const [statsRes, activitiesRes] = await Promise.all([statsReq, activitiesReq])
 
-      setStats(statsRes.data)
-      setActivities(activitiesRes.data)
+      setStats(statsRes.data || null)
+      setActivities(activitiesRes.data || [])
     } catch (error) {
       console.error('Failed to load data:', error)
       if (error instanceof UnauthorizedError) {
@@ -166,11 +166,11 @@ export const DashboardPage: React.FC = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="text-4xl font-bold group-hover:text-green-500 transition-colors">
-                        {stats?.by_category.coding?.percentage ? Math.round(stats.by_category.coding.percentage) : 0}%
+                        {stats?.by_category?.coding?.percentage ? Math.round(stats.by_category.coding.percentage) : 0}%
                       </div>
                       <div className="flex items-center gap-2 mt-2">
                         <div className="h-1.5 flex-1 bg-secondary rounded-full overflow-hidden">
-                          <div className="h-full bg-green-500" style={{ width: `${stats?.by_category.coding?.percentage || 0}%` }} />
+                          <div className="h-full bg-green-500" style={{ width: `${stats?.by_category?.coding?.percentage || 0}%` }} />
                         </div>
                       </div>
                     </CardContent>

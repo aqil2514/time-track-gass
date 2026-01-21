@@ -1,9 +1,13 @@
-export interface Screenshot {
+export interface Activity {
   id: string
-  timestamp: string
-  data: string
-  activityId?: string
+  captured_at: string
+  app_name: string
+  window_title: string
+  category: string
+  summary: string
 }
+
+export type Screenshot = Activity
 
 export interface CaptureSettings {
   intervalMinutes: number

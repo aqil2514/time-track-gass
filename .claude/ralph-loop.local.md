@@ -3,7 +3,7 @@ active: true
 iteration: 1
 max_iterations: 0
 completion_promise: null
-started_at: "2026-01-20T07:19:57Z"
+started_at: "2026-01-20T17:20:43Z"
 ---
 
-implementasikan semua @docsplans secara pararel maximal jika sudah selesai lakukan codereview dengan skill kalau ada error atau warning cari root cause nya aku mau nya proper fix atau permanent fix, looping sampai hasil codereview pass semua
+@C:Usersbngkim.claude @tasksretry-ai-system kalau sudah lakukan codereview kalau ada error cari root cause nya aku mau permanent fix atau long term fix bukan quick fix looping sampai semua code review pass . kerjakan dengan sangat teliti kalau pengaruh ke lain nya trace dengan teliti
