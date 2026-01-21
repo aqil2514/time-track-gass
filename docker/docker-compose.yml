@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: timetrack-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-timetrack}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-timetrack123}
+      POSTGRES_DB: ${POSTGRES_DB:-timetrack}
+    volumes:
+      - timetrack-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U timetrack"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  timetrack-db-data:

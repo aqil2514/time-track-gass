@@ -1,0 +1,9 @@
+{
+  "name": "timetrack",
+  "private": true,
+  "scripts": {
+    "dev:backend": "cd backend && go run .",
+    "dev:web": "cd web && pnpm dev",
+    "dev:desktop": "cd desktop && pnpm tauri dev"
+  }
+}
