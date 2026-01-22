@@ -1,4 +1,7 @@
 // backend/internal/services/ai_service.go
+// [TimeTrack Backend AI Service - Server-side summary generation only]
+// Screenshot analysis has been moved to client-side (desktop app).
+// This service now handles only: SessionSummary, DailySummary generation.
 package services
 
 import (
@@ -16,21 +19,10 @@ import (
 )
 
 type AIService struct {
-	apiKey           string
-	baseURL          string
-	client           *http.Client
-	visionPrimary    string
-	visionFallback   string
-	textFast         string
-	textSmart        string
-	maxInlineRetries int
-}
-
-type ScreenshotAnalysis struct {
-	AppName     string `json:"app_name"`
-	WindowTitle string `json:"window_title"`
-	Category    string `json:"category"`
-	Summary     string `json:"summary"`
+	baseURL   string
+	client    *http.Client
+	textFast  string
+	textSmart string
 }
 
 type SessionSummaryInput struct {
@@ -69,13 +61,8 @@ type zaiMessage struct {
 }
 
 type zaiContent struct {
-	Type     string    `json:"type"`
-	Text     string    `json:"text,omitempty"`
-	ImageURL *imageURL `json:"image_url,omitempty"`
-}
-
-type imageURL struct {
-	URL string `json:"url"`
+	Type string `json:"type"`
+	Text string `json:"text,omitempty"`
 }
 
 type zaiResponse struct {
@@ -88,7 +75,6 @@ type zaiResponse struct {
 
 func NewAIService(cfg *config.Config) *AIService {
 	return &AIService{
-		apiKey:  cfg.ZAIAPIKey,
 		baseURL: cfg.ZAIBaseURL,
 		client: &http.Client{
 			Timeout: 30 * time.Second,
@@ -101,172 +87,15 @@ func NewAIService(cfg *config.Config) *AIService {
 				IdleConnTimeout:       90 * time.Second,
 			},
 		},
-		visionPrimary:    cfg.ZAIVisionModelPrimary,
-		visionFallback:   cfg.ZAIVisionModelFallback,
-		textFast:         cfg.ZAITextModelFast,
-		textSmart:        cfg.ZAITextModelSmart,
-		maxInlineRetries: cfg.ZAIMaxInlineRetries,
+		textFast:  cfg.ZAITextModelFast,
+		textSmart: cfg.ZAITextModelSmart,
 	}
-}
-
-// AnalyzeScreenshotWithRetry attempts screenshot analysis with model cascade
-// Tries primary model (FlashX) first, then falls back to full model
-// Returns error only if both models fail, allowing caller to implement retry logic
-func (s *AIService) AnalyzeScreenshotWithRetry(ctx context.Context, imageBase64 string) (*ScreenshotAnalysis, error) {
-	// If key is empty, return mock immediately with no error
-	// This allows the system to function without AI API
-	if s.apiKey == "" {
-		return &ScreenshotAnalysis{
-			AppName:     "Unknown",
-			WindowTitle: "Unknown",
-			Category:    "other",
-			Summary:     "Screenshot captured (AI analysis not configured)",
-		}, nil
-	}
-
-	var lastErr error
-
-	// Try primary model first (FlashX - faster and cheaper)
-	analysis, err := s.analyzeScreenshotWithModel(ctx, imageBase64, s.visionPrimary, 30*time.Second)
-	if err == nil {
-		return analysis, nil
-	}
-	lastErr = err
-
-	// Primary failed, try fallback model (full model)
-	analysis, err = s.analyzeScreenshotWithModel(ctx, imageBase64, s.visionFallback, 60*time.Second)
-	if err == nil {
-		return analysis, nil
-	}
-
-	// Both failed - return error to trigger retry queue
-	// The caller should enqueue for background retry
-	return nil, fmt.Errorf("both AI models failed: primary (%s): %w, fallback (%s): %w",
-		s.visionPrimary, lastErr, s.visionFallback, err)
-}
-
-// analyzeScreenshotWithModel performs analysis with specific model and timeout
-func (s *AIService) analyzeScreenshotWithModel(ctx context.Context, imageBase64, model string, timeout time.Duration) (*ScreenshotAnalysis, error) {
-	// Create context with timeout
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	fmt.Printf("[DEBUG] Analyzing screenshot with model: '%s' (timeout: %s)\n", model, timeout)
-	if len(s.apiKey) > 5 {
-		fmt.Printf("[DEBUG] API Key (truncated): %s...\n", s.apiKey[:5])
-	}
-
-	// Enhanced prompt for raw context extraction
-	prompt := `Extract activity context from this screenshot.
-
-**Capture visible information:**
-1. App/Tool: What application is active?
-2. Visible paths/URLs: File paths, URLs, terminal directories
-3. Specific content: Error messages, code being edited, article titles, queries
-4. Action: editing, reading, running, debugging, querying, etc.
-
-**Category** (pick one):
-- coding: Writing/editing code files
-- debugging: Analyzing errors, logs, stack traces
-- research: Reading docs, StackOverflow, articles
-- database: SQL queries, DB tools
-- devops: Docker, CI/CD, deployment, monitoring
-- review: Code/PR review
-- meeting: Video calls
-- communication: Chat apps, email
-- design: Design tools
-- planning: Task management, notes
-- other: None of the above
-
-**Summary format:**
-- Include project name ONLY if visible in paths/titles
-- Focus on WHAT is being done specifically
-- Examples:
-  - "Editing retry_queue.go error handling logic"
-  - "Reading PostgreSQL INTERVAL documentation"
-  - "Running go build with compilation errors"
-
-JSON output (no markdown):
-{"app_name": "...", "window_title": "...", "category": "...", "summary": "..."}`
-
-	reqBody := zaiRequest{
-		Model: model,
-		Messages: []zaiMessage{
-			{
-				Role: "user",
-				Content: []zaiContent{
-					{Type: "image_url", ImageURL: &imageURL{URL: s.ensureDataURI(imageBase64)}},
-					{Type: "text", Text: prompt},
-				},
-			},
-		},
-	}
-
-	var body bytes.Buffer
-	enc := json.NewEncoder(&body)
-	enc.SetEscapeHTML(false)
-	if err := enc.Encode(reqBody); err != nil {
-		return nil, fmt.Errorf("marshal error: %w", err)
-	}
-
-	// Debug log
-	bodyBytes := body.Bytes()
-	if len(bodyBytes) > 1000 {
-		fmt.Printf("[DEBUG] Request Body (truncated): %s...}\n", string(bodyBytes[:500]))
-	} else {
-		fmt.Printf("[DEBUG] Request Body: %s\n", string(bodyBytes))
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", s.baseURL+"/chat/completions", &body)
-	if err != nil {
-		return nil, fmt.Errorf("request creation error: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+s.apiKey)
-
-	resp, err := s.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("network error: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		respBody, _ := io.ReadAll(resp.Body)
-		// Truncate request body for error message
-		reqBodyStr := body.String()
-		if len(reqBodyStr) > 200 {
-			reqBodyStr = reqBodyStr[:200] + "..."
-		}
-		return nil, fmt.Errorf("API error (status %d) for model '%s': %s. Request: %s", resp.StatusCode, model, string(respBody), reqBodyStr)
-	}
-
-	var zaiResp zaiResponse
-	if err := json.NewDecoder(resp.Body).Decode(&zaiResp); err != nil {
-		return nil, fmt.Errorf("decode error: %w", err)
-	}
-
-	if len(zaiResp.Choices) == 0 {
-		return nil, fmt.Errorf("no choices returned")
-	}
-
-	var analysis ScreenshotAnalysis
-	if err := json.Unmarshal([]byte(zaiResp.Choices[0].Message.Content), &analysis); err != nil {
-		// If JSON parsing fails, return raw content as summary
-		return &ScreenshotAnalysis{
-			AppName:     "Unknown",
-			WindowTitle: "Unknown",
-			Category:    "other",
-			Summary:     zaiResp.Choices[0].Message.Content,
-		}, nil
-	}
-
-	return &analysis, nil
 }
 
 // GenerateSessionSummary generates a summary for a work session
-func (s *AIService) GenerateSessionSummary(ctx context.Context, input *SessionSummaryInput) (*SessionSummary, error) {
-	if s.apiKey == "" {
+// Note: apiKey must be provided by caller (from organization settings)
+func (s *AIService) GenerateSessionSummary(ctx context.Context, apiKey string, input *SessionSummaryInput) (*SessionSummary, error) {
+	if apiKey == "" {
 		return &SessionSummary{
 			Overview:   "Session summary not available (AI not configured)",
 			Categories: []string{},
@@ -277,7 +106,7 @@ func (s *AIService) GenerateSessionSummary(ctx context.Context, input *SessionSu
 	// Build prompt from activities
 	prompt := s.buildSessionSummaryPrompt(input)
 
-	summary, err := s.generateTextSummary(ctx, prompt, s.textFast)
+	summary, err := s.generateTextSummary(ctx, apiKey, prompt, s.textFast)
 	if err != nil {
 		return &SessionSummary{
 			Overview:   "Unable to generate session summary",
@@ -290,8 +119,9 @@ func (s *AIService) GenerateSessionSummary(ctx context.Context, input *SessionSu
 }
 
 // GenerateDailySummary generates a daily work summary
-func (s *AIService) GenerateDailySummary(ctx context.Context, activities []ActivitySummary, totalHours float64) (*DailySummary, error) {
-	if s.apiKey == "" {
+// Note: apiKey must be provided by caller (from organization settings)
+func (s *AIService) GenerateDailySummary(ctx context.Context, apiKey string, activities []ActivitySummary, totalHours float64) (*DailySummary, error) {
+	if apiKey == "" {
 		return &DailySummary{
 			Overview:      "Daily summary not available (AI not configured)",
 			TopCategories: []string{},
@@ -302,7 +132,7 @@ func (s *AIService) GenerateDailySummary(ctx context.Context, activities []Activ
 
 	prompt := s.buildDailySummaryPrompt(activities, totalHours)
 
-	summary, err := s.generateTextSummary(ctx, prompt, s.textSmart)
+	summary, err := s.generateTextSummary(ctx, apiKey, prompt, s.textSmart)
 	if err != nil {
 		return &DailySummary{
 			Overview:      "Unable to generate daily summary",
@@ -361,7 +191,7 @@ func (s *AIService) buildDailySummaryPrompt(activities []ActivitySummary, totalH
 }`, totalHours, len(activities), activityList.String())
 }
 
-func (s *AIService) generateTextSummary(ctx context.Context, prompt, model string) (*SessionSummary, error) {
+func (s *AIService) generateTextSummary(ctx context.Context, apiKey string, prompt, model string) (*SessionSummary, error) {
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
@@ -386,7 +216,7 @@ func (s *AIService) generateTextSummary(ctx context.Context, prompt, model strin
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+s.apiKey)
+	req.Header.Set("Authorization", "Bearer "+apiKey)
 
 	resp, err := s.client.Do(req)
 	if err != nil {
@@ -419,22 +249,4 @@ func (s *AIService) generateTextSummary(ctx context.Context, prompt, model strin
 	}
 
 	return &summary, nil
-}
-
-func (s *AIService) ensureDataURI(data string) string {
-	if strings.HasPrefix(data, "data:image/") {
-		return data
-	}
-
-	// Detect format from base64 data
-	// WebP magic bytes: "RIFF" (base64 "UklGR")
-	if strings.HasPrefix(data, "UklGR") {
-		return "data:image/webp;base64," + data
-	}
-	// PNG magic bytes: 0x89 0x50 0x4E 0x47 (base64 "iVBOR")
-	if strings.HasPrefix(data, "iVBOR") {
-		return "data:image/png;base64," + data
-	}
-	// Default to PNG for legacy compatibility if unknown
-	return "data:image/png;base64," + data
 }

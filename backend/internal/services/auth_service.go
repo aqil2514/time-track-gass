@@ -16,18 +16,24 @@ import (
 )
 
 var (
-	ErrUserNotFound     = errors.New("user not found")
-	ErrInvalidPassword  = errors.New("invalid password")
-	ErrEmailExists      = errors.New("email already exists")
-	ErrInvalidToken     = errors.New("invalid or expired token")
+	ErrUserNotFound    = errors.New("user not found")
+	ErrInvalidPassword = errors.New("invalid password")
+	ErrEmailExists     = errors.New("email already exists")
+	ErrInvalidToken    = errors.New("invalid or expired token")
 )
 
 type AuthService struct {
-	db *pgxpool.Pool
+	db         *pgxpool.Pool
+	orgService *OrganizationService
 }
 
 func NewAuthService(db *pgxpool.Pool) *AuthService {
 	return &AuthService{db: db}
+}
+
+// SetOrganizationService sets the organization service
+func (s *AuthService) SetOrganizationService(os *OrganizationService) {
+	s.orgService = os
 }
 
 func (s *AuthService) Register(ctx context.Context, input *models.CreateUserInput) (*models.User, error) {
@@ -41,21 +47,34 @@ func (s *AuthService) Register(ctx context.Context, input *models.CreateUserInpu
 		return nil, ErrEmailExists
 	}
 
-	// Hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+	// Create Organization with Owner using OrganizationService
+	if s.orgService == nil {
+		return nil, errors.New("organization service not initialized")
+	}
+
+	// Default organization name to "My Organization" or user's name + "Org"
+	orgName := input.Name
+	if orgName == "" {
+		orgName = "My Organization"
+	} else {
+		orgName += "'s Organization"
+	}
+
+	// Transactional creation of Org + Owner
+	// Note: CreateOrganizationWithOwner returns UserResponse, but we need User model here for consistency with existing signature
+	// Modifying signature or mapping back
+	_, userResponse, err := s.orgService.CreateOrganizationWithOwner(ctx, orgName, input.Email, input.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	// Insert user
-	user := &models.User{}
-	err = s.db.QueryRow(ctx,
-		`INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3)
-		 RETURNING id, email, password_hash, name, created_at`,
-		input.Email, string(hashedPassword), input.Name,
-	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.CreatedAt)
-	if err != nil {
-		return nil, err
+	// Map UserResponse back to User (limited fields needed for response)
+	user := &models.User{
+		ID:        userResponse.ID,
+		Email:     userResponse.Email,
+		Name:      userResponse.Name,
+		Role:      userResponse.Role,
+		CreatedAt: userResponse.CreatedAt,
 	}
 
 	return user, nil
@@ -65,9 +84,9 @@ func (s *AuthService) Login(ctx context.Context, input *models.LoginInput) (*mod
 	// Find user by email
 	user := &models.User{}
 	err := s.db.QueryRow(ctx,
-		`SELECT id, email, password_hash, name, created_at FROM users WHERE email = $1`,
+		`SELECT id, email, password_hash, name, organization_id, role, created_at FROM users WHERE email = $1`,
 		input.Email,
-	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.CreatedAt)
+	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.OrganizationID, &user.Role, &user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, "", ErrUserNotFound
@@ -107,12 +126,12 @@ func (s *AuthService) Logout(ctx context.Context, token string) error {
 func (s *AuthService) ValidateToken(ctx context.Context, token string) (*models.User, error) {
 	user := &models.User{}
 	err := s.db.QueryRow(ctx,
-		`SELECT u.id, u.email, u.password_hash, u.name, u.created_at
+		`SELECT u.id, u.email, u.password_hash, u.name, u.organization_id, u.role, u.created_at
 		 FROM users u
 		 JOIN sessions s ON s.user_id = u.id
 		 WHERE s.token = $1 AND s.expires_at > NOW()`,
 		token,
-	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.CreatedAt)
+	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.OrganizationID, &user.Role, &user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrInvalidToken
@@ -126,9 +145,9 @@ func (s *AuthService) ValidateToken(ctx context.Context, token string) (*models.
 func (s *AuthService) GetUserByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	user := &models.User{}
 	err := s.db.QueryRow(ctx,
-		`SELECT id, email, password_hash, name, created_at FROM users WHERE id = $1`,
+		`SELECT id, email, password_hash, name, organization_id, role, created_at FROM users WHERE id = $1`,
 		id,
-	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.CreatedAt)
+	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.OrganizationID, &user.Role, &user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrUserNotFound
@@ -141,9 +160,9 @@ func (s *AuthService) GetUserByID(ctx context.Context, id uuid.UUID) (*models.Us
 func (s *AuthService) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	user := &models.User{}
 	err := s.db.QueryRow(ctx,
-		`SELECT id, email, password_hash, name, created_at FROM users WHERE email = $1`,
+		`SELECT id, email, password_hash, name, organization_id, role, created_at FROM users WHERE email = $1`,
 		email,
-	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.CreatedAt)
+	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.OrganizationID, &user.Role, &user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrUserNotFound
@@ -159,4 +178,31 @@ func generateToken() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+// UpdatePassword updates the user's password
+func (s *AuthService) UpdatePassword(ctx context.Context, userID uuid.UUID, oldPassword, newPassword string) error {
+	var currentPasswordHash string
+	err := s.db.QueryRow(ctx, "SELECT password_hash FROM users WHERE id = $1", userID).Scan(&currentPasswordHash)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrUserNotFound
+		}
+		return err
+	}
+
+	// Verify old password
+	if err := bcrypt.CompareHashAndPassword([]byte(currentPasswordHash), []byte(oldPassword)); err != nil {
+		return ErrInvalidPassword
+	}
+
+	// Hash new password
+	newHashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	// Update password
+	_, err = s.db.Exec(ctx, "UPDATE users SET password_hash = $1 WHERE id = $2", string(newHashedPassword), userID)
+	return err
 }

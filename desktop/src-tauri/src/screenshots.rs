@@ -176,10 +176,18 @@ pub async fn capture_screen() -> Result<String, String> {
     Ok(b64)
 }
 
-pub fn save_offline_screenshot(app_handle: AppHandle, user_id: String, image_b64: String) -> Result<(), String> {
+pub fn save_offline_screenshot(
+    app_handle: AppHandle,
+    user_id: String,
+    image_b64: String,
+    app_name: String,
+    window_title: String,
+    category: String,
+    summary: String,
+) -> Result<(), String> {
     let data = base64::engine::general_purpose::STANDARD.decode(image_b64)
         .map_err(|e| format!("Failed to decode base64: {}", e))?;
     
-    offline_queue::save_to_queue(&app_handle, user_id, &data)?;
+    offline_queue::save_to_queue(&app_handle, user_id, &data, app_name, window_title, category, summary)?;
     Ok(())
 }

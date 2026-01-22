@@ -171,3 +171,29 @@ func (h *AuthHandler) Me(c *gin.Context) {
 		"data":    userModel.ToResponse(),
 	})
 }
+
+// UpdatePassword changes the user's password
+func (h *AuthHandler) UpdatePassword(c *gin.Context) {
+	user := c.MustGet("user").(*models.User)
+
+	var input struct {
+		OldPassword string `json:"old_password" binding:"required"`
+		NewPassword string `json:"new_password" binding:"required,min=8"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.authService.UpdatePassword(c.Request.Context(), user.ID, input.OldPassword, input.NewPassword); err != nil {
+		if errors.Is(err, services.ErrInvalidPassword) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid old password"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}

@@ -1,10 +1,21 @@
 // backend/internal/models/activity.go
+// [TimeTrack Activity Model]
 package models
 
 import (
 	"time"
 
 	"github.com/google/uuid"
+)
+
+// AIStatus defines the AI analysis status for activities
+type AIStatus string
+
+const (
+	AIStatusSuccess    AIStatus = "success"
+	AIStatusQueued     AIStatus = "queued"
+	AIStatusFailed     AIStatus = "failed"
+	AIStatusProcessing AIStatus = "processing"
 )
 
 type Activity struct {
@@ -16,13 +27,15 @@ type Activity struct {
 	Category    string     `json:"category"`
 	Summary     string     `json:"summary"`
 	AIStatus    AIStatus   `json:"ai_status"`
-	RetryQueueID *uuid.UUID `json:"retry_queue_id,omitempty"`
 	CreatedAt   time.Time  `json:"created_at"`
 }
 
 type UploadActivityInput struct {
-	Image      string  `json:"image" binding:"required"` // base64 encoded
-	CapturedAt *string `json:"captured_at"`              // optional ISO string
+	AppName     string `json:"app_name" binding:"required"`
+	WindowTitle string `json:"window_title"`
+	Category    string `json:"category"`
+	Summary     string `json:"summary"`
+	CapturedAt  string `json:"captured_at"`
 }
 
 type ActivityListInput struct {
@@ -45,9 +58,16 @@ type CategoryStat struct {
 	Count      int     `json:"count"`
 }
 
-type DailySummary struct {
+type DailyCategoryStat struct {
 	Day           time.Time `json:"day"`
 	Category      string    `json:"category"`
 	ActivityCount int       `json:"activity_count"`
 	TotalMinutes  int       `json:"total_minutes"`
+}
+
+type ScreenshotAnalysis struct {
+	AppName     string `json:"app_name"`
+	WindowTitle string `json:"window_title"`
+	Category    string `json:"category"`
+	Summary     string `json:"summary"`
 }

@@ -37,32 +37,38 @@ func main() {
 
 	// Initialize services
 	db := database.GetPool()
+
+	// Create core services first
 	authService := services.NewAuthService(db)
+	organizationService := services.NewOrganizationService(db, cfg)
+
+	// Set dependencies
+	authService.SetOrganizationService(organizationService)
+
 	aiService := services.NewAIService(cfg)
-	retryQueue := services.NewRetryQueueService(db, aiService, cfg.ZAIMaxQueueRetries)
+	// RetryQueue and WorkerPool removed as per plan (Phase 4)
+	// retryQueue := services.NewRetryQueueService(db, aiService, cfg.ZAIMaxQueueRetries)
 	activityService := services.NewActivityService(db, aiService)
 	shareService := services.NewShareService(db, authService)
 	linkService := services.NewShareLinkService(db)
+	notificationService := services.NewNotificationService(db)
+	dailySummaryService := services.NewDailySummaryService(db, aiService, organizationService, cfg)
 
 	// Wire up circular dependencies
-	activityService.SetRetryQueue(retryQueue)
-	retryQueue.SetActivityService(activityService)
-
-	// Initialize worker pool
-	var workerPool *services.WorkerPool
-	if cfg.RetryQueueWorkers > 0 {
-		workerPool = services.NewWorkerPool(retryQueue, cfg.RetryQueueWorkers, cfg.RetryQueueInterval)
-	}
+	// activityService.SetRetryQueue(retryQueue)
+	// retryQueue.SetActivityService(activityService)
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService)
+	organizationHandler := handlers.NewOrganizationHandler(organizationService)
 	activityHandler := handlers.NewActivityHandler(activityService)
 	shareHandler := handlers.NewShareHandler(shareService, activityService)
 	linkHandler := handlers.NewShareLinkHandler(linkService, activityService)
-	var healthHandler *handlers.HealthHandler
-	if workerPool != nil {
-		healthHandler = handlers.NewHealthHandler(workerPool)
-	}
+	notificationHandler := handlers.NewNotificationHandler(notificationService)
+	// var healthHandler *handlers.HealthHandler
+	// if workerPool != nil {
+	// 	healthHandler = handlers.NewHealthHandler(workerPool)
+	// }
 
 	// Setup Gin
 	if os.Getenv("GIN_MODE") == "" {
@@ -114,9 +120,9 @@ func main() {
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
-	if healthHandler != nil {
-		r.GET("/health/detailed", healthHandler.DetailedHealth)
-	}
+	// if healthHandler != nil {
+	// 	r.GET("/health/detailed", healthHandler.DetailedHealth)
+	// }
 
 	// API v1 routes
 	v1 := r.Group("/api/v1")
@@ -138,9 +144,30 @@ func main() {
 			// Auth
 			protected.POST("/auth/logout", authHandler.Logout)
 			protected.GET("/auth/me", authHandler.Me)
+			protected.PATCH("/auth/password", authHandler.UpdatePassword)
+
+			// Organization
+			protected.GET("/org", organizationHandler.GetOrganization)
+			protected.PATCH("/org/settings", organizationHandler.UpdateSettings)
+			protected.PUT("/org/settings/api-key", organizationHandler.SetAPIKey)
+			protected.DELETE("/org/settings/api-key", organizationHandler.RemoveAPIKey)
+			protected.GET("/org/api-key", organizationHandler.GetDecryptedAPIKey) // For desktop app
+
+			protected.POST("/org/members", organizationHandler.AddMember)
+			protected.GET("/org/members", organizationHandler.ListMembers)
+			protected.PATCH("/org/members/:id", organizationHandler.UpdateMember)
+			protected.DELETE("/org/members/:id", organizationHandler.RemoveMember)
+
+			// Organization Reporting (Owner/Admin only)
+			protected.GET("/org/stats", organizationHandler.GetOrganizationStats)
+			protected.GET("/org/members/summary", organizationHandler.GetMembersSummary)
+			protected.GET("/org/members/:id/activities", organizationHandler.GetMemberActivities)
+			protected.GET("/org/members/:id/stats", organizationHandler.GetMemberStats)
+			protected.GET("/org/activity-heatmap", organizationHandler.GetActivityHeatmap)
 
 			// Activity
 			protected.POST("/activity/upload", activityHandler.Upload)
+			protected.PATCH("/activity/:id", activityHandler.Update)
 			protected.GET("/activity", activityHandler.List)
 			protected.GET("/activity/stats", activityHandler.Stats)
 
@@ -158,6 +185,11 @@ func main() {
 			// Supervisor
 			protected.GET("/supervise/:user_id/activity", shareHandler.GetUserActivity)
 			protected.GET("/supervise/:user_id/stats", shareHandler.GetUserStats)
+
+			// Notifications (org-scoped as per design)
+			protected.POST("/org/notifications", notificationHandler.CreateNotification)
+			protected.GET("/org/notifications", notificationHandler.ListNotifications)
+			protected.PATCH("/org/notifications/:id", notificationHandler.MarkAsRead)
 		}
 	}
 
@@ -165,17 +197,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Start worker pool if configured
-	var cleanupDone, recoveryDone chan struct{}
-	if workerPool != nil {
-		workerPool.Start(ctx)
-
-		// Start cleanup job (runs every hour)
-		cleanupDone = services.StartCleanupJob(ctx, retryQueue, 1*time.Hour)
-
-		// Start recovery job (runs every 5 minutes, recovers tasks stuck for >10 minutes)
-		recoveryDone = services.StartRecoveryJob(ctx, retryQueue, 5*time.Minute, 10*time.Minute)
-	}
+	// Start daily summary scheduler
+	go dailySummaryService.StartDailySummaryScheduler(ctx)
 
 	// Start server in goroutine
 	serverErr := make(chan error, 1)
@@ -199,27 +222,9 @@ func main() {
 
 	// Graceful shutdown
 	log.Println("Shutting down gracefully...")
-	cancel() // Cancel context to stop workers
-
-	// Shutdown worker pool with timeout
-	if workerPool != nil {
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer shutdownCancel()
-
-		if err := workerPool.Shutdown(shutdownCtx); err != nil {
-			log.Printf("Worker pool shutdown error: %v", err)
-		}
-
-		// Wait for cleanup and recovery jobs to finish
-		if cleanupDone != nil {
-			log.Println("Waiting for cleanup job to finish...")
-			<-cleanupDone
-		}
-		if recoveryDone != nil {
-			log.Println("Waiting for recovery job to finish...")
-			<-recoveryDone
-		}
-	}
+	cancel() // Cancel context to stop daily summary scheduler
+	// Give scheduler time to stop gracefully
+	time.Sleep(1 * time.Second)
 
 	log.Println("Shutdown complete")
 }

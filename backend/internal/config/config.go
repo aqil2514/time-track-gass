@@ -1,39 +1,32 @@
 // backend/internal/config/config.go
+// [TimeTrack Backend Configuration]
+// Screenshot analysis is now client-side, so vision model configs removed from backend.
 package config
 
 import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type Config struct {
 	Port        string
 	DatabaseURL string
 	JWTSecret   string
-	ZAIAPIKey   string
-	ZAIBaseURL  string
 
-	// Vision models (screenshot analysis)
-	ZAIVisionModelPrimary  string
-	ZAIVisionModelFallback string
+	// AI Base URL (for server-side summary generation)
+	ZAIBaseURL string
 
-	// Text models (summaries)
+	// Text models (for summaries - server-side)
 	ZAITextModelFast  string
 	ZAITextModelSmart string
-
-	// Retry settings
-	ZAIMaxInlineRetries int
-	ZAIMaxQueueRetries  int
-
-	// Queue workers
-	RetryQueueWorkers  int
-	RetryQueueInterval time.Duration
 
 	// Feature flags
 	EnableSessions     bool
 	EnableDailySummary bool
+
+	// Security
+	EncryptionKey string
 }
 
 func Load() *Config {
@@ -41,28 +34,18 @@ func Load() *Config {
 		Port:        getEnv("PORT", "8080"),
 		DatabaseURL: getEnv("DATABASE_URL", "postgres://timetrack:timetrack123@localhost:5432/timetrack?sslmode=disable"),
 		JWTSecret:   getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
-		ZAIAPIKey:   getEnv("ZAI_API_KEY", ""),
-		ZAIBaseURL:  getEnv("ZAI_BASE_URL", "https://open.bigmodel.cn/api/coding/paas/v4/"),
+		ZAIBaseURL:  getEnv("ZAI_BASE_URL", "https://open.bigmodel.cn/api/paas/v4"),
 
-		// Vision models
-		ZAIVisionModelPrimary:  getEnv("ZAI_VISION_MODEL_PRIMARY", "glm-4.6v"),
-		ZAIVisionModelFallback: getEnv("ZAI_VISION_MODEL_FALLBACK", "glm-4.6v"),
-
-		// Text models
-		ZAITextModelFast:  getEnv("ZAI_TEXT_MODEL_FAST", "glm-4.7-flashx"),
-		ZAITextModelSmart: getEnv("ZAI_TEXT_MODEL_SMART", "glm-4.7"),
-
-		// Retry settings
-		ZAIMaxInlineRetries: getEnvInt("ZAI_MAX_INLINE_RETRIES", 2),
-		ZAIMaxQueueRetries:  getEnvInt("ZAI_MAX_QUEUE_RETRIES", 5),
-
-		// Queue workers
-		RetryQueueWorkers:  getEnvInt("RETRY_QUEUE_WORKERS", 3),
-		RetryQueueInterval: getEnvDuration("RETRY_QUEUE_INTERVAL", 10*time.Second),
+		// Text models for summary generation (server-side)
+		ZAITextModelFast:  getEnv("ZAI_TEXT_MODEL_FAST", "glm-4-flashx"),
+		ZAITextModelSmart: getEnv("ZAI_TEXT_MODEL_SMART", "glm-4"),
 
 		// Feature flags
 		EnableSessions:     getEnvBool("ENABLE_SESSIONS", true),
 		EnableDailySummary: getEnvBool("ENABLE_DAILY_SUMMARY", true),
+
+		// Security
+		EncryptionKey: getEnv("ENCRYPTION_KEY", "your-32-byte-hex-key-here-123456"),
 	}
 }
 
@@ -86,15 +69,6 @@ func getEnvBool(key string, defaultValue bool) bool {
 	if value := os.Getenv(key); value != "" {
 		if boolVal, err := strconv.ParseBool(value); err == nil {
 			return boolVal
-		}
-	}
-	return defaultValue
-}
-
-func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
-	if value := os.Getenv(key); value != "" {
-		if duration, err := time.ParseDuration(value); err == nil {
-			return duration
 		}
 	}
 	return defaultValue

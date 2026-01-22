@@ -46,8 +46,16 @@ fn clear_auth_token() -> Result<(), String> {
 }
 
 #[tauri::command(rename_all = "snake_case")]
-fn save_offline_screenshot(app_handle: tauri::AppHandle, user_id: String, image_b64: String) -> Result<(), String> {
-    screenshots::save_offline_screenshot(app_handle, user_id, image_b64)
+fn save_offline_screenshot(
+    app_handle: tauri::AppHandle,
+    user_id: String,
+    image_b64: String,
+    app_name: String,
+    window_title: String,
+    category: String,
+    summary: String
+) -> Result<(), String> {
+    screenshots::save_offline_screenshot(app_handle, user_id, image_b64, app_name, window_title, category, summary)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

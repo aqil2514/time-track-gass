@@ -6,12 +6,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/timetrack/backend/internal/models"
 	"github.com/timetrack/backend/internal/services"
-)
-
-const (
-	maxImageSize = 10 * 1024 * 1024 // 10MB max image size
 )
 
 type ActivityHandler struct {
@@ -34,18 +31,6 @@ func (h *ActivityHandler) Upload(c *gin.Context) {
 			"error": gin.H{
 				"code":    "VALIDATION_ERROR",
 				"message": err.Error(),
-			},
-		})
-		return
-	}
-
-	// Validate image size
-	if len(input.Image) > maxImageSize {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error": gin.H{
-				"code":    "IMAGE_TOO_LARGE",
-				"message": "Image size exceeds maximum allowed size of 10MB",
 			},
 		})
 		return
@@ -211,4 +196,28 @@ func (h *ActivityHandler) Stats(c *gin.Context) {
 		"success": true,
 		"data":    stats,
 	})
+}
+
+func (h *ActivityHandler) Update(c *gin.Context) {
+	user := c.MustGet("user").(*models.User)
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid activity ID"})
+		return
+	}
+
+	var input models.ScreenshotAnalysis
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = h.activityService.UpdateAIAnalysis(c.Request.Context(), id, user.ID, &input)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update activity"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }

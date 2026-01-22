@@ -8,11 +8,13 @@ import (
 )
 
 type User struct {
-	ID           uuid.UUID `json:"id"`
-	Email        string    `json:"email"`
-	PasswordHash string    `json:"-"`
-	Name         string    `json:"name,omitempty"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID             uuid.UUID  `json:"id"`
+	Email          string     `json:"email"`
+	PasswordHash   string     `json:"-"`
+	Name           string     `json:"name,omitempty"`
+	OrganizationID *uuid.UUID `json:"organization_id"`
+	Role           string     `json:"role"`
+	CreatedAt      time.Time  `json:"created_at"`
 }
 
 type CreateUserInput struct {
@@ -30,6 +32,7 @@ type UserResponse struct {
 	ID        uuid.UUID `json:"id"`
 	Email     string    `json:"email"`
 	Name      string    `json:"name,omitempty"`
+	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -38,6 +41,7 @@ func (u *User) ToResponse() *UserResponse {
 		ID:        u.ID,
 		Email:     u.Email,
 		Name:      u.Name,
+		Role:      u.Role,
 		CreatedAt: u.CreatedAt,
 	}
 }

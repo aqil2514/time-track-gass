@@ -14,6 +14,10 @@ pub struct PendingScreenshot {
     pub id: String,
     pub user_id: String,
     pub captured_at: String,
+    pub app_name: String,
+    pub window_title: String,
+    pub category: String,
+    pub summary: String,
     pub retry_count: u32,
     pub last_attempt: Option<String>,
     pub last_error: Option<String>,
@@ -38,6 +42,10 @@ pub fn save_to_queue(
     app_handle: &tauri::AppHandle,
     user_id: String,
     image_data: &[u8],
+    app_name: String,
+    window_title: String,
+    category: String,
+    summary: String,
 ) -> Result<String, String> {
     let pending_dir = get_pending_dir(app_handle)?;
     
@@ -56,6 +64,10 @@ pub fn save_to_queue(
         id: id.clone(),
         user_id,
         captured_at: chrono::Local::now().to_rfc3339(),
+        app_name,
+        window_title,
+        category,
+        summary,
         retry_count: 0,
         last_attempt: None,
         last_error: None,

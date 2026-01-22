@@ -12,9 +12,8 @@ import (
 )
 
 type ActivityService struct {
-	db         *pgxpool.Pool
-	aiService  *AIService
-	retryQueue *RetryQueueService
+	db        *pgxpool.Pool
+	aiService *AIService
 }
 
 func NewActivityService(db *pgxpool.Pool, aiService *AIService) *ActivityService {
@@ -24,18 +23,13 @@ func NewActivityService(db *pgxpool.Pool, aiService *AIService) *ActivityService
 	}
 }
 
-// SetRetryQueue sets the retry queue service (called during initialization)
-func (s *ActivityService) SetRetryQueue(rq *RetryQueueService) {
-	s.retryQueue = rq
-}
-
-// Upload handles activity upload with inline retry and fallback to queue
+// Upload handles activity upload (metadata only)
 func (s *ActivityService) Upload(ctx context.Context, userID uuid.UUID, input *models.UploadActivityInput) (*models.Activity, error) {
 	// Always use UTC for timestamps
 	capturedAt := time.Now().UTC()
 
 	// Parse captured_at if provided
-	if input.CapturedAt != nil && *input.CapturedAt != "" {
+	if input.CapturedAt != "" {
 		formats := []string{
 			time.RFC3339,
 			time.RFC3339Nano,
@@ -46,7 +40,7 @@ func (s *ActivityService) Upload(ctx context.Context, userID uuid.UUID, input *m
 		}
 		for _, format := range formats {
 			var err error
-			capturedAt, err = time.Parse(format, *input.CapturedAt)
+			capturedAt, err = time.Parse(format, input.CapturedAt)
 			if err == nil {
 				capturedAt = capturedAt.UTC()
 				break
@@ -54,83 +48,28 @@ func (s *ActivityService) Upload(ctx context.Context, userID uuid.UUID, input *m
 		}
 	}
 
-	// Try inline AI analysis first (with model cascade)
-	analysis, aiErr := s.aiService.AnalyzeScreenshotWithRetry(ctx, input.Image)
-
-	aiStatus := models.AIStatusSuccess
-
-	if aiErr != nil {
-		// AI analysis failed - need to queue for retry
-		fmt.Printf("[UPLOAD] AI analysis failed for user %s: %v\n", userID, aiErr)
-
-		// Use fallback data for initial insert
-		analysis = &ScreenshotAnalysis{
-			AppName:     "Unknown",
-			WindowTitle: "Unknown",
-			Category:    "other",
-			Summary:     "Processing...",
-		}
-	}
-
-	// Insert activity first (with or without AI data)
 	activity := &models.Activity{
-		UserID:     userID,
-		CapturedAt: capturedAt,
-		AppName:    analysis.AppName,
-		WindowTitle: analysis.WindowTitle,
-		Category:   analysis.Category,
-		Summary:    analysis.Summary,
-		AIStatus:   aiStatus,
+		UserID:      userID,
+		CapturedAt:  capturedAt,
+		AppName:     input.AppName,
+		WindowTitle: input.WindowTitle,
+		Category:    input.Category,
+		Summary:     input.Summary,
+		AIStatus:    models.AIStatusSuccess, // Client-side analysis assumes success or retry there
 	}
-
-	// If AI failed, mark as processing and enqueue after insert
-	if aiErr != nil {
-		activity.AIStatus = models.AIStatusProcessing
-	}
-
-	var retryQueueIDParam interface{} = nil
 
 	err := s.db.QueryRow(ctx,
-		`INSERT INTO activities (user_id, captured_at, app_name, window_title, category, summary, ai_status, retry_queue_id)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		 RETURNING id, user_id, captured_at, app_name, window_title, category, summary, ai_status, retry_queue_id, created_at`,
+		`INSERT INTO activities (user_id, captured_at, app_name, window_title, category, summary, ai_status)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		 RETURNING id, user_id, captured_at, app_name, window_title, category, summary, ai_status, created_at`,
 		activity.UserID, activity.CapturedAt, activity.AppName, activity.WindowTitle,
-		activity.Category, activity.Summary, activity.AIStatus, retryQueueIDParam,
+		activity.Category, activity.Summary, activity.AIStatus,
 	).Scan(&activity.ID, &activity.UserID, &activity.CapturedAt, &activity.AppName,
 		&activity.WindowTitle, &activity.Category, &activity.Summary, &activity.AIStatus,
-		&activity.RetryQueueID, &activity.CreatedAt)
+		&activity.CreatedAt)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert activity: %w", err)
-	}
-
-	// If AI failed, now enqueue retry task with actual activity ID
-	if aiErr != nil && s.retryQueue != nil {
-		taskID, queueErr := s.retryQueue.EnqueueScreenshotAnalysisForActivity(ctx, activity.ID, input.Image)
-		if queueErr != nil {
-			// Failed to enqueue - mark activity as failed
-			fmt.Printf("[UPLOAD] Failed to enqueue retry task for activity %s: %v\n", activity.ID, queueErr)
-			markErr := s.MarkAIFailed(ctx, activity.ID)
-			if markErr != nil {
-				fmt.Printf("[UPLOAD] Failed to mark activity as failed: %v\n", markErr)
-			}
-			// Return the original queue error to caller
-			return nil, fmt.Errorf("AI analysis failed and retry queue unavailable: %w", queueErr)
-		}
-
-		// Successfully enqueued - update activity with queued status
-		updateErr := s.db.QueryRow(ctx,
-			`UPDATE activities SET ai_status = 'queued', retry_queue_id = $1
-			 WHERE id = $2
-			 RETURNING ai_status, retry_queue_id`,
-			taskID, activity.ID,
-		).Scan(&activity.AIStatus, &activity.RetryQueueID)
-
-		if updateErr != nil {
-			fmt.Printf("[UPLOAD] Failed to update activity status: %v\n", updateErr)
-		} else {
-			fmt.Printf("[UPLOAD] Activity %s queued for retry (task: %s)\n", activity.ID, taskID)
-		}
 	}
 
 	return activity, nil
@@ -147,7 +86,7 @@ func (s *ActivityService) List(ctx context.Context, userID uuid.UUID, from, to t
 	}
 
 	// Build query
-	query := `SELECT id, user_id, captured_at, app_name, window_title, category, summary, ai_status, retry_queue_id, created_at
+	query := `SELECT id, user_id, captured_at, app_name, window_title, category, summary, ai_status, created_at
 			  FROM activities
 			  WHERE user_id = $1 AND captured_at >= $2 AND captured_at < $3`
 	args := []interface{}{userID, from, to}
@@ -189,14 +128,12 @@ func (s *ActivityService) List(ctx context.Context, userID uuid.UUID, from, to t
 	var activities []*models.Activity
 	for rows.Next() {
 		a := &models.Activity{}
-		var retryQueueID *uuid.UUID
 		err := rows.Scan(&a.ID, &a.UserID, &a.CapturedAt, &a.AppName, &a.WindowTitle,
-			&a.Category, &a.Summary, &a.AIStatus, &retryQueueID, &a.CreatedAt)
+			&a.Category, &a.Summary, &a.AIStatus, &a.CreatedAt)
 		if err != nil {
 			rows.Close()
 			return nil, 0, fmt.Errorf("failed to scan activity: %w", err)
 		}
-		a.RetryQueueID = retryQueueID
 		activities = append(activities, a)
 	}
 
@@ -268,15 +205,18 @@ func (s *ActivityService) GetStats(ctx context.Context, userID uuid.UUID, from, 
 }
 
 // UpdateAIAnalysis updates an activity with successful AI analysis
-func (s *ActivityService) UpdateAIAnalysis(ctx context.Context, activityID uuid.UUID, analysis *ScreenshotAnalysis) error {
-	_, err := s.db.Exec(ctx,
+func (s *ActivityService) UpdateAIAnalysis(ctx context.Context, activityID, userID uuid.UUID, analysis *models.ScreenshotAnalysis) error {
+	result, err := s.db.Exec(ctx,
 		`UPDATE activities
-		 SET app_name = $2, window_title = $3, category = $4, summary = $5, ai_status = 'success', retry_queue_id = NULL
-		 WHERE id = $1`,
-		activityID, analysis.AppName, analysis.WindowTitle, analysis.Category, analysis.Summary,
+		 SET app_name = $2, window_title = $3, category = $4, summary = $5, ai_status = 'success'
+		 WHERE id = $1 AND user_id = $6`,
+		activityID, analysis.AppName, analysis.WindowTitle, analysis.Category, analysis.Summary, userID,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to update activity: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("activity not found or access denied")
 	}
 	return nil
 }
@@ -285,7 +225,7 @@ func (s *ActivityService) UpdateAIAnalysis(ctx context.Context, activityID uuid.
 func (s *ActivityService) MarkAIFailed(ctx context.Context, activityID uuid.UUID) error {
 	_, err := s.db.Exec(ctx,
 		`UPDATE activities
-		 SET ai_status = 'failed', summary = 'AI analysis failed', retry_queue_id = NULL
+		 SET ai_status = 'failed', summary = 'AI analysis failed'
 		 WHERE id = $1`,
 		activityID,
 	)

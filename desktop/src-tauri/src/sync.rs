@@ -119,15 +119,19 @@ async fn process_pending_queue(app_handle: &AppHandle) -> Result<(), String> {
 
 async fn upload_screenshot(_app_handle: &AppHandle, item: &PendingScreenshot) -> Result<(), String> {
     let token = get_auth_token().ok_or("No auth token available")?;
-    let image_data = offline_queue::get_image_data(_app_handle, &item.id)?;
-    let b64 = base64::engine::general_purpose::STANDARD.encode(&image_data);
+    // We do NOT send image data anymore, only metadata
+    // let image_data = offline_queue::get_image_data(_app_handle, &item.id)?;
+    // let b64 = base64::engine::general_purpose::STANDARD.encode(&image_data);
 
     let client = reqwest::Client::new();
     let response = client.post("http://localhost:8080/api/v1/activity/upload")
         .header("Authorization", format!("Bearer {}", token))
         .json(&serde_json::json!({
-            "image": b64,
-            "captured_at": item.captured_at
+            "captured_at": item.captured_at,
+            "app_name": item.app_name,
+            "window_title": item.window_title,
+            "category": item.category,
+            "summary": item.summary
         }))
         .send()
         .await
