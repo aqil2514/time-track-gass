@@ -46,7 +46,7 @@ func Load() *Config {
 
 		// Vision models
 		ZAIVisionModelPrimary:  getEnv("ZAI_VISION_MODEL_PRIMARY", "glm-4.6v"),
-		ZAIVisionModelFallback: getEnv("ZAI_VISION_MODEL_FALLBACK", "glm-4-flash"),
+		ZAIVisionModelFallback: getEnv("ZAI_VISION_MODEL_FALLBACK", "glm-4.6v"),
 
 		// Text models
 		ZAITextModelFast:  getEnv("ZAI_TEXT_MODEL_FAST", "glm-4.7-flashx"),
