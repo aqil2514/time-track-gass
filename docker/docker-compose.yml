@@ -14,10 +14,31 @@ services:
     volumes:
       - timetrack-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U timetrack"]
+      test: [ "CMD-SHELL", "pg_isready -U timetrack" ]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # Test database (untuk running tests)
+  db-test:
+    image: timescale/timescaledb:latest-pg16
+    container_name: timetrack-db-test
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: timetrack_test
+    volumes:
+      - timetrack-db-test-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - test
 
   backend:
     build:
@@ -32,7 +53,7 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-timetrack}:${POSTGRES_PASSWORD:-timetrack123}@db:5432/${POSTGRES_DB:-timetrack}?sslmode=disable
       JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
       ZAI_API_KEY: ${ZAI_API_KEY:-}
-      ZAI_BASE_URL: ${ZAI_BASE_URL:-https://open.bigmodel.cn/api/coding/paas/v4/}
+      ZAI_BASE_URL: ${ZAI_BASE_URL:-https://api.z.ai/api/coding/paas/v4}
       ZAI_VISION_MODEL_PRIMARY: ${ZAI_VISION_MODEL_PRIMARY:-glm-4.6v}
       ZAI_VISION_MODEL_FALLBACK: ${ZAI_VISION_MODEL_FALLBACK:-glm-4-flash}
       ZAI_TEXT_MODEL_FAST: ${ZAI_TEXT_MODEL_FAST:-glm-4.7-flashx}
@@ -49,7 +70,7 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -57,3 +78,4 @@ services:
 
 volumes:
   timetrack-db-data:
+  timetrack-db-test-data:
