@@ -8,17 +8,11 @@ export interface AnalysisResult {
     summary: string;
 }
 
-const BASE_URL = "https://open.bigmodel.cn/api/paas/v4"; // Standard GLM V4 endpoint
-const PRIMARY_MODEL = "glm-4v"; // Or glm-4v-flash if available/cheaper. Config used glm-4.6v
-const FALLBACK_MODEL = "glm-4v-flash";
+const BASE_URL = "https://open.bigmodel.cn/api/coding/paas/v4";
+const MODEL = "glm-4.6v";
 
 export async function analyzeScreenshot(base64Image: string, apiKey: string): Promise<AnalysisResult> {
-    try {
-        return await callModel(base64Image, apiKey, PRIMARY_MODEL);
-    } catch (e) {
-        logger.warn(`Primary model ${PRIMARY_MODEL} failed, trying fallback ${FALLBACK_MODEL}`, e);
-        return await callModel(base64Image, apiKey, FALLBACK_MODEL);
-    }
+    return await callModel(base64Image, apiKey, MODEL);
 }
 
 async function callModel(base64Image: string, apiKey: string, model: string): Promise<AnalysisResult> {
@@ -87,11 +81,21 @@ JSON output (no markdown):
     }
 
     const data = await response.json();
-    if (!data.choices?.[0]?.message?.content) {
+    // Check for malformed response (no choices property)
+    if (!data.choices || !Array.isArray(data.choices)) {
         throw new Error('Invalid AI response format');
     }
 
-    const content = data.choices[0].message.content;
+    // Check for missing/empty content - return fallback
+    const content = data.choices[0]?.message?.content;
+    if (!content || content.trim() === '') {
+        return {
+            app_name: "Unknown",
+            window_title: "Unknown",
+            category: "other",
+            summary: "AI response had no content"
+        };
+    }
 
     // Parse JSON
     try {

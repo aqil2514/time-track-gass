@@ -6,6 +6,7 @@ export interface AiRetryItem {
     imageBase64: string;
     retryCount: number;
     lastError?: string;
+    lastRetryAt?: string; // ISO timestamp of last retry attempt
 }
 
 const DB_NAME = 'TimeTrackAI';
@@ -32,7 +33,8 @@ export async function saveAiRetry(activityId: string, base64: string, capturedAt
         id: activityId,
         capturedAt,
         imageBase64: base64,
-        retryCount: 0
+        retryCount: 0,
+        lastRetryAt: new Date().toISOString() // Track when item was first queued
     };
     return new Promise((resolve, reject) => {
         const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -76,6 +78,7 @@ export async function updateAiRetry(id: string, count: number, error: string): P
             if (data) {
                 data.retryCount = count;
                 data.lastError = error;
+                data.lastRetryAt = new Date().toISOString(); // Track when retry was attempted
                 store.put(data);
             }
             resolve();
@@ -94,4 +97,39 @@ export async function isInRetryQueue(activityId: string): Promise<boolean> {
         req.onsuccess = () => resolve(!!req.result);
         req.onerror = () => reject(req.error);
     });
+}
+
+/**
+ * Calculate exponential backoff delay in milliseconds
+ * Formula: base_delay * (2 ^ retry_count)
+ * With base_delay = 5000ms (5 seconds)
+ * - Retry 0: 5 seconds (first retry after 5s)
+ * - Retry 1: 10 seconds
+ * - Retry 2: 20 seconds
+ * - Retry 3: 40 seconds (but we stop at 3 retries)
+ */
+function calculateBackoffDelay(retryCount: number): number {
+    const BASE_DELAY_MS = 5000; // 5 seconds
+    return BASE_DELAY_MS * Math.pow(2, retryCount);
+}
+
+/**
+ * Check if an item is ready to be retried based on exponential backoff
+ */
+function isReadyForRetry(item: AiRetryItem): boolean {
+    if (!item.lastRetryAt) return true; // First retry attempt
+
+    const lastRetry = new Date(item.lastRetryAt).getTime();
+    const now = Date.now();
+    const backoffDelay = calculateBackoffDelay(item.retryCount);
+
+    return (now - lastRetry) >= backoffDelay;
+}
+
+/**
+ * Get only items that are ready for retry based on exponential backoff
+ */
+export async function getRetryableItems(): Promise<AiRetryItem[]> {
+    const allItems = await getAiRetries();
+    return allItems.filter(isReadyForRetry);
 }

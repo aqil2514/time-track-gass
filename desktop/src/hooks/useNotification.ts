@@ -31,7 +31,7 @@ export function useNotification() {
         }
 
         try {
-            await api.post('/notifications', {
+            await api.post('/org/notifications', {
                 type: payload.type,
                 title: payload.title,
                 message: payload.message,

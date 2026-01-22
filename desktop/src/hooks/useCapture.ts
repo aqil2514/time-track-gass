@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext'
 import { useApiKey } from './useApiKey'
 import { useNotification } from './useNotification'
 import { analyzeScreenshot, AnalysisResult } from '../lib/ai'
-import { saveAiRetry, getAiRetries, deleteAiRetry, updateAiRetry, isInRetryQueue } from '../lib/aiRetryQueue'
+import { saveAiRetry, getAiRetries, getRetryableItems, deleteAiRetry, updateAiRetry, isInRetryQueue } from '../lib/aiRetryQueue'
 
 async function safeInvoke<T>(command: string, args?: any): Promise<T> {
     if (!isTauriSync()) {
@@ -84,12 +84,17 @@ export function useCapture() {
             });
 
             if (response.data.success && response.data.data) {
-                const staleActivities = response.data.data.filter(
-                    (a: Screenshot) =>
-                        a.app_name === 'AI Processing' &&
-                        a.summary === 'AI analysis pending...' &&
-                        !await isInRetryQueue(a.id)
-                );
+                // Filter out activities that are already in retry queue
+                const activitiesNotInQueue: Screenshot[] = [];
+                for (const activity of response.data.data) {
+                    if (activity.app_name === 'AI Processing' && activity.summary === 'AI analysis pending') {
+                        const inQueue = await isInRetryQueue(activity.id);
+                        if (!inQueue) {
+                            activitiesNotInQueue.push(activity);
+                        }
+                    }
+                }
+                const staleActivities = activitiesNotInQueue;
 
                 if (staleActivities.length > 0) {
                     logger.warn(`Found ${staleActivities.length} stale 'AI Processing' activities`);
@@ -183,7 +188,7 @@ export function useCapture() {
             app_name: "AI Processing",
             window_title: "Pending Analysis",
             category: "processing",
-            summary: "AI analysis pending..."
+            summary: "AI analysis pending"
         };
 
         try {
@@ -229,15 +234,16 @@ export function useCapture() {
         const processRetries = async () => {
             if (isProcessingRef.current || !apiKey) return;
 
-            const retries = await getAiRetries();
+            // Use getRetryableItems to respect exponential backoff
+            const retries = await getRetryableItems();
             if (retries.length === 0) return;
 
             isProcessingRef.current = true;
-            logger.info(`Processing ${retries.length} AI retries...`);
+            logger.info(`Processing ${retries.length} AI retries (with exponential backoff)...`);
 
             for (const item of retries) {
                 try {
-                    if (item.retryCount > 5) {
+                    if (item.retryCount > 3) {
                         logger.warn(`Max retries reached for ${item.id}`);
 
                         // Mark activity as AI failed in backend
@@ -279,7 +285,7 @@ export function useCapture() {
             isProcessingRef.current = false;
         };
 
-        const timer = setInterval(processRetries, 60000); // Check every minute
+        const timer = setInterval(processRetries, 10000); // Check every 10 seconds (exponential backoff prevents rapid retries)
         if (apiKey) {
             processRetries();
             // Also check for stale "AI Processing" activities every 5 minutes
