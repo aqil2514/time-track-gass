@@ -1,5 +1,0 @@
-DROP TABLE IF EXISTS notifications;
-DROP TABLE IF EXISTS daily_summaries;
-ALTER TABLE users DROP COLUMN IF EXISTS role;
-ALTER TABLE users DROP COLUMN IF EXISTS organization_id;
-DROP TABLE IF EXISTS organizations;

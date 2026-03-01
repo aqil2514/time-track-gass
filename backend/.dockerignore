@@ -1,7 +1,0 @@
-bin/
-*.log
-.env
-.git/
-.gitignore
-*.md
-backend_logs.txt
