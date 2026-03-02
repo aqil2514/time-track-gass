@@ -7,7 +7,7 @@ import { AIScreenReportDb } from "../types/ai-record.type";
 
 interface Props {
   mutate: KeyedMutator<AIScreenReportDb[]>;
-  data: AIScreenReportDb[]; // ← tambah prop data
+  data: AIScreenReportDb[];
 }
 
 export function TimeTrackerController({ mutate, data }: Props) {
@@ -19,8 +19,8 @@ export function TimeTrackerController({ mutate, data }: Props) {
     stopAutoCapture,
     captureHandler,
     isRunning,
-    exportToExcel,       // ← tambah ini
-    isLoadingExport,     // ← opsional, untuk loading state
+    exportToExcel,
+    isLoadingExport,
   } = useTimeTracker(mutate);
 
   return (

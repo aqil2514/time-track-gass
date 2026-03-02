@@ -16,10 +16,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { MutateButton } from "@/components/atoms/mutate-button";
+import { useNavigate } from "react-router";
+import { useEffect } from "react";
 
 export default function HomeTemplate() {
   const url = buildUrl("image-upload");
   const { data, isLoading, mutate } = useFetch<AIScreenReportDb[]>(url);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    navigate("/login")
+  }, [navigate])
 
   return (
     <MainContainer className="space-y-4">
