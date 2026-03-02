@@ -10,3 +10,5 @@ export interface ProfilesDb {
 }
 
 export type ProfilesDbInsert = Omit<ProfilesDb, | "created_at" | "id">
+
+export type ProfilesWithNoPassword = Omit<ProfilesDb, 'password'>

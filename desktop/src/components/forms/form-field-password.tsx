@@ -52,6 +52,7 @@ export function FormFieldPassword<T extends FieldValues>({
 
                 {showForgotPassword && <Button
                   variant={"link"}
+                  tabIndex={-1}
                   className="text-xs text-amber-400 hover:text-amber-300 transition-colors font-medium"
                   onClick={() => navigate("/register")}
                 >

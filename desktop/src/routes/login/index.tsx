@@ -5,7 +5,7 @@ import { AuthBackground } from "@/features/auth/auth-background";
 import { TimerIcon } from "@/components/atoms/tmer-icon";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { NavLink, useLocation } from "react-router";
+import { Navigate, NavLink, useLocation, useNavigate } from "react-router";
 import { useForm, useWatch } from "react-hook-form";
 import {
   loginSchema,
@@ -13,8 +13,13 @@ import {
 } from "@/features/auth/schema/login.schema";
 import { FormFieldText } from "@/components/forms/form-field-text";
 import { FormFieldPassword } from "@/components/forms/form-field-password";
+import { buildUrl } from "@/utils/build-url";
+import axios, { isAxiosError } from "axios";
+import { useAuth } from "@/hooks/use-auth";
+import { Loading } from "@/components/layout/loading";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const form = useForm<LoginSchemaType>({
     defaultValues: {
       identifier: "",
@@ -23,10 +28,55 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = (values: LoginSchemaType) => {
-    console.log(values);
-  };
+  const onSubmit = async (values: LoginSchemaType) => {
+    form.clearErrors();
 
+    try {
+      const url = buildUrl("auth/login");
+      const { data } = await axios.post(url, values);
+
+      localStorage.setItem("accessToken", data.token);
+      navigate("/");
+    } catch (error) {
+      if (isAxiosError(error)) {
+        const status = error.response?.status;
+        const message = error.response?.data?.message ?? "Something went wrong";
+
+        // 404 — user tidak ditemukan
+        if (status === 404) {
+          form.setError("identifier", { message: "Account not found" });
+          return;
+        }
+
+        // 401 — password salah
+        if (status === 401) {
+          form.setError("password", { message: "Invalid password" });
+          return;
+        }
+
+        // 400 — validasi
+        if (status === 400) {
+          const messages = Array.isArray(message) ? message : [message];
+          for (const msg of messages) {
+            if (msg.toLowerCase().includes("identifier")) {
+              form.setError("identifier", { message: msg });
+            } else if (msg.toLowerCase().includes("password")) {
+              form.setError("password", { message: msg });
+            }
+          }
+          return;
+        }
+
+        // 500+ atau network error
+        form.setError("identifier", {
+          message: !error.response
+            ? "Network error. Check your internet connection."
+            : "Server error. Please try again later.",
+        });
+      }
+    }
+  };
+  
   const username = useWatch({
     control: form.control,
     name: "identifier",
@@ -41,6 +91,13 @@ export default function LoginPage() {
 
   const location = useLocation();
   const successMessage = location.state?.successMessage;
+
+  
+    const { loading, user } = useAuth();
+  
+    if (loading) return <Loading />;
+  
+    if (user) return <Navigate to={"/"} />;
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">

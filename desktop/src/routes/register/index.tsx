@@ -4,7 +4,7 @@ import { Clock, Check, X } from "lucide-react";
 import { AuthBackground } from "@/features/auth/auth-background";
 import { TimerIcon } from "@/components/atoms/tmer-icon";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { NavLink, useNavigate } from "react-router";
+import { Navigate, NavLink, useNavigate } from "react-router";
 import { useForm, useWatch } from "react-hook-form";
 import {
   registerSchema,
@@ -14,6 +14,8 @@ import { FormFieldText } from "@/components/forms/form-field-text";
 import { FormFieldPassword } from "@/components/forms/form-field-password";
 import axios, { isAxiosError } from "axios";
 import { buildUrl } from "@/utils/build-url";
+import { useAuth } from "@/hooks/use-auth";
+import { Loading } from "@/components/layout/loading";
 
 // Struktur error response NestJS
 interface NestErrorResponse {
@@ -151,6 +153,12 @@ export default function RegisterPage() {
     match: password === confirmPassword && confirmPassword !== "",
   };
 
+  const { loading, user } = useAuth();
+
+  if (loading) return <Loading />;
+
+  if (user) return <Navigate to={"/"} />;
+
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
       <AuthBackground />
@@ -216,7 +224,10 @@ export default function RegisterPage() {
               {password.length > 0 && (
                 <div className="grid grid-cols-2 gap-1 pt-1 pb-2">
                   <PasswordRule met={rules.length} label="Min. 8 characters" />
-                  <PasswordRule met={rules.uppercase} label="Uppercase letter" />
+                  <PasswordRule
+                    met={rules.uppercase}
+                    label="Uppercase letter"
+                  />
                   <PasswordRule met={rules.number} label="Contains number" />
                 </div>
               )}

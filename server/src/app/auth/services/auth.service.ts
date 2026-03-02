@@ -1,7 +1,22 @@
-import { ConflictException, Inject, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthMapperService } from './auth-mapper.service';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { RegisterDto } from '../dto/register.dto';
+import { LoginDto } from '../dto/login.dto';
+import { SupabaseService } from 'src/services/supabase/supabase.service';
+import { TableName } from 'src/services/supabase/supabase.interface';
+import {
+  ProfilesDb,
+  ProfilesWithNoPassword,
+} from '../interfaces/profiles.interface';
+
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class AuthService {
@@ -10,23 +25,22 @@ export class AuthService {
 
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
+
+    private readonly supabaseService: SupabaseService,
   ) {}
 
-  private async isExistValue(column: string, value: string): Promise<boolean> {
-    const { data, error } = await this.supabase
-      .from('profiles')
-      .select('id') // select minimal, tidak perlu '*'
-      .eq(column, value)
-      .maybeSingle();
-
-    if (error) throw error;
-    return !!data;
+  private isEmailIdentifier(identifier: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
   }
 
   async createNewProfile(raw: RegisterDto) {
     const [isUsernameTaken, isEmailTaken] = await Promise.all([
-      this.isExistValue('username', raw.username),
-      this.isExistValue('email', raw.email),
+      this.supabaseService.isExistValue(
+        TableName.Profiles,
+        'username',
+        raw.username,
+      ),
+      this.supabaseService.isExistValue(TableName.Profiles, 'email', raw.email),
     ]);
 
     if (isUsernameTaken) throw new ConflictException('Username already exists');
@@ -34,11 +48,31 @@ export class AuthService {
 
     const payload = await this.mapper.mapRegisterFormToDb(raw);
 
-    const { error } = await this.supabase.from('profiles').insert(payload);
+    await this.supabaseService.createNewData(TableName.Profiles, payload);
+  }
 
-    if (error) {
-      console.error(error);
-      throw error;
-    }
+  async login(loginData: LoginDto): Promise<ProfilesWithNoPassword> {
+    const { identifier, password } = loginData;
+    const isEmail = this.isEmailIdentifier(identifier);
+
+    const isExistAccount = await this.supabaseService.isExistValue(
+      TableName.Profiles,
+      isEmail ? 'email' : 'username',
+      identifier,
+    );
+
+    if (!isExistAccount) throw new NotFoundException('user not found');
+    const user = await this.supabaseService.getDataByColumn<ProfilesDb>(
+      TableName.Profiles,
+      isEmail ? 'email' : 'username',
+      identifier,
+    );
+    const { password: hashedPassword, ...result } = user[0];
+
+    const isValidPassword = await bcrypt.compare(password, hashedPassword);
+
+   if (!isValidPassword) throw new UnauthorizedException('Invalid password');
+
+    return result;
   }
 }

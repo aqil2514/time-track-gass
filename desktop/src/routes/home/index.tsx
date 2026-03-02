@@ -16,22 +16,36 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { MutateButton } from "@/components/atoms/mutate-button";
-import { useNavigate } from "react-router";
-import { useEffect } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { Loading } from "@/components/layout/loading";
+import { Navigate, useNavigate } from "react-router";
+import { Button } from "@/components/ui/button";
 
 export default function HomeTemplate() {
   const url = buildUrl("image-upload");
   const { data, isLoading, mutate } = useFetch<AIScreenReportDb[]>(url);
-
   const navigate = useNavigate();
 
-  useEffect(() => {
-    navigate("/login")
-  }, [navigate])
+  const { loading, user } = useAuth();
+
+  if (loading) return <Loading />;
+
+  if (!user) return <Navigate to={"/login"} />;
 
   return (
     <MainContainer className="space-y-4">
-      <Title title="Time Tracker" />
+      <div className="flex gap-4 justify-between">
+        <Title title="Time Tracker" />
+        <Button
+          variant={"destructive"}
+          onClick={() => {
+            localStorage.removeItem("accessToken");
+            navigate("/login");
+          }}
+        >
+          Logout
+        </Button>
+      </div>
       <Separator />
       <TimeTrackerController mutate={mutate} data={data ?? []} />
       <Separator />
