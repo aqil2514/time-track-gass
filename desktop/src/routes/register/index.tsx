@@ -4,7 +4,7 @@ import { Clock, Check, X } from "lucide-react";
 import { AuthBackground } from "@/features/auth/auth-background";
 import { TimerIcon } from "@/components/atoms/tmer-icon";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { NavLink } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 import { useForm, useWatch } from "react-hook-form";
 import {
   registerSchema,
@@ -12,6 +12,15 @@ import {
 } from "@/features/auth/schema/register.schema";
 import { FormFieldText } from "@/components/forms/form-field-text";
 import { FormFieldPassword } from "@/components/forms/form-field-password";
+import axios, { isAxiosError } from "axios";
+import { buildUrl } from "@/utils/build-url";
+
+// Struktur error response NestJS
+interface NestErrorResponse {
+  statusCode: number;
+  message: string | string[];
+  error: string;
+}
 
 function PasswordRule({ met, label }: { met: boolean; label: string }) {
   return (
@@ -29,6 +38,8 @@ function PasswordRule({ met, label }: { met: boolean; label: string }) {
 }
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
+
   const form = useForm<RegisterFormValues>({
     defaultValues: {
       fullName: "",
@@ -40,12 +51,96 @@ export default function RegisterPage() {
     resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = (values: RegisterFormValues) => {
-    console.log(values);
+  const onSubmit = async (values: RegisterFormValues) => {
+    form.clearErrors("root");
+
+    try {
+      const url = buildUrl("auth/register");
+      await axios.post(url, values);
+      navigate("/login", {
+        state: { successMessage: "Account created! Please sign in." },
+      });
+    } catch (error) {
+      if (isAxiosError(error)) {
+        const status = error.response?.status;
+        const data = error.response?.data as NestErrorResponse | undefined;
+
+        // 409 — username atau email sudah dipakai
+        if (status === 409) {
+          const message =
+            typeof data?.message === "string" ? data.message.toLowerCase() : "";
+
+          if (message.includes("username")) {
+            form.setError("username", { message: "Username already exists" });
+          } else if (message.includes("email")) {
+            form.setError("email", { message: "Email already exists" });
+          } else {
+            form.setError("username", { message: "Username already exists" });
+            form.setError("email", { message: "Email already exists" });
+          }
+          return;
+        }
+
+        // 400 — validasi dari backend
+        if (status === 400) {
+          const messages = Array.isArray(data?.message)
+            ? data.message
+            : [data?.message ?? "Invalid request"];
+
+          const fieldMap: Record<string, keyof RegisterFormValues> = {
+            fullname: "fullName",
+            username: "username",
+            email: "email",
+            password: "password",
+            confirmpassword: "confirmPassword",
+          };
+
+          let hasFieldError = false;
+          for (const msg of messages) {
+            for (const [key, field] of Object.entries(fieldMap)) {
+              if (msg.toLowerCase().includes(key)) {
+                form.setError(field, { message: msg });
+                hasFieldError = true;
+                break;
+              }
+            }
+          }
+
+          if (!hasFieldError) {
+            form.setError("root", { message: messages.join(", ") });
+          }
+          return;
+        }
+
+        // 500 — server error
+        if (status !== undefined && status >= 500) {
+          form.setError("root", {
+            message: "Server error. Please try again later.",
+          });
+          return;
+        }
+
+        // Network error
+        if (!error.response) {
+          form.setError("root", {
+            message: "Network error. Check your internet connection.",
+          });
+          return;
+        }
+      }
+
+      // Unknown error
+      form.setError("root", {
+        message: "Something went wrong. Please try again.",
+      });
+    }
   };
 
   const password = useWatch({ control: form.control, name: "password" });
-  const confirmPassword = useWatch({ control: form.control, name: "confirmPassword" });
+  const confirmPassword = useWatch({
+    control: form.control,
+    name: "confirmPassword",
+  });
 
   const isLoading = form.formState.isSubmitting;
 
@@ -110,7 +205,6 @@ export default function RegisterPage() {
                 placeholder="john@example.com"
               />
 
-              {/* Password + rules */}
               <FormFieldPassword
                 form={form}
                 showForgotPassword={false}
@@ -130,12 +224,18 @@ export default function RegisterPage() {
               <FormFieldPassword
                 form={form}
                 showForgotPassword={false}
-
                 label="Confirm Password"
                 name="confirmPassword"
                 textVariant="slate"
                 placeholder="Repeat your password"
               />
+
+              {/* Root error — 500 & network */}
+              {form.formState.errors.root && (
+                <p className="text-xs text-red-400 text-center">
+                  {form.formState.errors.root.message}
+                </p>
+              )}
 
               <Button
                 disabled={isLoading}

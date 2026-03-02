@@ -7,6 +7,7 @@ import { AIGeminiModule } from '../services/ai-gemini/ai-gemini.module';
 import { CloudinaryModule } from '../services/cloudinary/cloudinary.module';
 import { ZAIModule } from '../services/ai-z/ai-z.module';
 import { SupabaseModule } from '../services/supabase/supabase.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { SupabaseModule } from '../services/supabase/supabase.module';
     AIGeminiModule,
     CloudinaryModule,
     ZAIModule,
-    SupabaseModule
+    SupabaseModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],

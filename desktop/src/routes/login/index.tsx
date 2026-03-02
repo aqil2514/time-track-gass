@@ -5,7 +5,7 @@ import { AuthBackground } from "@/features/auth/auth-background";
 import { TimerIcon } from "@/components/atoms/tmer-icon";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
 import { useForm, useWatch } from "react-hook-form";
 import {
   loginSchema,
@@ -39,6 +39,9 @@ export default function LoginPage() {
 
   const isLoading = form.formState.isSubmitting;
 
+  const location = useLocation();
+  const successMessage = location.state?.successMessage;
+
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background decorative elements */}
@@ -69,6 +72,11 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent className="px-6 pb-6 space-y-5">
+            {successMessage && (
+              <p className="text-xs text-amber-400 text-center">
+                {successMessage}
+              </p>
+            )}
             <form action="" onSubmit={form.handleSubmit(onSubmit)}>
               {/* Username */}
               <FormFieldText
