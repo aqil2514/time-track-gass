@@ -18,8 +18,10 @@ export class CloudinaryService {
           upload_preset: 'gass-tracker',
         },
         (error, result) => {
-          console.error(error);
-          if (error) return reject(error);
+          if (error) {
+            console.error(error);
+            return reject(error);
+          }
 
           return resolve(result);
         },

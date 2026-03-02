@@ -23,9 +23,6 @@ export class AuthService {
   constructor(
     private readonly mapper: AuthMapperService,
 
-    @Inject('SUPABASE_CLIENT')
-    private readonly supabase: SupabaseClient,
-
     private readonly supabaseService: SupabaseService,
   ) {}
 
@@ -71,7 +68,7 @@ export class AuthService {
 
     const isValidPassword = await bcrypt.compare(password, hashedPassword);
 
-   if (!isValidPassword) throw new UnauthorizedException('Invalid password');
+    if (!isValidPassword) throw new UnauthorizedException('Invalid password');
 
     return result;
   }
