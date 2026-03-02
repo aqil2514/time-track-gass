@@ -14,6 +14,12 @@ import { labelTextMapper } from "./form-constants";
 import { Button } from "../ui/button";
 import { useNavigate } from "react-router";
 
+interface FormFieldPasswordProps<
+  T extends FieldValues,
+> extends BasicFormFieldProps<T> {
+  showForgotPassword?: boolean;
+}
+
 export function FormFieldPassword<T extends FieldValues>({
   form,
   name,
@@ -21,11 +27,12 @@ export function FormFieldPassword<T extends FieldValues>({
   placeholder = "Isi password",
   className,
   textVariant = "default",
-}: BasicFormFieldProps<T>) {
+  showForgotPassword = true,
+}: FormFieldPasswordProps<T>) {
   const isSubmitting = form.formState.isSubmitting;
   const [showPassword, setShowPassword] = useState(false);
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   return (
     <FieldGroup>
@@ -43,13 +50,13 @@ export function FormFieldPassword<T extends FieldValues>({
                   {label}
                 </FieldLabel>
 
-                <Button
+                {showForgotPassword && <Button
                   variant={"link"}
                   className="text-xs text-amber-400 hover:text-amber-300 transition-colors font-medium"
-                  onClick={()=> navigate("/register")}
+                  onClick={() => navigate("/register")}
                 >
                   Forgot Password
-                </Button>
+                </Button>}
               </div>
               <div className="relative">
                 <Input
