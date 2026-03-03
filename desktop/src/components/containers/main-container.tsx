@@ -10,7 +10,7 @@ export default function MainContainer({
   ...props
 }: ContainerProps) {
   return (
-    <div className={cn("w-full min-h-screen bg-slate-950 p-4",className)} {...props}>
+    <div className={cn("w-full min-h-screen bg-slate-950 p-4 text-white",className)} {...props}>
       {children}
     </div>
   );

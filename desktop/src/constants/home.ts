@@ -1,0 +1,1 @@
+export const TIME_TO_SCREENSHOT = 60 * 5 // 5 Menit

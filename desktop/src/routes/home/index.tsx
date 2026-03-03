@@ -20,8 +20,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { Loading } from "@/components/layout/loading";
 import { Navigate, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
+import { HomeTemplate } from "./components/home.template";
+import { HomeProvider } from "./store/home.provider";
 
-export default function HomeTemplate() {
+export default function HomePage() {
   const url = buildUrl("image-upload");
   const { data, isLoading, mutate } = useFetch<AIScreenReportDb[]>(url);
   const navigate = useNavigate();
@@ -33,37 +35,43 @@ export default function HomeTemplate() {
   if (!user) return <Navigate to={"/login"} />;
 
   return (
-    <MainContainer className="space-y-4">
-      <div className="flex gap-4 justify-between">
-        <Title title="Time Tracker" />
-        <Button
-          variant={"destructive"}
-          onClick={() => {
-            localStorage.removeItem("accessToken");
-            navigate("/login");
-          }}
-        >
-          Logout
-        </Button>
-      </div>
-      <Separator />
-      <TimeTrackerController mutate={mutate} data={data ?? []} />
-      <Separator />
-      {isLoading ? (
-        <LoadingSpinner />
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Data Hasil AI</CardTitle>
-            <CardAction>
-              <MutateButton mutate={mutate} />
-            </CardAction>
-          </CardHeader>
-          <CardContent>
-            <DataTable columns={columnDef} data={data ?? []} />
-          </CardContent>
-        </Card>
-      )}
-    </MainContainer>
+    <HomeProvider>
+      <HomeTemplate />
+    </HomeProvider>
   );
+
+  // return (
+  //   <MainContainer className="space-y-4">
+  //     <div className="flex gap-4 justify-between">
+  //       <Title title="Time Tracker" />
+  //       <Button
+  //         variant={"destructive"}
+  //         onClick={() => {
+  //           localStorage.removeItem("accessToken");
+  //           navigate("/login");
+  //         }}
+  //       >
+  //         Logout
+  //       </Button>
+  //     </div>
+  //     <Separator />
+  //     <TimeTrackerController mutate={mutate} data={data ?? []} />
+  //     <Separator />
+  //     {isLoading ? (
+  //       <LoadingSpinner />
+  //     ) : (
+  //       <Card>
+  //         <CardHeader>
+  //           <CardTitle>Data Hasil AI</CardTitle>
+  //           <CardAction>
+  //             <MutateButton mutate={mutate} />
+  //           </CardAction>
+  //         </CardHeader>
+  //         <CardContent>
+  //           <DataTable columns={columnDef} data={data ?? []} />
+  //         </CardContent>
+  //       </Card>
+  //     )}
+  //   </MainContainer>
+  // );
 }
