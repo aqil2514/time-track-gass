@@ -1,10 +1,14 @@
 import MainContainer from "@/components/containers/main-container";
 import { Controller } from "./controller";
+import { DashboardHeader } from "@/components/layout/header";
 
 export function HomeTemplate() {
   return (
-    <MainContainer>
-      <Controller />
-    </MainContainer>
+    <>
+      <DashboardHeader />
+      <MainContainer>
+        <Controller />
+      </MainContainer>
+    </>
   );
 }

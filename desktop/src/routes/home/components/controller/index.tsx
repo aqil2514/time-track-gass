@@ -8,7 +8,7 @@ export function Controller() {
   const [date, setDate] = useState<Date | undefined>(new Date());
 
   return (
-    <div className="flex justify-between items-center">
+    <div className="space-y-4">
       <div className="flex gap-4 items-center">
         <DatePicker date={date} setDate={setDate} />
         <StartSessionButton />
