@@ -1,6 +1,3 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { AIScreenReportDb } from "../types/ai-record.type";
-
 // format date helper
 export function formatDate(dateString: string) {
   const date = new Date(dateString);
@@ -13,30 +10,3 @@ export function formatDate(dateString: string) {
     second: "2-digit",
   });
 }
-
-export const columnDef: ColumnDef<AIScreenReportDb>[] = [
-  {
-    accessorKey: "created_at",
-    header: "Date",
-    cell: ({ getValue }) => {
-      const raw = getValue<string>();
-      return formatDate(raw);
-    },
-  },
-  {
-    accessorKey: "app_name",
-    header: "App Name",
-  },
-  {
-    accessorKey: "category",
-    header: "Category",
-  },
-  {
-    accessorKey: "window_title",
-    header: "Window Title",
-  },
-  {
-    accessorKey: "summary",
-    header: "Summary",
-  },
-];

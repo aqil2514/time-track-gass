@@ -5,6 +5,10 @@ export interface AIScreenReportDb {
   window_title: string;
   category: string;
   summary: string;
+  user_id: string;
 }
 
-export type AIScreenReportDbInsert = Omit<AIScreenReportDb, "id" | 'created_at'>
+export type AIScreenReportDbInsert = Omit<
+  AIScreenReportDb,
+  'id' | 'created_at'
+>;

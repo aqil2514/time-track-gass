@@ -5,29 +5,41 @@ export function ActivityBreakdown() {
   const { fetcher } = useHomeContext();
   const { data, isLoading, error } = fetcher;
 
+  // 🔹 Loading state
   if (isLoading) return <p className="text-slate-400">Loading...</p>;
-  if (error || !data) return null;
 
-  // 🔹 Hitung total activity
+  // 🔹 Error or no data
+  if (error || !data || data.length === 0)
+    return (
+      <div>
+        <h3 className="text-white font-semibold tracking-tight">
+          Activity Breakdown
+        </h3>
+        <p className="text-slate-400">No activity data available</p>
+      </div>
+    );
+
+  // 🔹 Total activity count
   const total = data.length;
 
-  // 🔹 Grouping berdasarkan category
+  // 🔹 Group activities by category
   const grouped = data.reduce<Record<ActivityType, number>>(
     (acc, item) => {
       acc[item.category] = (acc[item.category] || 0) + 1;
       return acc;
     },
-    {} as Record<ActivityType, number>
+    {} as Record<ActivityType, number>,
   );
 
-  // 🔹 Convert ke array supaya bisa di-map
+  // 🔹 Convert grouped object to array and sort by count descending
   const breakdown = Object.entries(grouped)
     .map(([category, count]) => ({
       category: category as ActivityType,
       count,
       percentage: Math.round((count / total) * 100),
     }))
-    .sort((a, b) => b.count - a.count).splice(0, 3);
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3); // Take top 3 categories
 
   return (
     <div className="space-y-5">
@@ -40,12 +52,8 @@ export function ActivityBreakdown() {
           <div key={item.category} className="space-y-2">
             {/* Label */}
             <div className="flex justify-between text-sm">
-              <span className="capitalize text-slate-300">
-                {item.category}
-              </span>
-              <span className="text-slate-400">
-                {item.percentage}%
-              </span>
+              <span className="capitalize text-slate-300">{item.category}</span>
+              <span className="text-slate-400">{item.percentage}%</span>
             </div>
 
             {/* Progress Bar */}
@@ -57,6 +65,11 @@ export function ActivityBreakdown() {
             </div>
           </div>
         ))}
+
+        {/* Optional: Show message if less than 3 categories */}
+        {breakdown.length < 3 && (
+          <p className="text-slate-400 text-sm">No more activity categories</p>
+        )}
       </div>
     </div>
   );

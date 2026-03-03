@@ -8,6 +8,7 @@ import { CloudinaryModule } from '../services/cloudinary/cloudinary.module';
 import { ZAIModule } from '../services/ai-z/ai-z.module';
 import { SupabaseModule } from '../services/supabase/supabase.module';
 import { AuthModule } from './auth/auth.module';
+import { ActivitiesModule } from './activities/activities.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { AuthModule } from './auth/auth.module';
     CloudinaryModule,
     ZAIModule,
     SupabaseModule,
-    AuthModule
+    AuthModule,
+    ActivitiesModule
   ],
   controllers: [AppController],
   providers: [AppService],

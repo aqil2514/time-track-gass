@@ -32,7 +32,6 @@ export function MutateButton<T>({
     <Button
       disabled={isLoading}
       size={"icon"}
-      variant={"outline"}
       onClick={mutateHandler}
       title="Refresh Data"
       type="button"

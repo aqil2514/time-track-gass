@@ -7,7 +7,15 @@ export function TimelineItems() {
   const { fetcher } = useHomeContext();
   const { data, isLoading } = fetcher;
 
-  if (isLoading || !data) return <LoadingSpinner />;
+  if (isLoading) return <LoadingSpinner />;
+
+  // Handle empty data
+  if (!data || data.length === 0)
+    return (
+      <div className="flex items-center justify-center h-96 text-slate-400 text-sm">
+        No activity yet
+      </div>
+    );
 
   return (
     <ScrollArea className="h-96 pr-4">

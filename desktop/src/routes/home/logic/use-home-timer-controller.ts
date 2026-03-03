@@ -15,7 +15,7 @@ export type TimerStatus =
   | "error";
 
 export function useHomeTimerController(
-  mutate: KeyedMutator<AIScreenReportDb[]>
+  mutate: KeyedMutator<AIScreenReportDb[]>,
 ) {
   const { capture } = useCapture();
 
@@ -50,7 +50,7 @@ export function useHomeTimerController(
 
       const remaining = Math.max(
         0,
-        Math.round((nextCaptureAtRef.current - Date.now()) / 1000)
+        Math.round((nextCaptureAtRef.current - Date.now()) / 1000),
       );
 
       setCountdown(remaining);
@@ -78,7 +78,11 @@ export function useHomeTimerController(
 
       setStatus("uploading");
 
-      await axios.postForm(buildUrl("image-upload"), formData);
+      await axios.postForm(buildUrl("image-upload"), formData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
 
       await mutate();
     } catch (error) {
@@ -95,7 +99,7 @@ export function useHomeTimerController(
   // ==============================
   // MAIN LOOP (ANTI DRIFT)
   // ==============================
-  
+
   const scheduleNextCapture = useCallback(() => {
     const nextTarget = Date.now() + TIME_TO_SCREENSHOT * 1000;
     nextCaptureAtRef.current = nextTarget;

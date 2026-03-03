@@ -34,7 +34,7 @@ interface HomeContextType {
 const HomeContext = createContext<HomeContextType>({} as HomeContextType);
 
 export function HomeProvider({ children }: { children: React.ReactNode }) {
-  const url = buildUrl("image-upload");
+  const url = buildUrl("activities/user");
   const fetcher = useFetch<AIScreenReportDb[]>(url);
   const timerController = useHomeTimerController(fetcher.mutate);
   const excelController = useHomeExcelController();

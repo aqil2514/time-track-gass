@@ -2,7 +2,10 @@ import axios from "axios";
 
 export async function fetcher<T>(url: string): Promise<T> {
   const res = await fetch(url, {
-    credentials: "include", // ⬅️ penting untuk Paseto cookie
+    credentials: "include",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+    },
   });
 
   if (!res.ok) {
