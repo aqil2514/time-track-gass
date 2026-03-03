@@ -1,8 +1,8 @@
-import { HTMLAttributes } from "react";
+import { ButtonHTMLAttributes } from "react";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 
-interface PrimaryButtonProps extends HTMLAttributes<HTMLButtonElement> {}
+interface PrimaryButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {}
 
 export function PrimaryButton({ className, ...props }: PrimaryButtonProps) {
   return (
@@ -11,6 +11,7 @@ export function PrimaryButton({ className, ...props }: PrimaryButtonProps) {
         "bg-purple-600 hover:bg-purple-700 text-white active:scale-95 duration-200 transition",
         className,
       )}
+
       {...props}
     ></Button>
   );

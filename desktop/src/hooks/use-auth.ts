@@ -22,7 +22,6 @@ export function useAuth() {
         },
       })
       .then((res) => {
-        console.log(res);
         setUser(res.data.user);
       })
       .catch((err) => {

@@ -1,10 +1,33 @@
 import { PrimaryButton } from "@/components/atoms/primary-button";
-import { Download } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
+import { useHomeContext } from "../../store/home.provider";
 
 export function ExportToExcelButton() {
+  const { controllerExcel, fetcher } = useHomeContext();
+  const { exportToExcel, isLoading } = controllerExcel;
+
+  const handleExport = async () => {
+    if (isLoading) return;
+    await exportToExcel(fetcher.data ?? []);
+  };
+
   return (
-    <PrimaryButton>
-      <Download /> Export To Excel
+    <PrimaryButton
+      onClick={handleExport}
+      disabled={isLoading}
+      className="gap-2"
+    >
+      {isLoading ? (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Exporting...
+        </>
+      ) : (
+        <>
+          <Download className="h-4 w-4" />
+          Export To Excel
+        </>
+      )}
     </PrimaryButton>
   );
 }

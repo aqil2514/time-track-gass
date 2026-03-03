@@ -7,6 +7,7 @@ import {
   TimerStatus,
   useHomeTimerController,
 } from "../logic/use-home-timer-controller";
+import { useHomeExcelController } from "../logic/use-home-excel-controller";
 
 interface HomeContextType {
   fetcher: {
@@ -23,6 +24,11 @@ interface HomeContextType {
     status: TimerStatus;
     countdown: number;
   };
+
+  controllerExcel: {
+    isLoading: boolean;
+    exportToExcel: (data: AIScreenReportDb[]) => Promise<void>
+  };
 }
 
 const HomeContext = createContext<HomeContextType>({} as HomeContextType);
@@ -31,10 +37,12 @@ export function HomeProvider({ children }: { children: React.ReactNode }) {
   const url = buildUrl("image-upload");
   const fetcher = useFetch<AIScreenReportDb[]>(url);
   const timerController = useHomeTimerController(fetcher.mutate);
+  const excelController = useHomeExcelController();
 
   const values: HomeContextType = {
     fetcher: { ...fetcher },
     controllerTime: { ...timerController },
+    controllerExcel: { ...excelController },
   };
   return <HomeContext.Provider value={values}>{children}</HomeContext.Provider>;
 }

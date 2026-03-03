@@ -7,6 +7,9 @@
     "core:default",
     "opener:default",
     "screenshots:default",
+    "dialog:default",
+
+    "dialog:allow-save",
 
     "fs:allow-read-file",
     "fs:allow-read",
