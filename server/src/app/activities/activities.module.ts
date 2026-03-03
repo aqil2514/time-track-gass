@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ActivitiesController } from './activities.controller';
-import { ActivitiesService } from './activities.service';
+import { ActivitiesService } from './services/activities.service';
+import { ActivitiesCronService } from './services/activities-cron.service';
+import { ActivitiesCronHelper } from './services/helpers/activites-cron-helper.service';
 
 @Module({
   controllers: [ActivitiesController],
-  providers: [ActivitiesService],
+  providers: [ActivitiesService, ActivitiesCronService, ActivitiesCronHelper],
 })
 export class ActivitiesModule {}

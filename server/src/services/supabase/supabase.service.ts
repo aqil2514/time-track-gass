@@ -22,6 +22,20 @@ export class SupabaseService {
     }
   }
 
+  async getAllData<T = unknown>(
+    tableName: TableName,
+    select = '*',
+  ): Promise<T[]> {
+    const { data, error } = await this.supabase.from(tableName).select(select);
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    return (data ?? []) as T[];
+  }
+
   async getDataByColumn<T = unknown>(
     tableName: TableName,
     column: string,

@@ -9,6 +9,7 @@ import { ZAIModule } from '../services/ai-z/ai-z.module';
 import { SupabaseModule } from '../services/supabase/supabase.module';
 import { AuthModule } from './auth/auth.module';
 import { ActivitiesModule } from './activities/activities.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ActivitiesModule } from './activities/activities.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
 
     AIGeminiModule,
     CloudinaryModule,
