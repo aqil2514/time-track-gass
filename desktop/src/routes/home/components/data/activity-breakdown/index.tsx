@@ -20,9 +20,9 @@ export function ActivityBreakdown() {
     );
 
   // 🔹 Total activity count
-  const total = data.length;
-
   const items = data.flatMap((d) => d.items);
+  const total = items.length;
+
 
   // 🔹 Group activities by category
   const grouped = items.reduce<Record<ActivityType, number>>(
