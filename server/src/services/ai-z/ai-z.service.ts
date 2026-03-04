@@ -18,18 +18,23 @@ export class ZAIService {
       {
         type: 'text',
         text: `
-        Tolong analisis gambar ini dan extract informasi.  
-Balas **hanya JSON** dengan format ini:
+Analyze this image and extract the relevant information.
+
+Return ONLY valid JSON in the following format:
 
 {
-  "app_name": "nama aplikasi utama di layar",
-  "window_title": "judul window yang terlihat",
-  "category": "pilih salah satu dari 10 kategori: coding, debugging, research, database, devops, review, meeting, communication, design, planning",
-  "summary": "deskripsi ringkas aktivitas"
+  "app_name": "main application visible on the screen",
+  "window_title": "visible window title",
+  "category": "choose one of the following: coding, debugging, research, database, devops, review, meeting, communication, design, planning",
+  "summary": "concise description of the activity"
 }
 
-Jangan tulis teks lain selain JSON.
-Gunakan Bahasa Inggris dalam penulisan datanya`,
+Rules:
+- Respond with JSON only.
+- Do NOT wrap the response in markdown.
+- Do NOT include explanations.
+- All values must be written in English.
+`,
       },
     ];
 

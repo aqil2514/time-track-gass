@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { ExportToExcelButton } from "./export-to-excel";
 import { StartSessionButton } from "./start-session";
 import { DatePicker } from "@/components/molecules/date-picker";
@@ -7,13 +6,12 @@ import { MutateButton } from "@/components/atoms/mutate-button";
 import { useHomeContext } from "../../store/home.provider";
 
 export function Controller() {
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const {fetcher} = useHomeContext()
+  const { fetcher } = useHomeContext();
 
   return (
     <div className="space-y-4">
       <div className="flex gap-4 items-center">
-        <DatePicker date={date} setDate={setDate} />
+        <DatePicker date={fetcher.date} setDate={fetcher.setDate} />
         <StartSessionButton />
         <ExportToExcelButton />
       </div>

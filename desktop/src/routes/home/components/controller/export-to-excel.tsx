@@ -8,7 +8,8 @@ export function ExportToExcelButton() {
 
   const handleExport = async () => {
     if (isLoading) return;
-    await exportToExcel(fetcher.data ?? []);
+    const items = fetcher.data?.flatMap((data) => data.items);
+    await exportToExcel(items ?? []);
   };
 
   return (

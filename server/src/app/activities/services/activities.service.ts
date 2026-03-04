@@ -1,21 +1,16 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { TableName } from 'src/services/supabase/supabase.interface';
+import { Injectable } from '@nestjs/common';
 import { ActivitiesFetcherHelper } from './helpers/activities-fetcher-helper.service';
 import { ActivityData } from '../interface/activities_data.interface';
-import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 
 @Injectable()
 export class ActivitiesService {
-  constructor(
-    @Inject('SUPABASE_CLIENT')
-    private readonly supabase: SupabaseClient,
+  constructor(private readonly helper: ActivitiesFetcherHelper) {}
 
-    private readonly helper: ActivitiesFetcherHelper,
-  ) {}
-
-  async getActivityData(userId: string): Promise<ActivityData[]> {
-    const summariesData = await this.helper.getSessionActivityByUserId(userId);
+  async getActivityData(userId: string, date: string): Promise<ActivityData[]> {
+    const summariesData = await this.helper.getSessionActivityByUserId(
+      userId,
+      date,
+    );
 
     const allRawIds = summariesData.flatMap((data) => data.raw_ids);
 

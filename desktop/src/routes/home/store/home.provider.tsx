@@ -1,6 +1,6 @@
 import { KeyedMutator } from "swr";
 import { AIScreenReportDb } from "../types/ai-record.type";
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { useFetch } from "@/hooks/use-fetch";
 import { buildUrl } from "@/utils/build-url";
 import {
@@ -9,9 +9,13 @@ import {
 } from "../logic/use-home-timer-controller";
 import { useHomeExcelController } from "../logic/use-home-excel-controller";
 import { ActivityData } from "../types/activites-data.type";
+import { startOfDay } from "date-fns";
 
 interface HomeContextType {
   fetcher: {
+    date: Date | undefined;
+    setDate: React.Dispatch<React.SetStateAction<Date | undefined>>;
+
     data: ActivityData[] | undefined;
     error: any;
     isLoading: boolean;
@@ -28,20 +32,25 @@ interface HomeContextType {
 
   controllerExcel: {
     isLoading: boolean;
-    exportToExcel: (data: AIScreenReportDb[]) => Promise<void>
+    exportToExcel: (data: AIScreenReportDb[]) => Promise<void>;
   };
 }
 
 const HomeContext = createContext<HomeContextType>({} as HomeContextType);
 
 export function HomeProvider({ children }: { children: React.ReactNode }) {
-  const url = buildUrl("activities/user");
+  const [date, setDate] = useState<Date | undefined>(new Date());
+
+  const url = date
+    ? buildUrl(`activities/user?date=${startOfDay(date).toISOString()}`)
+    : buildUrl(`activities/user`);
   const fetcher = useFetch<ActivityData[]>(url);
+
   const timerController = useHomeTimerController(fetcher.mutate);
   const excelController = useHomeExcelController();
 
   const values: HomeContextType = {
-    fetcher: { ...fetcher },
+    fetcher: { ...fetcher, date, setDate },
     controllerTime: { ...timerController },
     controllerExcel: { ...excelController },
   };

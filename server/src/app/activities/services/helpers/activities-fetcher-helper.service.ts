@@ -12,13 +12,20 @@ export class ActivitiesFetcherHelper {
 
   async getSessionActivityByUserId(
     userId: string,
+    date: string,
   ): Promise<SessionSummaryDb[]> {
+    const start = new Date(date);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
     const { data, error } = await this.supabase
       .from('session_summary')
       .select('*')
       .eq('user_id', userId)
+      .gte('session_start', start.toISOString())
+      .lt('session_start', end.toISOString())
       .order('session_start', { ascending: false });
-
+      
     if (error) {
       console.error(error);
       throw error;
