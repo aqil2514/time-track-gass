@@ -13,4 +13,12 @@ export class ActivitiesController {
 
     return await this.service.getActivityData(userId, date);
   }
+
+  @Get('daily')
+  async getUserDailyActivity(@Req() req: any,  @Query('date') date: string) {
+    const user = req.user;
+    const userId = user.user.id;
+
+    return await this.service.getDailyActivity(userId, date);
+  }
 }

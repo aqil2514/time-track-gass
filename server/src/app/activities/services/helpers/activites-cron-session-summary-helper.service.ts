@@ -7,7 +7,7 @@ import { SessionSummaryDbInsert } from '../../interface/session_summary.interfac
 import { ZAIService } from 'src/services/ai-z/ai-z.service';
 
 @Injectable()
-export class ActivitiesCronHelper {
+export class ActivitiesSessionSummaryCronHelper {
   constructor(
     private readonly supabaseService: SupabaseService,
     @Inject('SUPABASE_CLIENT')
@@ -43,10 +43,8 @@ export class ActivitiesCronHelper {
   async mapToSessionSummaryDbInsert(
     data: AIScreenReportDb[],
   ): Promise<SessionSummaryDbInsert[]> {
-    const result: SessionSummaryDbInsert[] = [];
     const rawResult = [];
 
-    // 🔹 Group per user dulu
     const userMap = new Map<string, AIScreenReportDb[]>();
     for (const item of data) {
       if (!userMap.has(item.user_id)) userMap.set(item.user_id, []);
@@ -92,11 +90,12 @@ export class ActivitiesCronHelper {
       rawResult.map(async (r) => {
         const { summaries, ...rest } = r;
 
-        const title = await this.aiService.getAiSessionSummaryTitle(summaries);
+        const {title, description} = await this.aiService.getAiSessionSummaryTitleAndDescription(summaries);
 
         return {
           ...rest,
           title,
+          description
         };
       }),
     );

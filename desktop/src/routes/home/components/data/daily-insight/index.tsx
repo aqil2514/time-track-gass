@@ -1,27 +1,22 @@
+import { LoadingSpinner } from "@/components/atoms/loading-spinner";
+import { useFetch } from "@/hooks/use-fetch";
+import { useHomeContext } from "@/routes/home/store/home.provider";
+import { DailySummaryDb } from "@/routes/home/types/daily-summary.type";
+import { buildUrl } from "@/utils/build-url";
+import { isToday, startOfDay } from "date-fns";
+import React from "react";
 import { BsStars } from "react-icons/bs";
 
-interface InsightData {
-  summary: string;
-  highlights: string[];
-  productivity: {
-    title: string;
-    description: string;
-  };
-}
-
-const dummyInsightData: InsightData = {
-  summary:
-    "Alice focused on auth module in the morning, continued with payment API after lunch. Fixed 1 validation bug and reviewed cache PR.",
-  highlights: ["auth module", "payment API"],
-  productivity: {
-    title: "Productivity:",
-    description:
-      "5.5h coding from 6.5h total.",
-  },
-};
-
 export function AIDailyInsight() {
-  const { summary, highlights, productivity } = dummyInsightData;
+  const { fetcher } = useHomeContext();
+  const url = fetcher.date
+    ? buildUrl(
+        `activities/daily?date=${startOfDay(fetcher.date).toISOString()}`,
+      )
+    : buildUrl("activities/daily");
+  const { data, isLoading } = useFetch<DailySummaryDb>(url, {
+    keepPreviousData: false,
+  });
 
   return (
     <div className="space-y-4">
@@ -34,23 +29,47 @@ export function AIDailyInsight() {
       </div>
 
       {/* Card */}
-      <div className="ml-8 bg-slate-800/80 border border-slate-700 hover:border-purple-500/40 transition-colors duration-300 p-5 rounded-2xl shadow-sm space-y-5">
-        {/* Summary */}
-        <p className="text-sm text-slate-300 leading-relaxed">
-          {highlightText(summary, highlights)}
-        </p>
-
-        {/* Productivity Box */}
-        <div className="bg-slate-900/70 border border-slate-700 rounded-xl px-4 py-3">
-          <span className="text-purple-400 font-semibold">
-            {productivity.title}
-          </span>{" "}
-          <span className="text-slate-300">{productivity.description}</span>
-        </div>
-      </div>
+      {isLoading ? <LoadingSpinner /> : <DataRender data={data} />}
     </div>
   );
 }
+
+const DataRender: React.FC<{ data: DailySummaryDb | undefined }> = ({
+  data,
+}) => {
+  const { fetcher } = useHomeContext();
+  const { date } = fetcher;
+
+  if (!date) return null;
+
+  if (isToday(date))
+    return (
+      <p className="text-slate-400 italic">
+        Daily summary for today is being processed...
+      </p>
+    );
+
+  if (!data)
+    return (
+      <p className="text-sm text-slate-400 leading-relaxed">Data not found</p>
+    );
+
+  const { productivity_description, summary, highlights } = data;
+  return (
+    <div className="ml-8 bg-slate-800/80 border border-slate-700 hover:border-purple-500/40 transition-colors duration-300 p-5 rounded-2xl shadow-sm space-y-5">
+      {/* Summary */}
+      <p className="text-sm text-slate-300 leading-relaxed">
+        {highlightText(summary, highlights)}
+      </p>
+
+      {/* Productivity Box */}
+      <div className="bg-slate-900/70 border border-slate-700 rounded-xl px-4 py-3">
+        <span className="text-purple-400 font-semibold">Productivity</span>{" "}
+        <span className="text-slate-300">{productivity_description}</span>
+      </div>
+    </div>
+  );
+};
 
 function highlightText(text: string, highlights: string[]) {
   if (!highlights.length) return text;

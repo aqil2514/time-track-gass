@@ -16,17 +16,12 @@ export class ActivitiesService {
 
     const allReports = await this.helper.getRawActivityRawIds(allRawIds);
 
-    const reportMap = new Map(allReports.map((r) => [r.id, r]));
-
-    const data: ActivityData[] = summariesData.map((summary) => {
-      const { raw_ids, ...rest } = summary;
-
-      return {
-        ...rest,
-        items: raw_ids.map((id) => reportMap.get(id)).filter(Boolean),
-      };
-    });
+    const data = this.helper.mapToActivityData(allReports, summariesData);
 
     return data;
+  }
+
+  async getDailyActivity(userId: string, date: string) {
+    return await this.helper.getDailyActivity(userId, date);
   }
 }

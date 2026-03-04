@@ -5,6 +5,7 @@ export interface SessionSummaryDb {
   session_start: string;
   session_end: string;
   title: string;
+  description: string;
   categories: string;
   raw_ids: string[];
 }

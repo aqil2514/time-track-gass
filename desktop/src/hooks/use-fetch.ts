@@ -6,6 +6,7 @@ import useSWR from "swr";
 interface UseFetchOptions {
   refreshInterval?: number;
   revalidateOnFocus?: boolean;
+  keepPreviousData?: boolean;
 }
 
 export function useFetch<T>(key: string | null, options?: UseFetchOptions) {

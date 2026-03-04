@@ -2,15 +2,19 @@ import { Module } from '@nestjs/common';
 import { ActivitiesController } from './activities.controller';
 import { ActivitiesService } from './services/activities.service';
 import { ActivitiesCronService } from './services/activities-cron.service';
-import { ActivitiesCronHelper } from './services/helpers/activites-cron-helper.service';
+import { ActivitiesSessionSummaryCronHelper } from './services/helpers/activites-cron-session-summary-helper.service';
 import { ActivitiesFetcherHelper } from './services/helpers/activities-fetcher-helper.service';
+import { ActivitiesDailySummaryCronHelper } from './services/helpers/activites-cron-daily-summary-helper.service';
 
 @Module({
   controllers: [ActivitiesController],
   providers: [
     ActivitiesService,
     ActivitiesCronService,
-    ActivitiesCronHelper,
+
+    // Helper
+    ActivitiesDailySummaryCronHelper,
+    ActivitiesSessionSummaryCronHelper,
     ActivitiesFetcherHelper,
   ],
 })

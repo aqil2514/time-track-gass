@@ -11,3 +11,14 @@ export interface ZImageAnalyzeReturn {
   aiReasoning: string;
   data: ZImageAnalyzeData;
 }
+
+export interface AiSessionSummaryResult {
+  title: string;
+  description: string;
+}
+
+export interface AiDailySummaryResult {
+  summary: string;
+  highlights: string[];
+  productivity_description: string;
+}
