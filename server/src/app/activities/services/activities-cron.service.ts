@@ -7,7 +7,8 @@ export class ActivitiesCronService {
   private logger = new Logger(ActivitiesCronService.name);
   constructor(private readonly helper: ActivitiesCronHelper) {}
 
-  @Cron(CronExpression.EVERY_HOUR)
+  // @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async createNewSummary() {
     const now = new Date();
 
@@ -28,11 +29,11 @@ export class ActivitiesCronService {
     if (oneHourActivites.length === 0) return;
 
     const mappedData =
-      this.helper.mapToSessionSummaryDbInsert(oneHourActivites);
+      await this.helper.mapToSessionSummaryDbInsert(oneHourActivites);
 
-    await this.helper.createNewSessionSummary(mappedData);
-    this.logger.log(
-      `Session summary generated for ${mappedData.length} entries from ${oneHourBefore.toISOString()} to ${nextHourStart.toISOString()}`,
-    );
+    // await this.helper.createNewSessionSummary(mappedData);
+    // this.logger.log(
+    //   `Session summary generated for ${mappedData.length} entries from ${oneHourBefore.toISOString()} to ${nextHourStart.toISOString()}`,
+    // );
   }
 }

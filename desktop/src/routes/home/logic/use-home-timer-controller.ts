@@ -5,7 +5,7 @@ import { readFile } from "@tauri-apps/plugin-fs";
 import axios from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { KeyedMutator } from "swr";
-import { AIScreenReportDb } from "../types/ai-record.type";
+import { ActivityData } from "../types/activites-data.type";
 
 export type TimerStatus =
   | "idle"
@@ -15,7 +15,7 @@ export type TimerStatus =
   | "error";
 
 export function useHomeTimerController(
-  mutate: KeyedMutator<AIScreenReportDb[]>,
+  mutate: KeyedMutator<ActivityData[]>,
 ) {
   const { capture } = useCapture();
 

@@ -8,13 +8,14 @@ import {
   useHomeTimerController,
 } from "../logic/use-home-timer-controller";
 import { useHomeExcelController } from "../logic/use-home-excel-controller";
+import { ActivityData } from "../types/activites-data.type";
 
 interface HomeContextType {
   fetcher: {
-    data: AIScreenReportDb[] | undefined;
+    data: ActivityData[] | undefined;
     error: any;
     isLoading: boolean;
-    mutate: KeyedMutator<AIScreenReportDb[]>;
+    mutate: KeyedMutator<ActivityData[]>;
   };
 
   controllerTime: {
@@ -35,7 +36,7 @@ const HomeContext = createContext<HomeContextType>({} as HomeContextType);
 
 export function HomeProvider({ children }: { children: React.ReactNode }) {
   const url = buildUrl("activities/user");
-  const fetcher = useFetch<AIScreenReportDb[]>(url);
+  const fetcher = useFetch<ActivityData[]>(url);
   const timerController = useHomeTimerController(fetcher.mutate);
   const excelController = useHomeExcelController();
 

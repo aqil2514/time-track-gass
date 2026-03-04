@@ -12,6 +12,6 @@ export class ActivitiesController {
   async getUserActivity(@Req() req: any) {
     const user = req.user;
     const userId = user.user.id;
-    return await this.service.getActivityByUserId(userId);
+    return await this.service.getActivityData(userId);
   }
 }

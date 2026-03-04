@@ -22,8 +22,10 @@ export function ActivityBreakdown() {
   // 🔹 Total activity count
   const total = data.length;
 
+  const items = data.flatMap((d) => d.items);
+
   // 🔹 Group activities by category
-  const grouped = data.reduce<Record<ActivityType, number>>(
+  const grouped = items.reduce<Record<ActivityType, number>>(
     (acc, item) => {
       acc[item.category] = (acc[item.category] || 0) + 1;
       return acc;

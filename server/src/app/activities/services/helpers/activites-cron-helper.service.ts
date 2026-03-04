@@ -4,6 +4,7 @@ import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-repo
 import { TableName } from 'src/services/supabase/supabase.interface';
 import { SupabaseService } from 'src/services/supabase/supabase.service';
 import { SessionSummaryDbInsert } from '../../interface/session_summary.interface';
+import { ZAIService } from 'src/services/ai-z/ai-z.service';
 
 @Injectable()
 export class ActivitiesCronHelper {
@@ -11,6 +12,7 @@ export class ActivitiesCronHelper {
     private readonly supabaseService: SupabaseService,
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
+    private readonly aiService: ZAIService,
   ) {}
 
   async getAllUser() {
@@ -38,10 +40,11 @@ export class ActivitiesCronHelper {
     return data as AIScreenReportDb[];
   }
 
-  mapToSessionSummaryDbInsert(
+  async mapToSessionSummaryDbInsert(
     data: AIScreenReportDb[],
-  ): SessionSummaryDbInsert[] {
+  ): Promise<SessionSummaryDbInsert[]> {
     const result: SessionSummaryDbInsert[] = [];
+    const rawResult = [];
 
     // 🔹 Group per user dulu
     const userMap = new Map<string, AIScreenReportDb[]>();
@@ -69,26 +72,36 @@ export class ActivitiesCronHelper {
         const sessionEnd = new Date(sessionStart.getTime() + 60 * 60 * 1000);
 
         // 🔹 title = gabungan summary 3 pertama
-        const title = items
-          .slice(0, 3)
-          .map((i) => i.summary)
-          .join(' | ');
+        const summaries = items.map((i) => i.summary);
 
         // 🔹 raw_ids
         const raw_ids = items.map((i) => i.id);
 
-        result.push({
+        rawResult.push({
           user_id: userId,
           session_start: sessionStart.toISOString(),
           session_end: sessionEnd.toISOString(),
-          title,
+          summaries,
           categories: category, // hanya satu kategori per record
           raw_ids,
         });
       }
     }
 
-    return result;
+    const finalResult = await Promise.all(
+      rawResult.map(async (r) => {
+        const { summaries, ...rest } = r;
+
+        const title = await this.aiService.getAiSessionSummaryTitle(summaries);
+
+        return {
+          ...rest,
+          title,
+        };
+      }),
+    );
+
+    return finalResult;
   }
 
   async createNewSessionSummary(payload: SessionSummaryDbInsert[]) {
