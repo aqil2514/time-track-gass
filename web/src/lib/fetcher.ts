@@ -1,15 +1,18 @@
-import axios from "axios";
-import { cookies } from "next/headers";
+import axios, { AxiosRequestConfig } from "axios";
 
-export async function fetcher<T>(url: string): Promise<T> {
-  const cookiesStorage = await cookies();
+export async function fetcher<T>(
+  url: string,
+  config?: AxiosRequestConfig,
+): Promise<T> {
+  try {
+    const { data } = await axios.get<T>(url, {
+      withCredentials: true,
+      ...config,
+    });
 
-  const { data } = await axios.get(url, {
-    withCredentials: true,
-    headers: {
-      Authorization: `Bearer ${cookiesStorage.get("accessToken")}`,
-    },
-  });
-
-  return data;
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }

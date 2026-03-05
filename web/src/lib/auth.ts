@@ -1,17 +1,18 @@
-import { cookies } from "next/headers";
-import { api } from "./api";
+import axios from "axios";
 import { AuthUser } from "@/@types/auth";
+import { serverUrl } from "@/constants/server-url";
+import { cookies } from "next/headers";
 
 export async function getMe(): Promise<AuthUser | null> {
   try {
-    const cookiesStorage = await cookies();
-    const access_token = cookiesStorage.get("access_token");
+    const cookieStore = await cookies();
+    const token = cookieStore.get("access_token")?.value;
 
-    if (!access_token) return null;
+    if (!token) return null;
 
-    const { data } = await api.get("/auth/me/supervisor", {
+    const { data } = await axios.get(`${serverUrl}/auth/me/supervisor`, {
       headers: {
-        access_token: access_token.value,
+        Cookie: `access_token=${token}`,
       },
     });
 

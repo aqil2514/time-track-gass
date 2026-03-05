@@ -6,7 +6,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format, addDays, subDays } from "date-fns";
-import { useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { useQueryParams } from "@/hooks/use-query-params";
 

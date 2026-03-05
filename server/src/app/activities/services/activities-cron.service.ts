@@ -13,7 +13,7 @@ export class ActivitiesCronService {
     private readonly helper: ActivitiesFetcherHelper,
   ) {}
 
-  @Cron(CronExpression.EVERY_HOUR, { disabled: true })
+  @Cron(CronExpression.EVERY_HOUR)
   async createNewSummary() {
     const now = new Date();
 
@@ -48,7 +48,6 @@ export class ActivitiesCronService {
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
     timeZone: 'Asia/Jakarta',
   })
-  // @Cron(CronExpression.EVERY_10_SECONDS)
   async createDailySummary() {
     const allUser = await this.sessionSummaryHelper.getAllUser();
 

@@ -10,6 +10,7 @@ import { SupabaseModule } from '../services/supabase/supabase.module';
 import { AuthModule } from './auth/auth.module';
 import { ActivitiesModule } from './activities/activities.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { SupervisorModule } from './supervisor/supervisor.module';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     ZAIModule,
     SupabaseModule,
     AuthModule,
-    ActivitiesModule
+    ActivitiesModule,
+    SupervisorModule
   ],
   controllers: [AppController],
   providers: [AppService],

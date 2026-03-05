@@ -11,12 +11,12 @@ export class JwtAuthSupervisorGuard implements CanActivate {
   constructor(private readonly jwtService: JwtService) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const token = request.headers.access_token;
+    const token = request.cookies.access_token;
 
     if (!token) throw new UnauthorizedException('Token not found');
 
     try {
-      const { iat, exp, ...rest } = await this.jwtService.verifyAsync(token);
+      const { iat, exp, ...rest } = this.jwtService.verify(token);
 
       const user = {
         role: rest.role,
@@ -26,8 +26,13 @@ export class JwtAuthSupervisorGuard implements CanActivate {
       };
 
       request['user'] = user;
+
+      if (user.role !== 'supervisor') {
+        throw new UnauthorizedException('Access denied: supervisor only');
+      }
       return true;
     } catch (error) {
+      console.error(error);
       throw new UnauthorizedException('Invalid or expired token');
     }
   }

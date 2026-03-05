@@ -19,7 +19,7 @@ import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
 export class AuthController {
   private readonly supervisorCookiesOption: CookieOptions = {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 1000 * 60 * 60 * 24,
   };
@@ -93,7 +93,7 @@ export class AuthController {
 
   @Post('logout/supervisor')
   async logoutSupervisor(@Res({ passthrough: true }) res: Response) {
-    const {maxAge, ...rest} = this.supervisorCookiesOption;
+    const { maxAge, ...rest } = this.supervisorCookiesOption;
     res.clearCookie('access_token', rest);
 
     return { message: 'Logout success' };
