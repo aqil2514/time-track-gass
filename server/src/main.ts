@@ -21,7 +21,8 @@ async function bootstrap() {
       }
 
       if (
-        requestOrigin === 'http://localhost:1420' || // dev
+        requestOrigin === 'http://localhost:1420' || // dev desktop
+        requestOrigin === 'http://localhost:3001' || // dev web
         requestOrigin === 'http://tauri.localhost' || // Windows production
         requestOrigin === 'tauri://localhost' || // macOS & Linux production
         requestOrigin.startsWith('tauri://') || // fallback Tauri

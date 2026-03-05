@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -48,7 +49,10 @@ export class AuthService {
     await this.supabaseService.createNewData(TableName.Profiles, payload);
   }
 
-  async login(loginData: LoginDto): Promise<ProfilesWithNoPassword> {
+  async login(
+    loginData: LoginDto,
+    isSuperVisor: boolean = false,
+  ): Promise<ProfilesWithNoPassword> {
     const { identifier, password } = loginData;
     const isEmail = this.isEmailIdentifier(identifier);
 
@@ -64,11 +68,15 @@ export class AuthService {
       isEmail ? 'email' : 'username',
       identifier,
     );
+
     const { password: hashedPassword, ...result } = user[0];
 
     const isValidPassword = await bcrypt.compare(password, hashedPassword);
 
     if (!isValidPassword) throw new UnauthorizedException('Invalid password');
+
+    if (isSuperVisor && result.role !== 'supervisor')
+      throw new ForbiddenException('Acces denied');
 
     return result;
   }

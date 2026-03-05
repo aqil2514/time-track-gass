@@ -13,7 +13,7 @@ export class ActivitiesCronService {
     private readonly helper: ActivitiesFetcherHelper,
   ) {}
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_HOUR, { disabled: true })
   async createNewSummary() {
     const now = new Date();
 
