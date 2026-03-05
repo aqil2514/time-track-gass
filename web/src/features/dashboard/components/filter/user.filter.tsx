@@ -7,15 +7,18 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { userFilterMocks } from "../mocks/user-filter.mocks";
+import { userFilterMocks } from "../../mocks/user-filter.mocks";
 import { useMemo, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { UserFilterItem } from "../interface/user.interface";
+import { UserFilterItem } from "../../interface/user.interface";
 import { Input } from "@/components/ui/input";
+import { useQueryParams } from "@/hooks/use-query-params";
 
 export function DashboardUserFilter() {
-  const [selectedUser, setSelectedUser] = useState<string>("Alice");
+  const { get, set } = useQueryParams();
+
+  const selectedUser = get("user") ?? "";
   const [hoverName, setHoverName] = useState<string>(selectedUser);
   const [search, setSearch] = useState<string>("");
 
@@ -53,7 +56,7 @@ export function DashboardUserFilter() {
             </div>
 
             {/* Selected User */}
-            <div className="text-white text-sm font-medium">{selectedUser}</div>
+            <div className="text-white text-sm font-medium">{!!selectedUser ? selectedUser : "No Selected" }</div>
           </div>
         </button>
       </PopoverTrigger>
@@ -78,27 +81,31 @@ export function DashboardUserFilter() {
         {/* Scroll User */}
         <ScrollArea className="pb-4">
           <div className="flex gap-3 py-2">
-            {filteredUsers.length === 0 ? <p className="text-gray-300 font-semibold">User not found</p> : filteredUsers.map((item) => {
-              const isSelected = selectedUser === item.name;
+            {filteredUsers.length === 0 ? (
+              <p className="text-gray-300 font-semibold">User not found</p>
+            ) : (
+              filteredUsers.map((item) => {
+                const isSelected = selectedUser === item.name;
 
-              return (
-                <button
-                  key={item.name}
-                  onClick={() => setSelectedUser(item.name)}
-                  onMouseEnter={() => setHoverName(item.name)}
-                  onMouseLeave={() => setHoverName(selectedUser)}
-                  className={`cursor-pointer size-10 flex items-center justify-center rounded-full border-2 text-white font-semibold transition-all duration-200
+                return (
+                  <button
+                    key={item.name}
+                    onClick={() => set("user", item.name)}
+                    onMouseEnter={() => setHoverName(item.name)}
+                    onMouseLeave={() => setHoverName(selectedUser)}
+                    className={`cursor-pointer size-10 flex items-center justify-center rounded-full border-2 text-white font-semibold transition-all duration-200
                   ${
                     isSelected
                       ? "border-green-400 scale-110 bg-green-500"
                       : "border-gray-600 bg-gray-700 hover:scale-105 hover:bg-gray-600"
                   }
                   `}
-                >
-                  {item.name[0]}
-                </button>
-              );
-            })}
+                  >
+                    {item.name[0]}
+                  </button>
+                );
+              })
+            )}
           </div>
 
           <ScrollBar orientation="horizontal" />
