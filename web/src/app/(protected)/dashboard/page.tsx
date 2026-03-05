@@ -1,3 +1,4 @@
+import { DashboardTemplate } from "@/features/dashboard/dashboard.template";
 import { Metadata } from "next";
 
 export const metadata:Metadata = {
@@ -5,5 +6,5 @@ export const metadata:Metadata = {
 }
 
 export default function DashboardPage(){
-    return <div>OK</div>
+    return <DashboardTemplate />
 }
