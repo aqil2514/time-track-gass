@@ -4,7 +4,7 @@ import { SessionSummaryDb } from '../../interface/session_summary.interface';
 import { ActivityData } from '../../interface/activities_data.interface';
 import { DailySummaryDbInsert } from '../../interface/daily_summary.interface';
 import { ZAIService } from 'src/services/ai-z/ai-z.service';
-import { startOfDay } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 
 @Injectable()
 export class ActivitiesDailySummaryCronHelper {
@@ -13,6 +13,41 @@ export class ActivitiesDailySummaryCronHelper {
     private readonly supabase: SupabaseClient,
     private readonly aiService: ZAIService,
   ) {}
+
+  async mapToDailySummaryDbInsert(
+    raw: ActivityData[],
+  ): Promise<DailySummaryDbInsert[]> {
+    const userIds = Array.from(new Set(raw.map((r) => r.user_id)));
+
+    const now = new Date();
+    const timeZone = 'Asia/Jakarta';
+
+    const startOfDayJakarta = formatInTimeZone(
+      now,
+      timeZone,
+      'yyyy-MM-dd 00:00:00XXX',
+    );
+
+    const dailySummaries = await Promise.all(
+      userIds.map(async (user) => {
+        const selectedData = raw.filter((data) => data.user_id === user);
+        if (!selectedData.length) return null;
+
+        const { highlights, productivity_description, summary } =
+          await this.aiService.getAiDailySummary(selectedData);
+
+        return {
+          date: startOfDayJakarta, // ini UTC tapi mewakili 00:00 WIB
+          user_id: user,
+          highlights,
+          productivity_description,
+          summary,
+        } as DailySummaryDbInsert;
+      }),
+    );
+
+    return dailySummaries.filter(Boolean) as DailySummaryDbInsert[];
+  }
 
   async getSessionActivityByUserId(
     userIds: string[],
@@ -39,42 +74,12 @@ export class ActivitiesDailySummaryCronHelper {
     return data;
   }
 
-  async mapToDailySummaryDbInsert(
-    raw: ActivityData[],
-  ): Promise<DailySummaryDbInsert[]> {
-    const userIds = Array.from(new Set(raw.map((r) => r.user_id)));
+  async createNewDailySummary(payload: DailySummaryDbInsert[]) {
+    const { error } = await this.supabase.from('daily_summary').insert(payload);
 
-    const date = startOfDay(new Date()).toISOString();
-
-    const dailySummaries = await Promise.all(
-      userIds.map(async (user) => {
-        const selectedData = raw.filter((data) => data.user_id === user);
-        if (selectedData.length === 0) return null;
-
-        const { highlights, productivity_description, summary } =
-          await this.aiService.getAiDailySummary(selectedData);
-
-        return {
-          date,
-          user_id: user,
-          highlights,
-          productivity_description,
-          summary,
-        } as DailySummaryDbInsert;
-      }),
-    );
-
-    return dailySummaries.filter(Boolean) as DailySummaryDbInsert[];
-  }
-
-    async createNewDailySummary(payload: DailySummaryDbInsert[]) {
-      const { error } = await this.supabase
-        .from('daily_summary')
-        .insert(payload);
-  
-      if (error) {
-        console.error(error);
-        throw error;
-      }
+    if (error) {
+      console.error(error);
+      throw error;
     }
+  }
 }
