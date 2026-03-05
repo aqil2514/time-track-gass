@@ -14,6 +14,13 @@ export class ZAIService {
   private readonly apiKey: string = `Bearer ${process.env.Z_AI_API_KEY}`;
   private readonly model: string = 'glm-4.6v';
 
+  private cleanAiJson(text: string) {
+    return text
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
+  }
+
   async getAiImageAnalyze(image_url: string): Promise<ZImageAnalyzeReturn> {
     const content = [
       {
@@ -66,9 +73,11 @@ Rules:
 
       const message = data.choices[0].message;
       const aiText = message.content;
+      const cleanText = this.cleanAiJson(aiText);
+
       const aiReasoning = message.reasoning_content;
 
-      return { message, aiText, aiReasoning, data: JSON.parse(aiText) };
+      return { message, aiText, aiReasoning, data: JSON.parse(cleanText) };
     } catch (error) {
       console.error(error);
       throw error;
@@ -133,7 +142,9 @@ Expected format:
       const message = data.choices[0].message;
       const aiText = message.content;
 
-      const parsed: AiSessionSummaryResult = JSON.parse(aiText);
+      const cleanText = this.cleanAiJson(aiText);
+
+      const parsed: AiSessionSummaryResult = JSON.parse(cleanText);
 
       return parsed;
     } catch (error) {

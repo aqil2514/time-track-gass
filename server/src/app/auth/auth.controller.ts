@@ -12,11 +12,18 @@ import { AuthService } from './services/auth.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtAuthGuard } from 'src/guards/jwt.guard';
-import { Response } from 'express';
+import { CookieOptions, Response } from 'express';
 import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
 
 @Controller('auth')
 export class AuthController {
+  private readonly supervisorCookiesOption: CookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    maxAge: 1000 * 60 * 60 * 24,
+  };
+
   constructor(
     private readonly service: AuthService,
     private readonly jwt: JwtService,
@@ -36,6 +43,7 @@ export class AuthController {
 
     return user;
   }
+
   @Post('/register')
   async register(@Body() body: RegisterDto) {
     return await this.service.createNewProfile(body);
@@ -78,13 +86,16 @@ export class AuthController {
       },
     );
 
-    res.cookie('access_token', token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24,
-    });
+    res.cookie('access_token', token, this.supervisorCookiesOption);
 
     return { message: 'Login Success' };
+  }
+
+  @Post('logout/supervisor')
+  async logoutSupervisor(@Res({ passthrough: true }) res: Response) {
+    const {maxAge, ...rest} = this.supervisorCookiesOption;
+    res.clearCookie('access_token', rest);
+
+    return { message: 'Logout success' };
   }
 }
