@@ -45,7 +45,7 @@ export class ActivitiesCronService {
     );
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
+  @Cron(CronExpression.EVERY_DAY_AT_11PM, {
     timeZone: 'Asia/Jakarta',
   })
   async createDailySummary() {
