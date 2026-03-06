@@ -1,6 +1,6 @@
 import { User } from "@/@types/user";
+import api from "@/lib/api";
 import { buildUrl } from "@/utils/build-url";
-import axios from "axios";
 import { useEffect, useState } from "react";
 
 export function useAuth() {
@@ -15,7 +15,7 @@ export function useAuth() {
       return;
     }
 
-    axios
+    api
       .get(url, {
         headers: {
           Authorization: `Bearer ${token}`,

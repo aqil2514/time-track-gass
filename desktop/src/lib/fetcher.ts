@@ -1,4 +1,4 @@
-import axios from "axios";
+import { fetch } from "@tauri-apps/plugin-http";
 
 export async function fetcher<T>(url: string): Promise<T> {
   const res = await fetch(url, {
@@ -16,14 +16,4 @@ export async function fetcher<T>(url: string): Promise<T> {
   }
 
   return res.json();
-}
-
-export async function fetcherAxios<T>(url: string): Promise<T> {
-  try {
-    const { data } = await axios(url);
-
-    return data;
-  } catch (error) {
-    throw error;
-  }
 }

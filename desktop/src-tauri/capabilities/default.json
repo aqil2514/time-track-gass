@@ -9,6 +9,9 @@
     "screenshots:default",
     "dialog:default",
 
+    "http:default",
+    "http:allow-fetch",
+
     "dialog:allow-save",
 
     "fs:allow-read-file",

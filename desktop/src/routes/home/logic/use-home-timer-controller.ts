@@ -2,10 +2,10 @@ import { TIME_TO_SCREENSHOT } from "@/constants/home";
 import { useCapture } from "@/hooks/use-capture";
 import { buildUrl } from "@/utils/build-url";
 import { readFile } from "@tauri-apps/plugin-fs";
-import axios from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { KeyedMutator } from "swr";
 import { ActivityData } from "../types/activites-data.type";
+import api from "@/lib/api";
 
 export type TimerStatus =
   | "idle"
@@ -78,7 +78,7 @@ export function useHomeTimerController(
 
       setStatus("uploading");
 
-      await axios.postForm(buildUrl("image-upload"), formData, {
+      await api.postForm(buildUrl("image-upload"), formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },

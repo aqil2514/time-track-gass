@@ -1,0 +1,17 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "http-scope",
+  "description": "Allow HTTP fetch to API",
+  "windows": ["main"],
+  "permissions": [
+    {
+      "identifier": "http:allow-fetch",
+      "allow": [
+        {
+          "url": "https://timetrack.gass.co.id/**"
+        },
+        { "url": "http://localhost:3000/**" }
+      ]
+    }
+  ]
+}

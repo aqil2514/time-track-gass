@@ -50,14 +50,17 @@ export function FormFieldPassword<T extends FieldValues>({
                   {label}
                 </FieldLabel>
 
-                {showForgotPassword && <Button
-                  variant={"link"}
-                  tabIndex={-1}
-                  className="text-xs text-amber-400 hover:text-amber-300 transition-colors font-medium"
-                  onClick={() => navigate("/register")}
-                >
-                  Forgot Password
-                </Button>}
+                {showForgotPassword && (
+                  <Button
+                    variant={"link"}
+                    tabIndex={-1}
+                    type="button"
+                    className="text-xs text-amber-400 hover:text-amber-300 transition-colors font-medium"
+                    onClick={() => navigate("/register")}
+                  >
+                    Forgot Password
+                  </Button>
+                )}
               </div>
               <div className="relative">
                 <Input
