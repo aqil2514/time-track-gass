@@ -17,6 +17,8 @@ export class ActivitiesCronService {
     disabled: process.env.NODE_ENV === 'development',
   })
   async createNewSummary() {
+    if(process.env.NODE_ENV === 'development') return;
+    
     const now = new Date();
 
     const hourStart = new Date(now);
