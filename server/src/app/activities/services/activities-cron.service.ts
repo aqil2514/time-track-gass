@@ -13,7 +13,9 @@ export class ActivitiesCronService {
     private readonly helper: ActivitiesFetcherHelper,
   ) {}
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_HOUR, {
+    disabled: process.env.NODE_ENV === 'development',
+  })
   async createNewSummary() {
     const now = new Date();
 

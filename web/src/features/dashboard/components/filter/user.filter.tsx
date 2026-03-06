@@ -7,15 +7,16 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { userFilterMocks } from "../../mocks/user-filter.mocks";
 import { useMemo, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { UserFilterItem } from "../../interface/user.interface";
 import { Input } from "@/components/ui/input";
 import { useQueryParams } from "@/hooks/use-query-params";
+import { ProfileIdAndUsername, useUsername } from "@/hooks/resources/use-username";
+import { LoadingSpinner } from "@/components/atoms/loading-spinner";
 
 export function DashboardUserFilter() {
+  const { data, isLoading } = useUsername();
   const { get, set } = useQueryParams();
 
   const selectedUser = get("user") ?? "";
@@ -23,19 +24,21 @@ export function DashboardUserFilter() {
   const [search, setSearch] = useState<string>("");
 
   const filteredUsers = useMemo(() => {
-    return userFilterMocks.filter((user) =>
-      user.name.toLowerCase().includes(search.toLowerCase()),
+    return data.filter((user) =>
+      user.username.toLowerCase().includes(search.toLowerCase()),
     );
-  }, [search]);
+  }, [search, data]);
 
   const avatarStack = useMemo(() => {
     return [
-      userFilterMocks.find((u) => u.name === selectedUser),
-      ...userFilterMocks.filter((u) => u.name !== selectedUser),
+      data.find((u) => u.username === selectedUser),
+      ...data.filter((u) => u.username !== selectedUser),
     ]
-      .filter((u): u is UserFilterItem => Boolean(u))
+      .filter((u): u is ProfileIdAndUsername => Boolean(u))
       .slice(0, 3);
-  }, [selectedUser]);
+  }, [data, selectedUser]);
+
+  if(isLoading) return <LoadingSpinner />
 
   return (
     <Popover>
@@ -46,17 +49,19 @@ export function DashboardUserFilter() {
             <div className="flex -space-x-2">
               {avatarStack.slice(0, 3).map((item, i) => (
                 <div
-                  key={item.name}
-                  className="size-8 flex items-center justify-center rounded-full bg-green-500 border-2 border-gray-900 text-white transition-all duration-300"
+                  key={item.username}
+                  className="size-8 flex items-center justify-center rounded-full bg-green-500 border-2 border-gray-900 text-white transition-all duration-300 capitalize"
                   style={{ zIndex: 10 - i }}
                 >
-                  {item.name[0]}
+                  {item.username[0]}
                 </div>
               ))}
             </div>
 
             {/* Selected User */}
-            <div className="text-white text-sm font-medium">{!!selectedUser ? selectedUser : "No Selected" }</div>
+            <div className="text-white text-sm font-medium">
+              {!!selectedUser ? selectedUser : "No Selected"}
+            </div>
           </div>
         </button>
       </PopoverTrigger>
@@ -85,13 +90,13 @@ export function DashboardUserFilter() {
               <p className="text-gray-300 font-semibold">User not found</p>
             ) : (
               filteredUsers.map((item) => {
-                const isSelected = selectedUser === item.name;
+                const isSelected = selectedUser === item.username;
 
                 return (
                   <button
-                    key={item.name}
-                    onClick={() => set("user", item.name)}
-                    onMouseEnter={() => setHoverName(item.name)}
+                    key={item.username}
+                    onClick={() => set("user", item.username)}
+                    onMouseEnter={() => setHoverName(item.username)}
                     onMouseLeave={() => setHoverName(selectedUser)}
                     className={`cursor-pointer size-10 flex items-center justify-center rounded-full border-2 text-white font-semibold transition-all duration-200
                   ${
@@ -101,7 +106,7 @@ export function DashboardUserFilter() {
                   }
                   `}
                   >
-                    {item.name[0]}
+                    {item.username[0]}
                   </button>
                 );
               })

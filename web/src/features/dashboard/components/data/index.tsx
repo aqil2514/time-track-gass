@@ -1,11 +1,15 @@
+import { ActivityBreakdown } from "./activity-breakdown";
+import { AIDailyInsight } from "./daily-insight";
+import { DataTimeline } from "./timeline";
+
 export function DashboardDataContent() {
   return (
     <div className="grid md:grid-cols-2 gap-4">
       <div className="space-y-4">
-        <p>Data AI Daily insight</p>
-        <p>Activity Breakdown</p>
+        <AIDailyInsight />
+        <ActivityBreakdown />
       </div>
-        <p>Data Timeline</p>
+        <DataTimeline />
     </div>
   );
 }

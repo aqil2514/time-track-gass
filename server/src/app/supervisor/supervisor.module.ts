@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { SupervisorController } from './supervisor.controller';
-import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
-import { RoleGuard } from 'src/guards/role.guard';
+import { SupervisorService } from './services/supervisor.service';
+import { SupervisorActivityFetcher } from './services/helpers/supervisor-activity-fetcher.service';
 
 @Module({
   controllers: [SupervisorController],
-  providers: [JwtAuthSupervisorGuard, RoleGuard],
+  providers: [SupervisorService, SupervisorActivityFetcher],
 })
 export class SupervisorModule {}

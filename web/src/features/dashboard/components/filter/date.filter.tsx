@@ -12,7 +12,7 @@ import { useQueryParams } from "@/hooks/use-query-params";
 export function DashboardDateFilter() {
   const { get, set } = useQueryParams();
   const urlDate = get("date");
-  const date = urlDate ? new Date(urlDate) : new Date();
+  const date = urlDate ? new Date(urlDate) : undefined;
 
   function nextDay() {
     if (!date) return;
