@@ -1,5 +1,5 @@
 import { LoadingSpinner } from "@/components/atoms/loading-spinner";
-import { serverUrl } from "@/constants/server-url";
+import { webUrl } from "@/constants/server-url";
 import { DailySummaryDb } from "@/features/dashboard/interface/daily-summary.interface";
 import { useFetch } from "@/hooks/use-fetch";
 import { useQueryParams } from "@/hooks/use-query-params";
@@ -16,9 +16,8 @@ export function AIDailyInsight() {
 
   const isCanFetch = !!date && !!user;
 
-
   const url = isCanFetch
-    ? buildUrl("supervisor/user-daily-insight", serverUrl, {
+    ? buildUrl("api/user-daily-insight", webUrl, {
         date,
         user,
       })

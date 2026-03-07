@@ -1,4 +1,3 @@
-import { serverUrl } from "@/constants/server-url";
 import { useFetch } from "../use-fetch";
 import { useMemo } from "react";
 
@@ -8,9 +7,7 @@ export interface ProfileIdAndUsername {
 }
 
 export function useUsername() {
-  const fetcher = useFetch<ProfileIdAndUsername[]>(
-    `${serverUrl}/supervisor/user-profile`,
-  );
+  const fetcher = useFetch<ProfileIdAndUsername[]>(`/api/user-profile`);
 
   const data = useMemo(() => fetcher.data ?? [], [fetcher.data]);
 

@@ -3,7 +3,7 @@ import React, { createContext, useContext } from "react";
 import { useFetch } from "@/hooks/use-fetch";
 import { buildUrl } from "@/utils/build-url";
 import { ActivityData } from "../interface/acivity-data.interface";
-import { serverUrl } from "@/constants/server-url";
+import { webUrl } from "@/constants/server-url";
 import { useQueryParams } from "@/hooks/use-query-params";
 
 interface DashboardContextType {
@@ -26,7 +26,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const isCanFetch = !!date && !!user;
 
   const url = isCanFetch
-    ? buildUrl("supervisor/user-activity", serverUrl, {
+    ? buildUrl("api/user-activity", webUrl, {
         date,
         user,
       })
