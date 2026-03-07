@@ -89,7 +89,7 @@ export class AuthController {
 
     res.cookie('access_token', token, this.supervisorCookiesOption);
 
-    return { message: 'Login Success' };
+    return { message: 'Login Success', accessToken: token };
   }
 
   @Post('logout/supervisor')

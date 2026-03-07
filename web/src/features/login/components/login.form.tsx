@@ -6,7 +6,6 @@ import { FormFieldPassword } from "@/components/forms/form-field-password";
 import { FormFieldText } from "@/components/forms/form-field-text";
 import { Button } from "@/components/ui/button";
 import { Clock } from "lucide-react";
-import { buildUrl } from "@/utils/build-url";
 import { isAxiosError } from "axios";
 import { api } from "@/lib/api";
 import { loginServerErrorMapper } from "../helpers/server-error-mapper";
@@ -38,7 +37,7 @@ export function LoginForm() {
   const rootError = form.formState.errors.root?.message;
 
   const onSubmit = async (values: LoginSchemaType) => {
-    const url = buildUrl("auth/login/supervisor");
+    const url = "auth/login";
     try {
       await api.post(url, values);
       router.push("/dashboard");

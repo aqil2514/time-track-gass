@@ -14,7 +14,7 @@ export function LogoutButton() {
     try {
       setLoading(true);
 
-      await api.post("auth/logout/supervisor")
+      await api.post("auth/logout")
       router.replace("/login")
     } catch (error) {
       console.error(error);
