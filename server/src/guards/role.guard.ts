@@ -22,8 +22,6 @@ export class RoleGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    console.log(user)
-
     if (!user?.role) {
       throw new ForbiddenException('Role tidak ditemukan');
     }
