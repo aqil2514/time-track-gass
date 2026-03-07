@@ -19,7 +19,8 @@ import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
 export class AuthController {
   private readonly supervisorCookiesOption: CookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    // secure: process.env.NODE_ENV === 'production',
+    secure: false,
     sameSite: 'lax',
     maxAge: 1000 * 60 * 60 * 24,
   };
