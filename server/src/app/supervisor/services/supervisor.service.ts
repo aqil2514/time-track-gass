@@ -54,4 +54,6 @@ export class SupervisorService {
   async getDailyActivity(userId: string, date: string) {
     return await this.activityFetchHelper.getDailyActivity(userId, date);
   }
+
+  async triggerSessionSummary(from: string, to: string) {}
 }

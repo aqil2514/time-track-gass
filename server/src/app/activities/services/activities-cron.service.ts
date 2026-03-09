@@ -13,40 +13,90 @@ export class ActivitiesCronService {
     private readonly helper: ActivitiesFetcherHelper,
   ) {}
 
+  // @Cron(CronExpression.EVERY_HOUR, {
+  //   disabled: process.env.NODE_ENV === 'development',
+  // })
+
+  // async createNewSummary() {
+  //   if(process.env.NODE_ENV === 'development') return;
+
+  //   const now = new Date();
+
+  //   const hourStart = new Date(now);
+  //   hourStart.setMinutes(0, 0, 0);
+
+  //   const oneHourBefore = new Date(hourStart.getTime() - 60 * 60 * 1000);
+  //   const nextHourStart = new Date(hourStart.getTime() + 60 * 60 * 1000);
+
+  //   const allUser = await this.sessionSummaryHelper.getAllUser();
+
+  //   const oneHourActivites =
+  //     await this.sessionSummaryHelper.getDuringOneHourActivities(
+  //       oneHourBefore,
+  //       nextHourStart,
+  //       allUser,
+  //     );
+
+  //   if (oneHourActivites.length === 0) return;
+
+  //   const mappedData =
+  //     await this.sessionSummaryHelper.mapToSessionSummaryDbInsert(
+  //       oneHourActivites,
+  //     );
+
+  //   await this.sessionSummaryHelper.createNewSessionSummary(mappedData);
+  //   this.logger.log(
+  //     `Session summary generated for ${mappedData.length} entries from ${oneHourBefore.toISOString()} to ${nextHourStart.toISOString()}`,
+  //   );
+  // }
+
   @Cron(CronExpression.EVERY_HOUR, {
     disabled: process.env.NODE_ENV === 'development',
   })
   async createNewSummary() {
-    if(process.env.NODE_ENV === 'development') return;
-    
-    const now = new Date();
+    if (process.env.NODE_ENV === 'development') return;
 
+    const now = new Date();
     const hourStart = new Date(now);
     hourStart.setMinutes(0, 0, 0);
 
     const oneHourBefore = new Date(hourStart.getTime() - 60 * 60 * 1000);
     const nextHourStart = new Date(hourStart.getTime() + 60 * 60 * 1000);
 
-    const allUser = await this.sessionSummaryHelper.getAllUser();
+    await this.generateSessionSummary(oneHourBefore, nextHourStart);
+  }
 
-    const oneHourActivites =
-      await this.sessionSummaryHelper.getDuringOneHourActivities(
-        oneHourBefore,
-        nextHourStart,
-        allUser,
+  async generateSessionSummary(from: Date, to: Date) {
+    try {
+      const allUser = await this.sessionSummaryHelper.getAllUser();
+
+      const oneHourActivites =
+        await this.sessionSummaryHelper.getDuringOneHourActivities(
+          from,
+          to,
+          allUser,
+        );
+
+      if (oneHourActivites.length === 0) {
+        this.logger.log(
+          `No activities found from ${from.toISOString()} to ${to.toISOString()}`,
+        );
+        return;
+      }
+
+      const mappedData =
+        await this.sessionSummaryHelper.mapToSessionSummaryDbInsert(
+          oneHourActivites,
+        );
+
+      await this.sessionSummaryHelper.createNewSessionSummary(mappedData);
+      this.logger.log(
+        `Session summary generated for ${mappedData.length} entries from ${from.toISOString()} to ${to.toISOString()}`,
       );
-
-    if (oneHourActivites.length === 0) return;
-
-    const mappedData =
-      await this.sessionSummaryHelper.mapToSessionSummaryDbInsert(
-        oneHourActivites,
-      );
-
-    await this.sessionSummaryHelper.createNewSessionSummary(mappedData);
-    this.logger.log(
-      `Session summary generated for ${mappedData.length} entries from ${oneHourBefore.toISOString()} to ${nextHourStart.toISOString()}`,
-    );
+    } catch (error) {
+      this.logger.error(`Failed to generate session summary: ${error.message}`);
+      throw error;
+    }
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_11PM, {

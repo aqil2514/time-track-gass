@@ -17,5 +17,6 @@ import { ActivitiesDailySummaryCronHelper } from './services/helpers/activites-c
     ActivitiesSessionSummaryCronHelper,
     ActivitiesFetcherHelper,
   ],
+  exports: [ActivitiesCronService],
 })
 export class ActivitiesModule {}
