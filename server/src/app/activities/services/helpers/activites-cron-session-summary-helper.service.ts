@@ -52,7 +52,6 @@ export class ActivitiesSessionSummaryCronHelper {
     }
 
     for (const [userId, activities] of userMap) {
-      // 🔹 Group per kategori
       const categoryMap = new Map<string, AIScreenReportDb[]>();
       activities.forEach((a) => {
         if (!categoryMap.has(a.category)) categoryMap.set(a.category, []);
@@ -60,19 +59,13 @@ export class ActivitiesSessionSummaryCronHelper {
       });
 
       for (const [category, items] of categoryMap) {
-        // 🔹 session_start = jam pertama aktivitas
         const times = items.map((i) => new Date(i.created_at).getTime());
         const minTime = new Date(Math.min(...times));
         const sessionStart = new Date(minTime);
-        sessionStart.setMinutes(0, 0, 0); // bulatkan ke jam penuh
+        sessionStart.setMinutes(0, 0, 0);
 
-        // 🔹 session_end = next hour
         const sessionEnd = new Date(sessionStart.getTime() + 60 * 60 * 1000);
-
-        // 🔹 title = gabungan summary 3 pertama
         const summaries = items.map((i) => i.summary);
-
-        // 🔹 raw_ids
         const raw_ids = items.map((i) => i.id);
 
         rawResult.push({
@@ -80,25 +73,37 @@ export class ActivitiesSessionSummaryCronHelper {
           session_start: sessionStart.toISOString(),
           session_end: sessionEnd.toISOString(),
           summaries,
-          categories: category, // hanya satu kategori per record
+          categories: category,
           raw_ids,
         });
       }
     }
 
-    const finalResult = await Promise.all(
-      rawResult.map(async (r) => {
-        const { summaries, ...rest } = r;
+    const finalResult: SessionSummaryDbInsert[] = [];
+    const BATCH_SIZE = 2;
+    const DELAY_MS = 2000;
 
-        const {title, description} = await this.aiService.getAiSessionSummaryTitleAndDescription(summaries);
+    for (let i = 0; i < rawResult.length; i += BATCH_SIZE) {
+      const batch = rawResult.slice(i, i + BATCH_SIZE);
 
-        return {
-          ...rest,
-          title,
-          description
-        };
-      }),
-    );
+      const batchResult = await Promise.all(
+        batch.map(async (r) => {
+          const { summaries, ...rest } = r;
+          const { title, description } =
+            await this.aiService.getAiSessionSummaryTitleAndDescription(
+              summaries,
+            );
+          return { ...rest, title, description };
+        }),
+      );
+
+      finalResult.push(...batchResult);
+
+      // Delay antar batch, kecuali batch terakhir
+      if (i + BATCH_SIZE < rawResult.length) {
+        await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
+      }
+    }
 
     return finalResult;
   }
