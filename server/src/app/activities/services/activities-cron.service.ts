@@ -13,43 +13,6 @@ export class ActivitiesCronService {
     private readonly helper: ActivitiesFetcherHelper,
   ) {}
 
-  // @Cron(CronExpression.EVERY_HOUR, {
-  //   disabled: process.env.NODE_ENV === 'development',
-  // })
-
-  // async createNewSummary() {
-  //   if(process.env.NODE_ENV === 'development') return;
-
-  //   const now = new Date();
-
-  //   const hourStart = new Date(now);
-  //   hourStart.setMinutes(0, 0, 0);
-
-  //   const oneHourBefore = new Date(hourStart.getTime() - 60 * 60 * 1000);
-  //   const nextHourStart = new Date(hourStart.getTime() + 60 * 60 * 1000);
-
-  //   const allUser = await this.sessionSummaryHelper.getAllUser();
-
-  //   const oneHourActivites =
-  //     await this.sessionSummaryHelper.getDuringOneHourActivities(
-  //       oneHourBefore,
-  //       nextHourStart,
-  //       allUser,
-  //     );
-
-  //   if (oneHourActivites.length === 0) return;
-
-  //   const mappedData =
-  //     await this.sessionSummaryHelper.mapToSessionSummaryDbInsert(
-  //       oneHourActivites,
-  //     );
-
-  //   await this.sessionSummaryHelper.createNewSessionSummary(mappedData);
-  //   this.logger.log(
-  //     `Session summary generated for ${mappedData.length} entries from ${oneHourBefore.toISOString()} to ${nextHourStart.toISOString()}`,
-  //   );
-  // }
-
   @Cron(CronExpression.EVERY_HOUR, {
     disabled: process.env.NODE_ENV === 'development',
   })

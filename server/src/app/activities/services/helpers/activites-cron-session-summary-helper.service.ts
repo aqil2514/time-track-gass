@@ -111,7 +111,10 @@ export class ActivitiesSessionSummaryCronHelper {
   async createNewSessionSummary(payload: SessionSummaryDbInsert[]) {
     const { error } = await this.supabase
       .from('session_summary')
-      .insert(payload);
+      .upsert(payload, {
+        onConflict: 'user_id, session_start, categories',
+        ignoreDuplicates: true,
+      });
 
     if (error) {
       console.error(error);
