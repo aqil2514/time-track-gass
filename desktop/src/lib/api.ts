@@ -1,12 +1,12 @@
 import axios from "axios";
 import { fetch } from "@tauri-apps/plugin-http";
 
-// const localEndpoint = "http://localhost:3000";
-const productionEndpoint = "https://timetrack.gass.co.id";
+const localEndpoint = "http://localhost:3000";
+// const productionEndpoint = "https://timetrack.gass.co.id";
 
 const api = axios.create({
-  baseURL: productionEndpoint,
-  // baseURL: localEndpoint,
+  // baseURL: productionEndpoint,
+  baseURL: localEndpoint,
 });
 
 api.defaults.adapter = async (config) => {

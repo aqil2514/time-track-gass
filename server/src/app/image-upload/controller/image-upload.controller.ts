@@ -19,6 +19,7 @@ export class ImageUploadController {
   @Post('')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(@UploadedFile() file: Express.Multer.File, @Req() req: any) {
+    console.log("OK")
     const user = req.user;
     const userId = user.user.id;
 

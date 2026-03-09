@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { KeyedMutator } from "swr";
 import { ActivityData } from "../types/activites-data.type";
 import api from "@/lib/api";
+import { load } from "@tauri-apps/plugin-store";
 
 export type TimerStatus =
   | "idle"
@@ -60,41 +61,44 @@ export function useHomeTimerController(
   // ==============================
   // CAPTURE PROCESS
   // ==============================
-  const captureHandler = useCallback(async () => {
-    if (isCapturingRef.current) return;
+const captureHandler = useCallback(async () => {
+  if (isCapturingRef.current) return;
 
-    try {
-      isCapturingRef.current = true;
-      setStatus("capturing");
+  try {
+    isCapturingRef.current = true;
+    setStatus("capturing");
 
-      const capturePath = await capture();
-      if (!capturePath) throw new Error("Capture failed");
+    const capturePath = await capture();
+    if (!capturePath) throw new Error("Capture failed");
 
-      const fileData = await readFile(capturePath);
-      const blob = new Blob([fileData]);
+    const fileData = await readFile(capturePath);
+    const blob = new Blob([fileData]);
 
-      const formData = new FormData();
-      formData.append("file", blob);
+    const formData = new FormData();
+    formData.append("file", blob);
 
-      setStatus("uploading");
+    setStatus("uploading");
 
-      await api.postForm(buildUrl("image-upload"), formData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
-      });
+    const store = await load("auth.json");
+    const token = await store.get<string>("accessToken");
 
-      await mutate();
-    } catch (error) {
-      console.error(error);
-      setStatus("error");
-      return;
-    } finally {
-      isCapturingRef.current = false;
-    }
+    await api.postForm(buildUrl("image-upload"), formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-    setStatus("countdown");
-  }, [capture, mutate]);
+    await mutate();
+  } catch (error) {
+    console.error(error);
+    setStatus("error");
+    return;
+  } finally {
+    isCapturingRef.current = false;
+  }
+
+  setStatus("countdown");
+}, [capture, mutate]);
 
   // ==============================
   // MAIN LOOP (ANTI DRIFT)
