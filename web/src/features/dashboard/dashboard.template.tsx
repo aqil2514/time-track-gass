@@ -10,7 +10,7 @@ export function DashboardTemplate() {
   return (
     <DashboardProvider>
       <MainContainer className="space-y-4">
-        <div className="flex flex-col md:flex-row justify-between">
+        <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex flex-col md:flex-row gap-4">
             <DashboardUserFilter />
             <DashboardDateFilter />

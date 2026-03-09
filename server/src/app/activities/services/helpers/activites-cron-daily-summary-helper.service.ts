@@ -28,25 +28,41 @@ export class ActivitiesDailySummaryCronHelper {
       'yyyy-MM-dd 00:00:00XXX',
     );
 
-    const dailySummaries = await Promise.all(
-      userIds.map(async (user) => {
-        const selectedData = raw.filter((data) => data.user_id === user);
-        if (!selectedData.length) return null;
+    const dailySummaries: DailySummaryDbInsert[] = [];
+    const BATCH_SIZE = 2;
+    const DELAY_MS = 2000;
 
-        const { highlights, productivity_description, summary } =
-          await this.aiService.getAiDailySummary(selectedData);
+    for (let i = 0; i < userIds.length; i += BATCH_SIZE) {
+      const batch = userIds.slice(i, i + BATCH_SIZE);
 
-        return {
-          date: startOfDayJakarta, // ini UTC tapi mewakili 00:00 WIB
-          user_id: user,
-          highlights,
-          productivity_description,
-          summary,
-        } as DailySummaryDbInsert;
-      }),
-    );
+      const batchResult = await Promise.all(
+        batch.map(async (user) => {
+          const selectedData = raw.filter((data) => data.user_id === user);
+          if (!selectedData.length) return null;
 
-    return dailySummaries.filter(Boolean) as DailySummaryDbInsert[];
+          const { highlights, productivity_description, summary } =
+            await this.aiService.getAiDailySummary(selectedData);
+
+          return {
+            date: startOfDayJakarta,
+            user_id: user,
+            highlights,
+            productivity_description,
+            summary,
+          } as DailySummaryDbInsert;
+        }),
+      );
+
+      dailySummaries.push(
+        ...(batchResult.filter(Boolean) as DailySummaryDbInsert[]),
+      );
+
+      if (i + BATCH_SIZE < userIds.length) {
+        await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
+      }
+    }
+
+    return dailySummaries;
   }
 
   async getSessionActivityByUserId(
@@ -75,7 +91,12 @@ export class ActivitiesDailySummaryCronHelper {
   }
 
   async createNewDailySummary(payload: DailySummaryDbInsert[]) {
-    const { error } = await this.supabase.from('daily_summary').insert(payload);
+    const { error } = await this.supabase
+      .from('daily_summary')
+      .upsert(payload, {
+        onConflict: 'user_id, date',
+        ignoreDuplicates: true,
+      });
 
     if (error) {
       console.error(error);

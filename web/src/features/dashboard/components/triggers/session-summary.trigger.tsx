@@ -52,7 +52,7 @@ export function SessionSummaryTriggerPopover() {
       <PopoverTrigger asChild>
         <button className="cursor-pointer border border-gray-600 bg-gray-800/80 hover:bg-gray-700 transition rounded-lg px-3 py-2 shadow-sm">
           <div className="flex items-center gap-2">
-            <RefreshCcw className="size-4 text-green-400" />
+            <RefreshCcw className="size-4 text-purple-400" />
             <span className="text-white text-sm font-medium">
               Generate Session Summary
             </span>
@@ -63,7 +63,7 @@ export function SessionSummaryTriggerPopover() {
       <PopoverContent className="bg-gray-800 border border-gray-600 w-[320px] space-y-4 p-4">
         <PopoverHeader>
           <PopoverTitle className="text-white flex items-center gap-2">
-            <Clock className="size-4 text-green-400" />
+            <Clock className="size-4 text-purple-400" />
             Session Summary
           </PopoverTitle>
           <PopoverDescription className="text-gray-400">
@@ -85,7 +85,7 @@ export function SessionSummaryTriggerPopover() {
               setFrom(e.target.value);
               setMessage(null);
             }}
-            className="w-full rounded-md bg-gray-700 border border-gray-600 px-3 py-2 text-sm text-white outline-none focus:border-green-500 transition scheme-dark"
+            className="w-full rounded-md bg-gray-700 border border-gray-600 px-3 py-2 text-sm text-white outline-none focus:border-purple-500 transition scheme-dark"
           />
         </div>
 
@@ -101,7 +101,7 @@ export function SessionSummaryTriggerPopover() {
               setTo(e.target.value);
               setMessage(null);
             }}
-            className="w-full rounded-md bg-gray-700 border border-gray-600 px-3 py-2 text-sm text-white outline-none focus:border-green-500 transition scheme-dark"
+            className="w-full rounded-md bg-gray-700 border border-gray-600 px-3 py-2 text-sm text-white outline-none focus:border-purple-500 transition scheme-dark"
           />
         </div>
 
@@ -111,7 +111,7 @@ export function SessionSummaryTriggerPopover() {
         {message && (
           <p
             className={`text-xs text-center font-medium ${
-              message.type === "success" ? "text-green-400" : "text-red-400"
+              message.type === "success" ? "text-purple-400" : "text-red-400"
             }`}
           >
             {message.text}
@@ -122,7 +122,7 @@ export function SessionSummaryTriggerPopover() {
         <Button
           onClick={handleSubmit}
           disabled={isDisabled}
-          className="w-full bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <div className="flex items-center gap-2">
