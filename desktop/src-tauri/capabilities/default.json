@@ -8,6 +8,7 @@
     "opener:default",
     "screenshots:default",
     "dialog:default",
+    "store:default",
 
     "http:default",
     "http:allow-fetch",

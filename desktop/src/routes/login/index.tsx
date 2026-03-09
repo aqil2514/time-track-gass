@@ -18,6 +18,8 @@ import axios, { isAxiosError } from "axios";
 import { useAuth } from "@/hooks/use-auth";
 import { Loading } from "@/components/layout/loading";
 
+import { load } from "@tauri-apps/plugin-store";
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const form = useForm<LoginSchemaType>({
@@ -35,7 +37,10 @@ export default function LoginPage() {
       const url = buildUrl("auth/login");
       const { data } = await axios.post(url, values);
 
-      localStorage.setItem("accessToken", data.token);
+      const store = await load("auth.json");
+      await store.set("accessToken", data.token);
+      await store.save();
+
       navigate("/");
     } catch (error) {
       if (isAxiosError(error)) {
@@ -76,7 +81,7 @@ export default function LoginPage() {
       }
     }
   };
-  
+
   const username = useWatch({
     control: form.control,
     name: "identifier",
@@ -92,12 +97,11 @@ export default function LoginPage() {
   const location = useLocation();
   const successMessage = location.state?.successMessage;
 
-  
-    const { loading, user } = useAuth();
-  
-    if (loading) return <Loading />;
-  
-    if (user) return <Navigate to={"/"} />;
+  const { loading, user } = useAuth();
+
+  if (loading) return <Loading />;
+
+  if (user) return <Navigate to={"/"} />;
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">

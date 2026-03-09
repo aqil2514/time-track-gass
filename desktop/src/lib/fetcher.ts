@@ -1,10 +1,14 @@
 import { fetch } from "@tauri-apps/plugin-http";
+import { load } from "@tauri-apps/plugin-store";
 
 export async function fetcher<T>(url: string): Promise<T> {
+  const store = await load("auth.json");
+  const token = await store.get<string>("accessToken");
+
   const res = await fetch(url, {
     credentials: "include",
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+      Authorization: `Bearer ${token}`,
     },
   });
 
