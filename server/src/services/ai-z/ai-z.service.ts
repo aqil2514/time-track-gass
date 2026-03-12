@@ -37,9 +37,15 @@ Return ONLY valid JSON in the following format:
 {
   "app_name": "main application visible on the screen",
   "window_title": "visible window title",
-  "category": "choose one of the following: coding, debugging, research, database, devops, review, meeting, communication, design, planning",
+  "category": "choose one of the following: active_support, client_farming, technical_escalation, admin_reporting, coding, debugging, research, database, devops, review, meeting, communication, design, planning",
   "summary": "concise description of the activity"
 }
+
+Category Definitions:
+- active_support: Focus on responding to client chats/tickets or providing quick solutions in CRM.
+- client_farming: Proactive activity of contacting old clients to maintain relationships (weekly follow-up).
+- technical_escalation: Process of creating tickets in "Task Gass" for technical issues to be handled by the dev team.
+- admin_reporting: Filling out reports in Google Sheets, attendance forms, or internal database updates.
 
 Rules:
 - Respond with JSON only.
