@@ -75,17 +75,12 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const user = await this.service.login(body, true);
-    const token = await this.jwt.signAsync(
-      {
-        id: user.id,
-        role: user.role,
-        username: user.username,
-        email: user.email,
-      },
-      {
-        expiresIn: '1d',
-      },
-    );
+    const token = await this.jwt.signAsync({
+      id: user.id,
+      role: user.role,
+      username: user.username,
+      email: user.email,
+    });
 
     res.cookie('access_token', token, this.supervisorCookiesOption);
 
