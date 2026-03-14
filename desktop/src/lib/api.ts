@@ -24,7 +24,9 @@ api.defaults.adapter = async (config) => {
     body: isFormData
       ? config.data
       : config.data
-        ? JSON.stringify(config.data)
+        ? typeof config.data === "string"
+          ? config.data
+          : JSON.stringify(config.data)
         : undefined,
   });
 
