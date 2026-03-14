@@ -1,7 +1,36 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+use base64::Engine;
+use image::imageops::FilterType;
+
 #[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+async fn resize_and_encode(file_path: String) -> Result<String, String> {
+    let img = image::open(&file_path).map_err(|e| format!("Failed to open image: {e}"))?;
+
+    let max_width = 1440u32;
+    let max_height = 900u32;
+    let (w, h) = (img.width(), img.height());
+
+    let img = if w > max_width || h > max_height {
+        let ratio = (max_width as f64 / w as f64).min(max_height as f64 / h as f64);
+        let new_w = (w as f64 * ratio) as u32;
+        let new_h = (h as f64 * ratio) as u32;
+        img.resize(new_w, new_h, FilterType::CatmullRom)
+    } else {
+        img
+    };
+
+    let rgba = img.to_rgba8();
+    let (w, h) = (rgba.width(), rgba.height());
+
+    let encoder = webp::Encoder::from_rgba(&rgba, w, h);
+    let webp_data = encoder.encode(70.0);
+
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&*webp_data);
+
+    if let Err(e) = std::fs::remove_file(&file_path) {
+        eprintln!("Warning: failed to clean up temp file {file_path}: {e}");
+    }
+
+    Ok(format!("data:image/webp;base64,{b64}"))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -9,11 +38,10 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_screenshots::init())
-        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_store::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![resize_and_encode])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

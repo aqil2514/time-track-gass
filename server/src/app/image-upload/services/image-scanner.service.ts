@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ZAIService } from '../../../services/ai-z/ai-z.service';
 import { ZImageAnalyzeData } from '../../../services/ai-z/interface/ai-z.interface';
-import { CloudinaryService } from '../../../services/cloudinary/cloudinary.service';
 import { AIScreenReportDbInsert } from '../interfaces/ai-screen-report.interface';
 
 @Injectable()
@@ -11,7 +10,6 @@ export class ImageScannerService {
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
 
-    private readonly cloudinary: CloudinaryService,
     private readonly zAi: ZAIService,
   ) {}
 
@@ -24,9 +22,8 @@ export class ImageScannerService {
     }
   }
 
-  async analizeActivity(file: Express.Multer.File, userId: string) {
-    const { secure_url } = (await this.cloudinary.uploadImageFile(file)) as any;
-    const { data } = await this.zAi.getAiImageAnalyze(secure_url);
+  async analyzeActivity(imageDataUrl: string, userId: string) {
+    const { data } = await this.zAi.getAiImageAnalyze(imageDataUrl);
     const mappedData: AIScreenReportDbInsert = {
       ...data,
       user_id: userId,

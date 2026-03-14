@@ -10,22 +10,49 @@ import { ActivityData } from 'src/app/activities/interface/activities_data.inter
 @Injectable()
 export class ZAIService {
   private readonly endpoint: string =
-    'https://api.z.ai/api/coding/paas/v4/chat/completions';
+    'https://open.bigmodel.cn/api/coding/paas/v4/chat/completions';
   private readonly apiKey: string = `Bearer ${process.env.Z_AI_API_KEY}`;
   private readonly model: string = 'glm-4.6v';
 
-  private cleanAiJson(text: string) {
+  private cleanAiJson(text: string): string {
     return text
       .replace(/```json/g, '')
       .replace(/```/g, '')
       .trim();
   }
 
-  async getAiImageAnalyze(image_url: string): Promise<ZImageAnalyzeReturn> {
+  private async chatCompletion(content: unknown[]): Promise<{
+    rawText: string;
+    cleanJson: string;
+    reasoning?: string;
+  }> {
+    const { data } = await axios.post(
+      this.endpoint,
+      {
+        model: this.model,
+        messages: [{ role: 'user', content }],
+      },
+      {
+        headers: {
+          Authorization: this.apiKey,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    const message = data.choices[0].message;
+    return {
+      rawText: message.content,
+      cleanJson: this.cleanAiJson(message.content),
+      reasoning: message.reasoning_content,
+    };
+  }
+
+  async getAiImageAnalyze(imageDataUrl: string): Promise<ZImageAnalyzeReturn> {
     const content = [
       {
         type: 'image_url',
-        image_url: { url: image_url },
+        image_url: { url: imageDataUrl },
       },
       {
         type: 'text',
@@ -57,35 +84,19 @@ Rules:
     ];
 
     try {
-      const { data } = await axios.post(
-        this.endpoint,
-        {
-          model: this.model,
-          messages: [
-            {
-              role: 'user',
-              content,
-            },
-          ],
-          // thinking: { type: 'enabled' },
-        },
-        {
-          headers: {
-            Authorization: this.apiKey,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
+      const { rawText, cleanJson, reasoning } =
+        await this.chatCompletion(content);
+      const parsed = JSON.parse(cleanJson);
+      const { app_name, window_title, category, summary } = parsed;
 
-      const message = data.choices[0].message;
-      const aiText = message.content;
-      const cleanText = this.cleanAiJson(aiText);
-
-      const aiReasoning = message.reasoning_content;
-
-      return { message, aiText, aiReasoning, data: JSON.parse(cleanText) };
+      return {
+        message: rawText,
+        aiText: rawText,
+        aiReasoning: reasoning,
+        data: { app_name, window_title, category, summary },
+      };
     } catch (error) {
-      console.error(error);
+      console.error('AI Image Analyze Error:', error);
       throw error;
     }
   }
@@ -126,35 +137,10 @@ Expected format:
     ];
 
     try {
-      const { data } = await axios.post(
-        this.endpoint,
-        {
-          model: this.model,
-          messages: [
-            {
-              role: 'user',
-              content,
-            },
-          ],
-        },
-        {
-          headers: {
-            Authorization: this.apiKey,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-
-      const message = data.choices[0].message;
-      const aiText = message.content;
-
-      const cleanText = this.cleanAiJson(aiText);
-
-      const parsed: AiSessionSummaryResult = JSON.parse(cleanText);
-
-      return parsed;
+      const { cleanJson } = await this.chatCompletion(content);
+      return JSON.parse(cleanJson) as AiSessionSummaryResult;
     } catch (error) {
-      console.error('AI Session Summary Title Error:', error);
+      console.error('AI Session Summary Error:', error);
       throw error;
     }
   }
@@ -162,7 +148,6 @@ Expected format:
   async getAiDailySummary(
     sessionActivities: ActivityData[],
   ): Promise<AiDailySummaryResult> {
-    // 🔹 Gabungkan semua session titles/summaries
     const summaries = sessionActivities.map(
       (s) => s.title || s.description || '',
     );
@@ -198,34 +183,11 @@ Expected JSON format:
     `,
       },
     ];
+
     try {
-      const { data } = await axios.post(
-        this.endpoint,
-        {
-          model: this.model,
-          messages: [
-            {
-              role: 'user',
-              content,
-            },
-          ],
-        },
-        {
-          headers: {
-            Authorization: this.apiKey,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
+      const { cleanJson } = await this.chatCompletion(content);
+      const parsed: AiDailySummaryResult = JSON.parse(cleanJson);
 
-      const message = data.choices[0].message;
-      let aiText = message.content.trim();
-
-      aiText = aiText.replace(/^```(json)?\s*/, '').replace(/```$/, '');
-
-      const parsed: AiDailySummaryResult = JSON.parse(aiText);
-
-      // pastikan highlights muncul di summary
       parsed.highlights = parsed.highlights.filter((h) =>
         parsed.summary.includes(h),
       );

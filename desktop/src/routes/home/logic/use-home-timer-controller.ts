@@ -1,7 +1,6 @@
 import { TIME_TO_SCREENSHOT } from "@/constants/home";
 import { useCapture } from "@/hooks/use-capture";
 import { buildUrl } from "@/utils/build-url";
-import { readFile } from "@tauri-apps/plugin-fs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { KeyedMutator } from "swr";
 import { ActivityData } from "../types/activites-data.type";
@@ -68,21 +67,15 @@ const captureHandler = useCallback(async () => {
     isCapturingRef.current = true;
     setStatus("capturing");
 
-    const capturePath = await capture();
-    if (!capturePath) throw new Error("Capture failed");
-
-    const fileData = await readFile(capturePath);
-    const blob = new Blob([fileData]);
-
-    const formData = new FormData();
-    formData.append("file", blob);
+    const dataUrl = await capture();
+    if (!dataUrl) throw new Error("Capture failed");
 
     setStatus("uploading");
 
     const store = await load("auth.json");
     const token = await store.get<string>("accessToken");
 
-    await api.postForm(buildUrl("image-upload"), formData, {
+    await api.post(buildUrl("image-upload"), { image: dataUrl }, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

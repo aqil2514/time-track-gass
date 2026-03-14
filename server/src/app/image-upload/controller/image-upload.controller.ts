@@ -1,15 +1,14 @@
 import {
+  Body,
   Controller,
   Get,
   Post,
   Req,
-  UploadedFile,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { ImageScannerService } from '../services/image-scanner.service';
 import { JwtAuthGuard } from 'src/guards/jwt.guard';
+import { ImageUploadDto } from '../dto/image-upload.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('image-upload')
@@ -17,12 +16,11 @@ export class ImageUploadController {
   constructor(private readonly scannerService: ImageScannerService) {}
 
   @Post('')
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@UploadedFile() file: Express.Multer.File, @Req() req: any) {
+  async uploadFile(@Body() body: ImageUploadDto, @Req() req: any) {
     const user = req.user;
     const userId = user.user.id;
 
-    return await this.scannerService.analizeActivity(file, userId);
+    return await this.scannerService.analyzeActivity(body.image, userId);
   }
 
   @Get('')

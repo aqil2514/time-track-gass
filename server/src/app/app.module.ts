@@ -4,7 +4,6 @@ import { ImageUploadModule } from './image-upload/image-upload.module';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { AIGeminiModule } from '../services/ai-gemini/ai-gemini.module';
-import { CloudinaryModule } from '../services/cloudinary/cloudinary.module';
 import { ZAIModule } from '../services/ai-z/ai-z.module';
 import { SupabaseModule } from '../services/supabase/supabase.module';
 import { AuthModule } from './auth/auth.module';
@@ -21,7 +20,6 @@ import { SupervisorModule } from './supervisor/supervisor.module';
     ScheduleModule.forRoot(),
 
     AIGeminiModule,
-    CloudinaryModule,
     ZAIModule,
     SupabaseModule,
     AuthModule,
