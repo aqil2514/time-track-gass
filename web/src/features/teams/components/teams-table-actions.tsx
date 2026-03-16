@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AuthUser } from "@/@types/auth";
-import { useTeams } from "../providers/teams.provider";
+// import { useTeams } from "../providers/teams.provider";
 
 interface TeamsTableActionsProps {
   user: AuthUser;
@@ -24,7 +24,7 @@ export function TeamsTableActions({
   onEdit,
   onDelete,
 }: TeamsTableActionsProps) {
-  const { dispatch } = useTeams();
+  // const { dispatch } = useTeams();
   return (
     <div className="text-right">
       <DropdownMenu>
@@ -59,12 +59,13 @@ export function TeamsTableActions({
 
           <DropdownMenuItem
             className="cursor-pointer focus:bg-blue-900/50 focus:text-blue-400 text-blue-400"
-            onClick={() =>
-              dispatch({
-                type: "OPEN_RESET_PASSWORD_USER_MODAL",
-                payload: { userId: user.id },
-              })
-            }
+            onClick={() => alert("Dalam Pengembangan")}
+            // onClick={() =>
+            //   dispatch({
+            //     type: "OPEN_RESET_PASSWORD_USER_MODAL",
+            //     payload: { userId: user.id },
+            //   })
+            // }
           >
             <Key className="mr-2 h-4 w-4" /> Reset Password
           </DropdownMenuItem>

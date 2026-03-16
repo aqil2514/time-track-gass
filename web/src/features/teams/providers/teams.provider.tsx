@@ -17,7 +17,6 @@ const TeamsContext = createContext<TeamManagemetContext>(
   {} as TeamManagemetContext,
 );
 
-// TODO : NANTI AJAH PAKEK REDUCER
 export function TeamProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(teamManagemetAction, reducerTeamInitial);
   const userData = useUserData(state);
