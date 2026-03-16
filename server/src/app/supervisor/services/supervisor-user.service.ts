@@ -1,4 +1,9 @@
-import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ProfilesWithNoPassword } from 'src/app/auth/interfaces/profiles.interface';
 import { TableName } from 'src/services/supabase/supabase.interface';
@@ -46,7 +51,11 @@ export class SupervisorUserService {
     return data as ProfilesWithNoPassword;
   }
 
-  private async checkUniqueness(email: string, username: string, excludeId?: string) {
+  private async checkUniqueness(
+    email: string,
+    username: string,
+    excludeId?: string,
+  ) {
     let query = this.supabase
       .from(TableName.Profiles)
       .select('id, email, username')
@@ -70,39 +79,51 @@ export class SupervisorUserService {
     }
   }
 
-  async createUserData(createUserDto: CreateUserDto): Promise<ProfilesWithNoPassword> {
+  async createUserData(
+    createUserDto: CreateUserDto,
+  ): Promise<ProfilesWithNoPassword> {
     await this.checkUniqueness(createUserDto.email, createUserDto.username);
 
     const { data, error } = await this.supabase
       .from(TableName.Profiles)
-      .insert([{
+      .insert([
+        {
           full_name: createUserDto.fullName,
           username: createUserDto.username,
           email: createUserDto.email,
           password: createUserDto.password,
           role: createUserDto.role,
           division: createUserDto.division,
-      }])
+        },
+      ])
       .select('id, email, username, full_name, role, division')
       .single();
 
     if (error) {
       // 2. Backup check jika constraint DB yang kena
-      if (error.code === '23505') throw new ConflictException('User already exists');
+      if (error.code === '23505')
+        throw new ConflictException('User already exists');
       throw error;
     }
 
     return data as ProfilesWithNoPassword;
   }
 
-  async updateUserData(id: string, updateUserDto: UpdateUserDto): Promise<ProfilesWithNoPassword> {
+  async updateUserData(
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<ProfilesWithNoPassword> {
     const { data: currentUser } = await this.supabase
       .from(TableName.Profiles)
       .select('username')
       .eq('id', id)
       .single();
 
-    await this.checkUniqueness(updateUserDto.email, currentUser?.username || '', id);
+    await this.checkUniqueness(
+      updateUserDto.email,
+      currentUser?.username || '',
+      id,
+    );
 
     const { data, error } = await this.supabase
       .from(TableName.Profiles)
@@ -117,16 +138,30 @@ export class SupervisorUserService {
       .single();
 
     if (error) {
-      if (error.code === '23505') throw new ConflictException('Email already used by another user');
+      if (error.code === '23505')
+        throw new ConflictException('Email already used by another user');
       throw error;
     }
 
     return data as ProfilesWithNoPassword;
   }
+
   async deleteUserData(id: string): Promise<void> {
     const { error } = await this.supabase
       .from(TableName.Profiles)
       .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) {
+      console.error(`Error deleting user ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async deleteUserPassword(id: string): Promise<void> {
+    const { error } = await this.supabase
+      .from(TableName.Profiles)
+      .update({ password: ""})
       .eq('id', id);
 
     if (error) {

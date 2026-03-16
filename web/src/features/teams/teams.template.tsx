@@ -6,13 +6,25 @@ import { UserFormDialog } from "./components/user-form-dialog";
 import { DeleteUserDialog } from "./components/delete-user-dialog"; // Import dialog hapus
 import { useTeams } from "./hooks/use-teams";
 import { TeamsControls } from "./components/teams-controls";
+import { TeamProvider } from "./providers/teams.provider";
+import { ResetPasswordDialog } from "./components/reset-password-dialog";
 
 export function TeamsTemplate() {
+  return (
+    <TeamProvider>
+      <InnerTemplate />
+    </TeamProvider>
+  );
+}
+
+const InnerTemplate = () => {
+  // TODO : NANTI INI HAPUS BIAR GA PROP DRILLING
   const {
     data,
     isLoading,
     error,
     columns,
+
     // State Form (Add/Edit)
     isDialogOpen,
     isFetchingDetail,
@@ -20,6 +32,7 @@ export function TeamsTemplate() {
     selectedUserData,
     setSelectedUserData,
     onFormSubmit,
+
     // State Delete
     userToDelete,
     isDeleteDialogOpen,
@@ -33,10 +46,11 @@ export function TeamsTemplate() {
     setSearch,
     search,
     totalRaw,
-    availableDivisions
+    availableDivisions,
   } = useTeams();
 
   return (
+    <>
     <div className="w-full space-y-6 p-8">
       <TeamsHeader />
 
@@ -101,5 +115,8 @@ export function TeamsTemplate() {
         isLoading={isDeleting}
       />
     </div>
+
+    <ResetPasswordDialog />
+    </>
   );
-}
+};

@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Patch, Param, Body, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Body,
+  Delete,
+} from '@nestjs/common';
 import { SupervisorUserService } from '../services/supervisor-user.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -9,7 +17,9 @@ export class SupervisorUserController {
   constructor(private readonly supervisorUserService: SupervisorUserService) {}
 
   @Post()
-  async create(@Body() createUserDto: CreateUserDto): Promise<ProfilesWithNoPassword> {
+  async create(
+    @Body() createUserDto: CreateUserDto,
+  ): Promise<ProfilesWithNoPassword> {
     return this.supervisorUserService.createUserData(createUserDto);
   }
 
@@ -29,6 +39,11 @@ export class SupervisorUserController {
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<ProfilesWithNoPassword> {
     return this.supervisorUserService.updateUserData(id, updateUserDto);
+  }
+
+  @Patch(':id/reset-password')
+  async resetPassword(@Param('id') id: string) {
+    return await this.supervisorUserService.deleteUserPassword(id)
   }
 
   @Delete(':id')

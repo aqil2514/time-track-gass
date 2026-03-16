@@ -106,7 +106,7 @@ export function DashboardUserFilter() {
                   }
                   `}
                   >
-                    {item.username[0]}
+                    {item.username.slice(0,2).toUpperCase()}
                   </button>
                 );
               })
