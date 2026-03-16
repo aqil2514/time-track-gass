@@ -5,6 +5,7 @@ import { DataTable } from "@/components/containers/data-table";
 import { UserFormDialog } from "./components/user-form-dialog";
 import { DeleteUserDialog } from "./components/delete-user-dialog"; // Import dialog hapus
 import { useTeams } from "./hooks/use-teams";
+import { TeamsControls } from "./components/teams-controls";
 
 export function TeamsTemplate() {
   const {
@@ -25,11 +26,30 @@ export function TeamsTemplate() {
     setIsDeleteDialogOpen,
     isDeleting,
     onConfirmDelete,
+    divisionFilter,
+    setDivisionFilter,
+    setRoleFilter,
+    roleFilter,
+    setSearch,
+    search,
+    totalRaw,
+    availableDivisions
   } = useTeams();
 
   return (
     <div className="w-full space-y-6 p-8">
       <TeamsHeader />
+
+      <TeamsControls
+        totalUsers={totalRaw}
+        searchValue={search}
+        onSearchChange={setSearch}
+        roleFilter={roleFilter}
+        onRoleChange={setRoleFilter}
+        divisionFilter={divisionFilter}
+        onDivisionChange={setDivisionFilter}
+        availableDivisions={availableDivisions}
+      />
 
       {isLoading ? (
         <div className="flex h-64 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/50">

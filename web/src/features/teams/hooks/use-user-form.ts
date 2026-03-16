@@ -1,12 +1,13 @@
 import React from "react";
 import { AddUserSchema } from "../schema/user-schema";
 import { AuthUser } from "@/@types/auth";
-import axios from "axios";
+import axios, { isAxiosError } from "axios";
 import { mapUserToSchema } from "../utils/user-mapper";
 
 export function useUserForm(mutate: () => void) {
   const [editingId, setEditingId] = React.useState<string | null>(null);
-  const [selectedUserData, setSelectedUserData] = React.useState<Partial<AddUserSchema> | null>(null);
+  const [selectedUserData, setSelectedUserData] =
+    React.useState<Partial<AddUserSchema> | null>(null);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -36,20 +37,28 @@ export function useUserForm(mutate: () => void) {
       setIsDialogOpen(false);
       setSelectedUserData(null);
       setEditingId(null);
+    } catch (error) {
+      if (isAxiosError(error)) {
+        const errorMessage =
+          error.response?.data?.message || "Failed to save data";
+        alert(errorMessage);
+      } else {
+        alert("An unexpected error occurred");
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return { 
-    editingId, 
-    selectedUserData, 
-    isDialogOpen, 
-    setIsDialogOpen, 
-    isSubmitting, 
-    isFetchingDetail: isSubmitting, // Tambahkan alias di sini
-    handleEdit, 
-    onFormSubmit, 
-    setSelectedUserData 
+  return {
+    editingId,
+    selectedUserData,
+    isDialogOpen,
+    setIsDialogOpen,
+    isSubmitting,
+    isFetchingDetail: isSubmitting,
+    handleEdit,
+    onFormSubmit,
+    setSelectedUserData,
   };
 }
