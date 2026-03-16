@@ -14,9 +14,9 @@ export const reducerTeamController: TeamControllerState = {
 
 export const reducerTeamModal: TeamModalState = {
   add: false,
-  delete: false,
-  edit: false,
-  resetPassword: {isOpen:false, userId:""},
+  delete: { isOpen: false, userId: "" },
+  edit: { isOpen: false, userId: "" },
+  resetPassword: { isOpen: false, userId: "" },
 };
 
 export const reducerTeamInitial: TeamManagemetState = {

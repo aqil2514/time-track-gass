@@ -49,13 +49,13 @@ const teamModalAction = (
     case "CLOSE_ADD_USER_MODAL":
       return { ...state, add: false };
     case "OPEN_EDIT_USER_MODAL":
-      return { ...state, edit: true };
+      return { ...state, edit: {isOpen: true, userId: action.payload.userId }};
     case "CLOSE_EDIT_USER_MODAL":
-      return { ...state, edit: false };
+      return { ...state, edit: {isOpen: false, userId: ""} };
     case "OPEN_DELETE_USER_MODAL":
-      return { ...state, delete: true };
+      return { ...state, delete: {isOpen: true, userId: action.payload.userId} };
     case "CLOSE_DELETE_USER_MODAL":
-      return { ...state, delete: false };
+      return { ...state, delete: {isOpen: false, userId: ""} };
     case "OPEN_RESET_PASSWORD_USER_MODAL":
       return {
         ...state,

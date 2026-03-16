@@ -1,6 +1,6 @@
 export interface TeamManagemetState {
   controller: TeamControllerState;
-  modal: TeamModalState
+  modal: TeamModalState;
 }
 
 export type TeamManagemetAction = TeamControllerActionType | TeamModalAction;
@@ -15,9 +15,9 @@ export interface TeamControllerState {
 
 export interface TeamModalState {
   add: boolean;
-  edit: boolean;
-  delete: boolean;
-  resetPassword: {isOpen: boolean, userId:string};
+  edit: { isOpen: boolean; userId: string };
+  delete: { isOpen: boolean; userId: string };
+  resetPassword: { isOpen: boolean; userId: string };
 }
 
 export type TeamControllerActionType =
@@ -31,9 +31,9 @@ export type TeamControllerActionType =
 export type TeamModalAction =
   | { type: "OPEN_ADD_USER_MODAL" }
   | { type: "CLOSE_ADD_USER_MODAL" }
-  | { type: "OPEN_EDIT_USER_MODAL" }
+  | { type: "OPEN_EDIT_USER_MODAL", payload: { userId: string } }
   | { type: "CLOSE_EDIT_USER_MODAL" }
-  | { type: "OPEN_DELETE_USER_MODAL" }
+  | { type: "OPEN_DELETE_USER_MODAL", payload: { userId: string } }
   | { type: "CLOSE_DELETE_USER_MODAL" }
-  | { type: "OPEN_RESET_PASSWORD_USER_MODAL", payload:{userId:string} }
-  | { type: "CLOSE_RESET_PASSWORD_USER_MODAL" }
+  | { type: "OPEN_RESET_PASSWORD_USER_MODAL"; payload: { userId: string } }
+  | { type: "CLOSE_RESET_PASSWORD_USER_MODAL" };

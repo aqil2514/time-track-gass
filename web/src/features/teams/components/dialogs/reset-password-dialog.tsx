@@ -13,8 +13,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Key, Loader2 } from "lucide-react";
-import { useTeams } from "../providers/teams.provider";
 import { useSWRConfig } from "swr";
+import { useTeams } from "../../providers/teams.provider";
 
 export function ResetPasswordDialog() {
   const { state, dispatch } = useTeams();

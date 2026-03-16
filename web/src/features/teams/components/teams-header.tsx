@@ -1,41 +1,12 @@
 "use client";
 
-import * as React from "react";
 import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { UserFormDialog } from "./user-form-dialog";
-import { AddUserSchema } from "../schema/user-schema";
-import { useSWRConfig } from "swr";
-import axios, { isAxiosError } from "axios";
+import { useTeams } from "../providers/teams.provider";
 
 export function TeamsHeader() {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { mutate } = useSWRConfig();
+  const { dispatch } = useTeams();
 
-  const handleAddUser = async (data: AddUserSchema) => {
-    setIsSubmitting(true);
-    try {
-      const response = await axios.post("/api/user", data);
-
-      if (response.status === 200 || response.status === 201) {
-        mutate("/api/user");
-        setIsOpen(false);
-      }
-    } catch (error) {
-      if (isAxiosError(error)) {
-        const errorMessage =
-          error.response?.data?.message || "Failed to create user";
-        alert(errorMessage);
-        console.error("Add user error:", errorMessage);
-      } else {
-        alert("An unexpected error occurred");
-        console.error("An unexpected error occurred:", error);
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="flex items-center justify-between">
@@ -49,19 +20,12 @@ export function TeamsHeader() {
       </div>
 
       <Button
-        onClick={() => setIsOpen(true)}
+        onClick={() => dispatch({ type: "OPEN_ADD_USER_MODAL" })}
         className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/20"
       >
         <UserPlus className="mr-2 h-4 w-4" />
         Add User
       </Button>
-
-      <UserFormDialog
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        onSubmit={handleAddUser}
-        isLoading={isSubmitting}
-      />
     </div>
   );
 }

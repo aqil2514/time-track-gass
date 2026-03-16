@@ -4,7 +4,6 @@ import * as React from "react";
 import { AuthUser } from "@/@types/auth";
 import { useFetch } from "@/hooks/use-fetch";
 import { useUserDelete } from "./use-user-delete";
-import { useUserForm } from "./use-user-form";
 import { getColumns } from "../components/teams-table-columns";
 
 export function useTeams() {
@@ -16,7 +15,6 @@ export function useTeams() {
   const [divisionFilter, setDivisionFilter] = React.useState("all");
 
   // Hooks Modular
-  const form = useUserForm(mutate);
   const deletion = useUserDelete(data, mutate);
 
   // Ambil daftar divisi unik dari data yang difetch
@@ -25,7 +23,7 @@ export function useTeams() {
     const divisions = data
       .map((user) => user.division)
       .filter((division): division is string => !!division);
-    
+
     return Array.from(new Set(divisions)).sort();
   }, [data]);
 
@@ -47,21 +45,18 @@ export function useTeams() {
     });
   }, [data, search, roleFilter, divisionFilter]);
 
-  const columns = React.useMemo(
-    () => getColumns(form.handleEdit, deletion.handleDeleteClick),
-    [form.handleEdit, deletion.handleDeleteClick],
-  );
+  const columns = React.useMemo(() => getColumns(), []);
 
   return {
     // Filtered data for Table
     data: filteredData,
     totalRaw: data?.length || 0,
     availableDivisions,
-    
+
     // Status
     isLoading,
     error,
-    
+
     // Filter Controls
     search,
     setSearch,
@@ -69,12 +64,11 @@ export function useTeams() {
     setRoleFilter,
     divisionFilter,
     setDivisionFilter,
-    
+
     // Table Config
     columns,
-    
+
     // Modals & Actions Logic
-    ...form,
     ...deletion,
   };
 }
