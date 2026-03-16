@@ -2,7 +2,9 @@ import { AuthUser } from "@/@types/auth";
 import { useFetch } from "@/hooks/use-fetch";
 import { useMemo } from "react";
 import { KeyedMutator } from "swr";
-import { TeamManagemetState } from "../reducer/reducer-teams.interface";
+import {
+  TeamManagemetState,
+} from "../reducer/reducer-teams.interface";
 
 export interface UseUserDataResult {
   data: AuthUser[];
@@ -12,9 +14,11 @@ export interface UseUserDataResult {
   filteredData: AuthUser[];
 }
 
-export function useUserData(state: TeamManagemetState): UseUserDataResult {
+export function useUserData(
+  state: TeamManagemetState,
+): UseUserDataResult {
   const { data, isLoading, error, mutate } = useFetch<AuthUser[]>("/api/user");
-  const {roleFilter, divisionFilter, searchValue:search} = state.controller
+  const { roleFilter, divisionFilter, searchValue: search } = state.controller;
 
   const memoData = useMemo(() => data ?? [], [data]);
 
@@ -40,6 +44,6 @@ export function useUserData(state: TeamManagemetState): UseUserDataResult {
     error,
     mutate,
     data: memoData,
-    filteredData
+    filteredData,
   };
 }

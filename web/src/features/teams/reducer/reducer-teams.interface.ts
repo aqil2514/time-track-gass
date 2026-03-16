@@ -1,9 +1,15 @@
+import { AuthUser } from "@/@types/auth";
+
 export interface TeamManagemetState {
   controller: TeamControllerState;
   modal: TeamModalState;
+  data: TeamDataState;
 }
 
-export type TeamManagemetAction = TeamControllerActionType | TeamModalAction;
+export type TeamManagemetAction =
+  | TeamControllerActionType
+  | TeamModalAction
+  | TeamDataAction;
 
 export interface TeamControllerState {
   totalUsers: number;
@@ -20,6 +26,10 @@ export interface TeamModalState {
   resetPassword: { isOpen: boolean; userId: string };
 }
 
+export interface TeamDataState {
+  filteredData: AuthUser[];
+}
+
 export type TeamControllerActionType =
   | { type: "SET_TOTAL_USER"; payload: number }
   | { type: "SET_AVAILABLE_DIVISIONS"; payload: string[] }
@@ -31,9 +41,13 @@ export type TeamControllerActionType =
 export type TeamModalAction =
   | { type: "OPEN_ADD_USER_MODAL" }
   | { type: "CLOSE_ADD_USER_MODAL" }
-  | { type: "OPEN_EDIT_USER_MODAL", payload: { userId: string } }
+  | { type: "OPEN_EDIT_USER_MODAL"; payload: { userId: string } }
   | { type: "CLOSE_EDIT_USER_MODAL" }
-  | { type: "OPEN_DELETE_USER_MODAL", payload: { userId: string } }
+  | { type: "OPEN_DELETE_USER_MODAL"; payload: { userId: string } }
   | { type: "CLOSE_DELETE_USER_MODAL" }
   | { type: "OPEN_RESET_PASSWORD_USER_MODAL"; payload: { userId: string } }
   | { type: "CLOSE_RESET_PASSWORD_USER_MODAL" };
+
+export type TeamDataAction =
+  | { type: "FILTER_NEW_DATA"; payload: AuthUser[] }
+  | { type: "RESET_ALL_DATA"; payload: AuthUser[] };

@@ -6,8 +6,8 @@ import {
 
 export const reducerTeamController: TeamControllerState = {
   availableDivisions: [],
-  divisionFilter: "",
-  roleFilter: "",
+  divisionFilter: "all", 
+  roleFilter: "all",     
   searchValue: "",
   totalUsers: 0,
 };
@@ -22,4 +22,5 @@ export const reducerTeamModal: TeamModalState = {
 export const reducerTeamInitial: TeamManagemetState = {
   controller: reducerTeamController,
   modal: reducerTeamModal,
+  data: { filteredData: [] },
 };

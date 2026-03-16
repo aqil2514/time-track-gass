@@ -15,10 +15,17 @@ import { useMemo } from "react";
 
 export function TeamsControls() {
   const { state, dispatch, userData } = useTeams();
-  const { searchValue, roleFilter, divisionFilter, totalUsers } =
-    state.controller;
+  // Gunakan fallback agar tidak undefined saat awal load
+  const { 
+    searchValue = "", 
+    roleFilter = "all", 
+    divisionFilter = "all" 
+  } = state.controller;
 
   const data = userData.data;
+
+  // Derived State untuk badge total
+  const totalCount = data?.length || 0;
 
   const availableDivisions = useMemo(() => {
     if (!data) return [];
@@ -35,7 +42,6 @@ export function TeamsControls() {
   return (
     <div className="flex flex-col gap-4 bg-slate-900/40 p-4 rounded-xl border border-slate-800/60 shadow-sm">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Search Bar */}
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
           <Input
@@ -44,16 +50,14 @@ export function TeamsControls() {
               dispatch({ type: "SET_SEARCH_VALUE", payload: e.target.value })
             }
             placeholder="Search name, email, or username..."
-            className="pl-10 bg-slate-950 border-slate-800 text-slate-200 focus-visible:ring-blue-600/50"
+            className="pl-10 bg-slate-950 border-slate-800 text-slate-200"
           />
         </div>
 
-        {/* Total Badge */}
         <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg shrink-0">
           <Users className="h-4 w-4 text-blue-400" />
           <span className="text-sm font-medium text-blue-300">
-            {totalUsers}{" "}
-            <span className="text-blue-400/60 ml-0.5">Total Members</span>
+            {totalCount} <span className="text-blue-400/60 ml-0.5">Total Members</span>
           </span>
         </div>
       </div>
@@ -63,14 +67,11 @@ export function TeamsControls() {
           <Filter className="h-3 w-3" /> Filter By
         </div>
 
-        {/* Role Filter */}
         <Select
           value={roleFilter}
-          onValueChange={(e) =>
-            dispatch({ type: "SET_ROLE_VALUE", payload: e })
-          }
+          onValueChange={(val) => dispatch({ type: "SET_ROLE_VALUE", payload: val })}
         >
-          <SelectTrigger className="w-35 h-9 bg-slate-950 border-slate-800 text-xs text-slate-300">
+          <SelectTrigger className="w-32 h-9 bg-slate-950 border-slate-800 text-xs text-slate-300">
             <SelectValue placeholder="All Roles" />
           </SelectTrigger>
           <SelectContent className="bg-slate-900 border-slate-800 text-slate-300">
@@ -80,14 +81,12 @@ export function TeamsControls() {
           </SelectContent>
         </Select>
 
-        {/* Dynamic Division Filter */}
         <Select
           value={divisionFilter}
-          onValueChange={(e) =>
-            dispatch({ type: "SET_DIVISION_VALUE", payload: e })
-          }
+          onValueChange={(val) => dispatch({ type: "SET_DIVISION_VALUE", payload: val })}
         >
-          <SelectTrigger className="w-40bg-slate-950 border-slate-800 text-xs text-slate-300">
+          {/* Typo fixed here: w-40 bg-... */}
+          <SelectTrigger className="w-40 h-9 bg-slate-950 border-slate-800 text-xs text-slate-300">
             <SelectValue placeholder="All Divisions" />
           </SelectTrigger>
           <SelectContent className="bg-slate-900 border-slate-800 text-slate-300">
@@ -100,13 +99,12 @@ export function TeamsControls() {
           </SelectContent>
         </Select>
 
-        {/* Reset Button */}
         {hasActiveFilters && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => dispatch({ type: "RESET_CONTROLLER" })}
-            className="h-8 text-xs text-slate-400 hover:text-slate-100 hover:bg-slate-800 px-2"
+            className="h-8 text-xs text-slate-400 hover:text-slate-100"
           >
             <X className="mr-1 h-3 w-3" /> Reset
           </Button>
