@@ -14,10 +14,10 @@ export function TeamsTemplate() {
     columns,
     // State Form (Add/Edit)
     isDialogOpen,
+    isFetchingDetail,
     setIsDialogOpen,
     selectedUserData,
     setSelectedUserData,
-    isFetchingDetail,
     onFormSubmit,
     // State Delete
     userToDelete,
