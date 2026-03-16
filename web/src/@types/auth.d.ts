@@ -3,4 +3,6 @@ export interface AuthUser {
   id: string;
   role: string;
   username: string;
+  full_name: string;
+  division: string;
 }
