@@ -6,7 +6,10 @@ export function DashboardHeader() {
   return (
     <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-6 py-3 flex justify-between items-center">
       <div className="flex items-center gap-3">
-      <SidebarTrigger variant={"secondary"} />
+        <SidebarTrigger
+          className="hover:bg-slate-800 text-slate-400 hover:text-white transition-colors border-none"
+          variant="ghost"
+        />
         <div className="inline-flex items-center justify-center size-9 rounded-xl bg-linear-to-br from-purple-500 to-indigo-600 shadow-lg shadow-purple-500/20">
           <Timer className="w-4 h-4 text-white" strokeWidth={2.5} />
         </div>

@@ -1,3 +1,4 @@
+import { TeamsTemplate } from "@/features/teams/teams.template";
 import { Metadata } from "next";
 
 export const metadata:Metadata = {
@@ -5,5 +6,5 @@ export const metadata:Metadata = {
 }
 
 export default function TeamPage(){
-    return <div>OK</div>
+    return <TeamsTemplate />
 }

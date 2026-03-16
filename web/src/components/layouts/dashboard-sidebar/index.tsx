@@ -11,11 +11,18 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
-import { Clock, LayoutDashboard, Users } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Clock } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { navItems } from "./items";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/providers/auth-provider";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function DashboardSidebar() {
   const router = useRouter();
+  const pathname = usePathname();
+  const auth = useAuth();
+
   return (
     <Sidebar className="border-r border-slate-800 bg-slate-900">
       {/* Header: Logo atau Nama Aplikasi */}
@@ -37,58 +44,54 @@ export function DashboardSidebar() {
           </div>
         </div>
       </SidebarHeader>
+      
       <SidebarContent className="bg-slate-900">
-        {/* Grup 1: Navigasi Utama */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-slate-500">
-            Main Menu
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  className="cursor-pointer text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                  onClick={() => router.push("/dashboard")}
-                >
-                  <LayoutDashboard className="w-4 h-4" />
-                  <span>Dashboard</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Grup 2: Pengaturan & Tim */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-slate-500">
-            Organization
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  className="cursor-pointer text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                  onClick={() => router.push("/teams")}
-                >
-                  <Users className="w-4 h-4" />
-                  <span>Team</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {navItems.map((group) => (
+          <SidebarGroup key={group.label}>
+            <SidebarGroupLabel className="text-slate-500">
+              {group.label}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const isActive = item.url === pathname;
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        className={cn(
+                          "cursor-pointer text-slate-300 transition-colors",
+                          isActive && "bg-white text-slate-800",
+                          !isActive && "hover:bg-slate-800 hover:text-white",
+                        )}
+                        onClick={() => router.push(item.url)}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       {/* Footer: Profil Pengguna */}
       <SidebarFooter className="p-4 border-t border-slate-800 bg-slate-900">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-slate-700 border border-slate-600" />
+        <div className="flex items-center gap-3 px-1">
+          <Avatar className="h-8 w-8 rounded-lg border border-slate-700">
+            <AvatarFallback className="rounded-lg bg-slate-800 text-slate-200 text-xs font-bold uppercase">
+              {auth.user?.username?.slice(0, 2).toUpperCase() || "??"}
+            </AvatarFallback>
+          </Avatar>
+
           <div className="flex flex-col overflow-hidden text-sm">
-            <span className="font-medium text-slate-200 truncate">
-              User Name
+            <span className="font-medium text-slate-200 truncate leading-tight">
+              {auth.user?.username}
             </span>
-            <span className="text-xs text-slate-500 truncate">
-              user@email.com
+            <span className="text-[11px] text-slate-500 truncate leading-tight mt-0.5">
+              {auth.user?.email}
             </span>
           </div>
         </div>

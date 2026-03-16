@@ -5,6 +5,7 @@ export interface ProfilesDb {
   email: string;
   password: string;
   role: string;
+  division: string;
   created_at: string;
   updated_at?: string;
 }
