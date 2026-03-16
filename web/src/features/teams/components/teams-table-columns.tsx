@@ -4,7 +4,11 @@ import { ColumnDef } from "@tanstack/react-table";
 import { TeamsTableActions } from "./teams-table-actions";
 import { AuthUser } from "@/@types/auth";
 
-export const columns: ColumnDef<AuthUser>[] = [
+// Fungsi sekarang menerima onEdit yang hanya membutuhkan string ID
+export const getColumns = (
+  onEdit: (id: string) => void,
+  onDelete: (id: string) => void
+): ColumnDef<AuthUser>[] => [
   {
     accessorKey: "full_name",
     header: "Name",
@@ -37,6 +41,14 @@ export const columns: ColumnDef<AuthUser>[] = [
   {
     id: "actions",
     header: () => <div className="text-right">Actions</div>,
-    cell: ({ row }) => <TeamsTableActions user={row.original} />,
+    cell: ({ row }) => (
+      <div className="text-right">
+        <TeamsTableActions 
+          user={row.original} 
+          onEdit={() => onEdit(row.original.id)}
+          onDelete={() => onDelete(row.original.id)}
+        />
+      </div>
+    ),
   },
 ];

@@ -1,13 +1,31 @@
 "use client";
 
 import { TeamsHeader } from "./components/teams-header";
-import { columns } from "./components/teams-table-columns";
 import { DataTable } from "@/components/containers/data-table";
-import { useFetch } from "@/hooks/use-fetch";
-import { AuthUser } from "@/@types/auth";
+import { UserFormDialog } from "./components/user-form-dialog";
+import { DeleteUserDialog } from "./components/delete-user-dialog"; // Import dialog hapus
+import { useTeams } from "./hooks/use-teams";
 
 export function TeamsTemplate() {
-  const { data, isLoading, error } = useFetch<AuthUser[]>("/api/user");
+  const {
+    data,
+    isLoading,
+    error,
+    columns,
+    // State Form (Add/Edit)
+    isDialogOpen,
+    setIsDialogOpen,
+    selectedUserData,
+    setSelectedUserData,
+    isFetchingDetail,
+    onFormSubmit,
+    // State Delete
+    userToDelete,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    isDeleting,
+    onConfirmDelete,
+  } = useTeams();
 
   return (
     <div className="w-full space-y-6 p-8">
@@ -25,12 +43,43 @@ export function TeamsTemplate() {
           Terjadi kesalahan saat memuat data.
         </div>
       ) : (
-        <DataTable 
-          columns={columns} 
-          data={data || []} 
+        <DataTable
+          columns={columns}
+          data={data || []}
           emptyMessage="No organization members found."
         />
       )}
+
+      {/* Dialog untuk Tambah & Edit User */}
+      <UserFormDialog
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) setSelectedUserData(null);
+        }}
+        initialData={
+          selectedUserData ?? {
+            fullName: "",
+            username: "",
+            email: "",
+            division: "",
+            role: "worker",
+            password: "",
+            confirmPassword: "",
+          }
+        }
+        onSubmit={onFormSubmit}
+        isLoading={isFetchingDetail}
+      />
+
+      {/* Dialog untuk Konfirmasi Hapus User */}
+      <DeleteUserDialog
+        user={userToDelete}
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={onConfirmDelete}
+        isLoading={isDeleting}
+      />
     </div>
   );
 }
