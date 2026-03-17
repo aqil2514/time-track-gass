@@ -11,13 +11,30 @@ export function useUserFilter() {
 
   const selectedUser = get("user") ?? "";
   const [hoverName, setHoverName] = useState<string>(selectedUser);
+  const [selectedDivision, setSelectedDivision] = useState("Semua");
   const [search, setSearch] = useState<string>("");
 
+  const allDivisions = [
+    "Semua",
+    ...Array.from(
+      new Set<string>(
+        data.map((d) => d.division).filter((d) => d && d.trim() !== ""),
+      ),
+    ).sort(),
+  ];
+
   const filteredUsers = useMemo(() => {
-    return data.filter((user) =>
-      user.username.toLowerCase().includes(search.toLowerCase()),
-    );
-  }, [search, data]);
+    return data.filter((user) => {
+      const matchesSearch = user.username
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+      const matchesDivision =
+        selectedDivision === "Semua" || user.division === selectedDivision;
+
+      return matchesSearch && matchesDivision;
+    });
+  }, [search, data, selectedDivision]);
 
   const avatarStack = useMemo(() => {
     return [
@@ -28,5 +45,17 @@ export function useUserFilter() {
       .slice(0, 3);
   }, [data, selectedUser]);
 
-  return {isLoading, avatarStack, selectedUser, search, setSearch, setHoverName,hoverName, filteredUsers}
+  return {
+    isLoading,
+    avatarStack,
+    selectedUser,
+    search,
+    setSearch,
+    setHoverName,
+    hoverName,
+    filteredUsers,
+    allDivisions,
+    selectedDivision,
+    setSelectedDivision,
+  };
 }

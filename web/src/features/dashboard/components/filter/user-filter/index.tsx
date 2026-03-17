@@ -13,6 +13,7 @@ import { LoadingSpinner } from "@/components/atoms/loading-spinner";
 import { UserFilterTriggerButton } from "./trigger-button";
 import { UserList } from "./user-list";
 import { useUserFilter } from "./logics";
+import { DivisionFilter } from "./division-filter";
 
 export function DashboardUserFilter() {
   const {
@@ -24,6 +25,9 @@ export function DashboardUserFilter() {
     setHoverName,
     setSearch,
     filteredUsers,
+    allDivisions,
+    selectedDivision,
+    setSelectedDivision
   } = useUserFilter();
 
   if (isLoading) return <LoadingSpinner />;
@@ -47,12 +51,16 @@ export function DashboardUserFilter() {
         </PopoverHeader>
 
         <Separator className="bg-gray-700" />
+        <div className="space-y-1">
+
+        <DivisionFilter allDivisions={allDivisions} selectedDivision={selectedDivision} setSelectedDivision={setSelectedDivision} />
         <Input
           placeholder="Search user..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full rounded-md bg-gray-700 border border-gray-600 px-3 py-2 text-sm text-white outline-none focus:border-green-500"
         />
+        </div>
 
         {/* Scroll User */}
         <UserList

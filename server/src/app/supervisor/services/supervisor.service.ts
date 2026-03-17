@@ -16,7 +16,7 @@ export class SupervisorService {
   async getAllUserProfile(): Promise<ProfileIdAndUsername[]> {
     const { data, error } = await this.supabase
       .from(TableName.Profiles)
-      .select('id, username')
+      .select('id, username, division')
       .is('deleted_at', null)
       .order('username', { ascending: true });
 

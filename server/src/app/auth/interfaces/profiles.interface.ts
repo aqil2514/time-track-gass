@@ -14,4 +14,4 @@ export type ProfilesDbInsert = Omit<ProfilesDb, | "created_at" | "id">
 
 export type ProfilesWithNoPassword = Omit<ProfilesDb, 'password'>
 
-export type ProfileIdAndUsername = Pick<ProfilesDb, "username" | "id">
+export type ProfileIdAndUsername = Pick<ProfilesDb, "username" | "id" | "division">
