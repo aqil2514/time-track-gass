@@ -10,10 +10,13 @@ export function DashboardHeader() {
         </div>
 
         <div className="leading-tight">
-          <h1 className="text-lg font-semibold tracking-tight">
-            <span className="text-white">Time</span>{" "}
-            <span className="text-purple-400">Tracker</span>
-          </h1>
+          <div className="flex gap-1">
+            <h1 className="text-lg font-semibold tracking-tight">
+              <span className="text-white">Time</span>{" "}
+              <span className="text-purple-400">Tracker</span>
+            </h1>
+            <p className="font-semibold text-xs text-white">V0.2.5</p>
+          </div>
           <p className="text-slate-400 text-xs">
             Track every second that matters
           </p>

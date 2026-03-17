@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "time-track",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "identifier": "com.gasstech.timetrack",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -26,7 +26,7 @@
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDRERUEwNTMwMzU2RUNCQTkKUldTcHkyNDFNQVhxVGNxTHVvVUJTOFEyazdHK1l4alZXTGRROXdyOHEwdFVFeExTWUtjTjN6eVQK",
       "dialog": true,
       "endpoints": [
-        "https://gist.githubusercontent.com/aqil2514/7c51b3722db7186941fa075b0035e1ed/raw/975f3c8865a5d1effaa106348b85da75a798a7b0/update.json"
+        "https://gist.githubusercontent.com/aqil2514/7c51b3722db7186941fa075b0035e1ed/raw/update.json"
       ]
     }
   },
