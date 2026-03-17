@@ -3,6 +3,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { ZAIService } from '../../../services/ai-z/ai-z.service';
 import { ZImageAnalyzeData } from '../../../services/ai-z/interface/ai-z.interface';
 import { AIScreenReportDbInsert } from '../interfaces/ai-screen-report.interface';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class ImageScannerService {
@@ -11,6 +12,9 @@ export class ImageScannerService {
     private readonly supabase: SupabaseClient,
 
     private readonly zAi: ZAIService,
+
+    @Inject('AWS_S3_CLIENT')
+    private readonly s3Client: S3Client,
   ) {}
 
   private async createNewData(data: ZImageAnalyzeData) {
@@ -23,6 +27,19 @@ export class ImageScannerService {
   }
 
   async analyzeActivity(imageDataUrl: string, userId: string) {
+    const mimeType = imageDataUrl.split(',')[0].match(/:(.*?);/)[1];
+    const buffer = Buffer.from(imageDataUrl.split(',')[1], 'base64');
+    const extension = mimeType.split('/')[1];
+
+    const command = new PutObjectCommand({
+      Bucket: 'tracker',
+      Key: `Activity-${userId}-${Date.now()}.${extension}`,
+      Body: buffer,
+      ContentType: mimeType,
+    });
+
+    await this.s3Client.send(command);
+    
     const { data } = await this.zAi.getAiImageAnalyze(imageDataUrl);
     const mappedData: AIScreenReportDbInsert = {
       ...data,

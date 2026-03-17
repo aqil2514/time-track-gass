@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { ActivitiesModule } from './activities/activities.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SupervisorModule } from './supervisor/supervisor.module';
+import { AWSS3Module } from 'src/services/aws-s3/aws-s3.module';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { SupervisorModule } from './supervisor/supervisor.module';
     SupabaseModule,
     AuthModule,
     ActivitiesModule,
-    SupervisorModule
+    SupervisorModule,
+    AWSS3Module
   ],
   controllers: [AppController],
   providers: [AppService],
