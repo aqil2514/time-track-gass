@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "notes": "Inisialisasi fitur tracking dan auto-update.",
+  "pub_date": "2026-03-17T13:00:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "ISI_DARI_FILE_MSI_ZIP_SIG",
+      "url": "https://github.com/username/timetrack/releases/download/v0.1.0/time-track_0.1.0_x64_en-US.msi.zip"
+    },
+    "linux-x86_64": {
+      "signature": "ISI_DARI_FILE_APPIMAGE_SIG",
+      "url": "https://github.com/username/timetrack/releases/download/v0.1.0/time-track_0.1.0_amd64.AppImage.tar.gz"
+    },
+    "darwin-x86_64": {
+      "signature": "ISI_DARI_FILE_APP_TAR_GZ_SIG",
+      "url": "https://github.com/username/timetrack/releases/download/v0.1.0/time-track_0.1.0_x64.app.tar.gz"
+    },
+    "darwin-aarch64": {
+      "signature": "ISI_DARI_FILE_APP_TAR_GZ_SIG",
+      "url": "https://github.com/username/timetrack/releases/download/v0.1.0/time-track_0.1.0_aarch64.app.tar.gz"
+    }
+  }
+}
