@@ -5,6 +5,7 @@ import { ActivitiesCronService } from './services/activities-cron.service';
 import { ActivitiesSessionSummaryCronHelper } from './services/helpers/activites-cron-session-summary-helper.service';
 import { ActivitiesFetcherHelper } from './services/helpers/activities-fetcher-helper.service';
 import { ActivitiesDailySummaryCronHelper } from './services/helpers/activites-cron-daily-summary-helper.service';
+import { ActivitiesDailySummaryPerCategoryCronHelper } from './services/helpers/activities-cron-daily-summary-per-category.service';
 
 @Module({
   controllers: [ActivitiesController],
@@ -16,6 +17,7 @@ import { ActivitiesDailySummaryCronHelper } from './services/helpers/activites-c
     ActivitiesDailySummaryCronHelper,
     ActivitiesSessionSummaryCronHelper,
     ActivitiesFetcherHelper,
+    ActivitiesDailySummaryPerCategoryCronHelper
   ],
   exports: [ActivitiesCronService],
 })

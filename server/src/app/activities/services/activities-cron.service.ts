@@ -3,6 +3,8 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { ActivitiesSessionSummaryCronHelper } from './helpers/activites-cron-session-summary-helper.service';
 import { ActivitiesDailySummaryCronHelper } from './helpers/activites-cron-daily-summary-helper.service';
 import { ActivitiesFetcherHelper } from './helpers/activities-fetcher-helper.service';
+import { ActivitiesDailySummaryPerCategoryCronHelper } from './helpers/activities-cron-daily-summary-per-category.service';
+import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 
 @Injectable()
 export class ActivitiesCronService {
@@ -10,6 +12,7 @@ export class ActivitiesCronService {
   constructor(
     private readonly sessionSummaryHelper: ActivitiesSessionSummaryCronHelper,
     private readonly dailySummaryHelper: ActivitiesDailySummaryCronHelper,
+    private readonly dailySummaryPerCategoryHelper: ActivitiesDailySummaryPerCategoryCronHelper,
     private readonly helper: ActivitiesFetcherHelper,
   ) {}
 
@@ -84,4 +87,22 @@ export class ActivitiesCronService {
 
     this.logger.log(`Daily summary generated for ${mappedData.length} entries`);
   }
+
+  // @Cron(CronExpression.EVERY_10_SECONDS)
+  // async createDailySummaryPerCategory() {
+  //   const [allUser, allCategories] = await Promise.all([
+  //     this.sessionSummaryHelper.getAllUser(),
+  //     this.dailySummaryPerCategoryHelper.getAllCategories(),
+  //   ]);
+  //   const availableUserActivity:AIScreenReportDb[]= []
+
+  //   for (const user of allUser) {
+  //     const userActivity =
+  //       await this.dailySummaryPerCategoryHelper.getUserDailyActivity(user);
+
+  //     if (userActivity.length === 0 || !userActivity) continue;
+
+  //     availableUserActivity.push(userActivity)
+  //   }
+  // }
 }
