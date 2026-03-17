@@ -109,3 +109,4 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}
+          includeUpdaterJson: true
