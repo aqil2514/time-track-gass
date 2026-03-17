@@ -1,6 +1,6 @@
 "use client";
 
-import { Key, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Eye, Key, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AuthUser } from "@/@types/auth";
 import { useTeams } from "../providers/teams.provider";
+import { useRouter } from "next/navigation";
 
 interface TeamsTableActionsProps {
   user: AuthUser;
@@ -19,6 +20,58 @@ interface TeamsTableActionsProps {
 
 export function TeamsTableActions({ user }: TeamsTableActionsProps) {
   const { dispatch } = useTeams();
+  const router = useRouter();
+
+  const menuItems = [
+    {
+      label: "Lihat Aktivitas",
+      icon: Eye,
+      // Menggunakan Blue-400 dengan opacity sedikit rendah agar tidak terlalu 'neon'
+      className:
+        "cursor-pointer focus:bg-blue-500/10 focus:text-blue-400 text-blue-400/90",
+      onClick: () => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        router.push(
+          `/dashboard?user=${user.username}&date=${today.toISOString()}`,
+        );
+      },
+    },
+    {
+      label: "Edit",
+      icon: Pencil,
+      className:
+        "cursor-pointer focus:bg-slate-800 focus:text-white text-slate-300",
+      onClick: () =>
+        dispatch({
+          type: "OPEN_EDIT_USER_MODAL",
+          payload: { userId: user.id },
+        }),
+    },
+    {
+      label: "Reset Password",
+      icon: Key,
+      className:
+        "cursor-pointer focus:bg-slate-800 focus:text-white text-slate-300",
+      onClick: () =>
+        dispatch({
+          type: "OPEN_RESET_PASSWORD_USER_MODAL",
+          payload: { userId: user.id },
+        }),
+    },
+    {
+      label: "Delete",
+      icon: Trash2,
+      // Merah untuk aksi berbahaya
+      className:
+        "cursor-pointer focus:bg-red-500/10 focus:text-red-400 text-red-400",
+      onClick: () =>
+        dispatch({
+          type: "OPEN_DELETE_USER_MODAL",
+          payload: { userId: user.id },
+        }),
+    },
+  ];
   return (
     <div className="text-right">
       <DropdownMenu>
@@ -37,41 +90,18 @@ export function TeamsTableActions({ user }: TeamsTableActionsProps) {
           <DropdownMenuLabel>{user.username}</DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-slate-800" />
 
-          <DropdownMenuItem
-            className="cursor-pointer focus:bg-slate-800 focus:text-white"
-            onClick={() =>
-              dispatch({
-                type: "OPEN_EDIT_USER_MODAL",
-                payload: { userId: user.id },
-              })
-            }
-          >
-            <Pencil className="mr-2 h-4 w-4" /> Edit
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            className="cursor-pointer focus:bg-red-900/50 focus:text-red-400 text-red-400"
-            onClick={() =>
-              dispatch({
-                type: "OPEN_DELETE_USER_MODAL",
-                payload: { userId: user.id },
-              })
-            }
-          >
-            <Trash2 className="mr-2 h-4 w-4" /> Delete
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            className="cursor-pointer focus:bg-blue-900/50 focus:text-blue-400 text-blue-400"
-            onClick={() =>
-              dispatch({
-                type: "OPEN_RESET_PASSWORD_USER_MODAL",
-                payload: { userId: user.id },
-              })
-            }
-          >
-            <Key className="mr-2 h-4 w-4" /> Reset Password
-          </DropdownMenuItem>
+          {menuItems.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <DropdownMenuItem
+                key={index}
+                className={`cursor-pointer ${item.className}`}
+                onClick={item.onClick}
+              >
+                <Icon className="mr-2 h-4 w-4" /> {item.label}
+              </DropdownMenuItem>
+            );
+          })}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

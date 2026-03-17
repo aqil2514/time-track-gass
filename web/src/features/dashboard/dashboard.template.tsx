@@ -1,6 +1,6 @@
 "use client";
 import { MainContainer } from "@/components/containers/main-container";
-import { DashboardUserFilter } from "./components/filter/user.filter";
+import { DashboardUserFilter } from "./components/filter/user-filter";
 import { DashboardDateFilter } from "./components/filter/date.filter";
 import { DashboardDataContent } from "./components/data";
 import { DashboardProvider } from "./provider/dashboard.provider";
