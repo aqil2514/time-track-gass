@@ -4,7 +4,7 @@ import { useFetch } from "@/hooks/use-fetch";
 import { useQueryParams } from "@/hooks/use-query-params";
 import { buildUrl } from "@/utils/build-url";
 
-export function useDailyInsight() {
+export function useSummaryMode() {
   const { get } = useQueryParams();
 
   const date = get("date");

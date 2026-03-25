@@ -2,8 +2,16 @@ import { DailySummaryDb } from "@/features/dashboard/interface/daily-summary.int
 import { highlightText } from "@/features/dashboard/utils/highlight-text";
 import { useQueryParams } from "@/hooks/use-query-params";
 import { isToday } from "date-fns";
+import { useSummaryMode } from "./logics";
+import { LoadingSpinner } from "@/components/atoms/loading-spinner";
 
-export function DataRender({ data }: { data: DailySummaryDb | undefined }) {
+export function SummaryMode() {
+   const { data, isLoading } = useSummaryMode();
+
+   return isLoading ? <LoadingSpinner /> : <InnerTemplate data={data} />
+}
+
+const InnerTemplate = ({ data }: { data: DailySummaryDb | undefined }) => {
   const { get } = useQueryParams();
 
   const date = get("date");
