@@ -55,4 +55,7 @@ export class SupervisorService {
     return await this.activityFetchHelper.getDailyActivity(userId, date);
   }
 
+  async getDailyActivityPerCategory(username:string, date:string){
+    return await this.activityFetchHelper.getDailyActivityPerCategory(username, date)
+  }
 }

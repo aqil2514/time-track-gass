@@ -6,6 +6,7 @@ import { ActivityData } from '../../interface/activities_data.interface';
 import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { DailySummaryDb } from '../../interface/daily_summary.interface';
 import { endOfDay, startOfDay } from 'date-fns';
+import { DailySummaryPerCategory } from '../../interface/daily_summary_per_category.interface';
 
 @Injectable()
 export class ActivitiesFetcherHelper {
@@ -76,6 +77,28 @@ export class ActivitiesFetcherHelper {
     if (!data || data.length === 0) return undefined;
 
     return data[0];
+  }
+
+  async getDailyActivityPerCategory(
+    userId: string,
+    date: string,
+  ): Promise<DailySummaryPerCategory[]> {
+    const start = startOfDay(new Date(date));
+    const end = endOfDay(new Date(date));
+
+    const { data, error } = await this.supabase
+      .from('daily_summary')
+      .select('*')
+      .eq('user_id', userId)
+      .gte('date', start.toISOString())
+      .lt('date', end.toISOString());
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    return data;
   }
 
   mapToActivityData(

@@ -15,7 +15,7 @@ export class ActivitiesController {
   }
 
   @Get('daily')
-  async getUserDailyActivity(@Req() req: any,  @Query('date') date: string) {
+  async getUserDailyActivity(@Req() req: any, @Query('date') date: string) {
     const user = req.user;
     const userId = user.user.id;
 

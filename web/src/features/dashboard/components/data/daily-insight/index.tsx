@@ -2,6 +2,7 @@ import { BsStars } from "react-icons/bs";
 import { SummaryMode } from "./summary-mode";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DetailMode } from "./detail-mode";
 
 const TRIGGER_STYLE =
   "px-8 h-full rounded-md font-medium transition-all duration-300 text-zinc-400 bg-transparent data-[state=active]:bg-purple-600/20  data-[state=active]:text-purple-300  data-[state=active]:border-purple-500/50  border border-transparent hover:text-zinc-200 hover:bg-white/5";
@@ -32,7 +33,9 @@ export function AIDailyInsight() {
         <TabsContent value="summary">
           <SummaryMode />
         </TabsContent>
-        <TabsContent value="detail">Change your password here.</TabsContent>
+        <TabsContent value="detail">
+          <DetailMode />
+        </TabsContent>
       </Tabs>
     </div>
   );

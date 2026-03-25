@@ -24,4 +24,8 @@ export class ActivitiesService {
   async getDailyActivity(userId: string, date: string) {
     return await this.helper.getDailyActivity(userId, date);
   }
+  
+  async getDailyActivityPerCategory(userId: string, date: string){
+    return await this.helper.getDailyActivityPerCategory(userId, date)
+  }
 }

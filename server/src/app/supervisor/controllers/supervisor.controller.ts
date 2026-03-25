@@ -29,6 +29,11 @@ export class SupervisorController {
     return await this.service.getDailyActivity(query.user, query.date);
   }
 
+  @Get('user-daily-percategory')
+  async getUserDailyActivityPerCategory(@Query() query: SupervisorQueryDto) {
+    return await this.service.getDailyActivityPerCategory(query.user, query.date);
+  }
+
   @Post('trigger/session-summary')
   async triggerSessionSummary(@Body() body: { from: string; to: string }) {
     return await this.cronService.generateSessionSummary(

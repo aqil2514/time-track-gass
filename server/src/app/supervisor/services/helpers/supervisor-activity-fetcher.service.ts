@@ -3,6 +3,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { endOfDay, startOfDay } from 'date-fns';
 import { ActivityData } from 'src/app/activities/interface/activities_data.interface';
 import { DailySummaryDb } from 'src/app/activities/interface/daily_summary.interface';
+import { DailySummaryPerCategory } from 'src/app/activities/interface/daily_summary_per_category.interface';
 import { SessionSummaryDb } from 'src/app/activities/interface/session_summary.interface';
 import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { TableName } from 'src/services/supabase/supabase.interface';
@@ -116,4 +117,31 @@ export class SupervisorActivityFetcher {
 
     return data[0];
   }
+
+async getDailyActivityPerCategory(
+  username: string,
+  date: string,
+): Promise<DailySummaryPerCategory[]> {
+  const userId = await this.getUserIdByUsername(username);
+
+  const localDate = new Date(date);
+  const year = localDate.getFullYear();
+  const month = String(localDate.getMonth() + 1).padStart(2, '0');
+  const day = String(localDate.getDate()).padStart(2, '0');
+  
+  const formattedDate = `${year}-${month}-${day}`; 
+
+  const { data, error } = await this.supabase
+    .from(TableName.DailySummaryPerCategory)
+    .select('*')
+    .eq('user_id', userId)
+    .eq('date', formattedDate); 
+
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+
+  return data;
+}
 }
