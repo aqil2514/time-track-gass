@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import {
   AiDailySummaryResult,
   AiSessionSummaryResult,
@@ -97,6 +97,10 @@ Rules:
       };
     } catch (error) {
       console.error('AI Image Analyze Error:', error);
+      if (isAxiosError(error)) {
+        const data = error.response.data;
+        console.error(data)
+      }
       throw error;
     }
   }
