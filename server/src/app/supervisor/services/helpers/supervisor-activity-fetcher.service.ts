@@ -118,30 +118,27 @@ export class SupervisorActivityFetcher {
     return data[0];
   }
 
-async getDailyActivityPerCategory(
-  username: string,
-  date: string,
-): Promise<DailySummaryPerCategory[]> {
-  const userId = await this.getUserIdByUsername(username);
+  async getDailyActivityPerCategory(
+    username: string,
+    date: string,
+  ): Promise<DailySummaryPerCategory[]> {
+    const userId = await this.getUserIdByUsername(username);
 
-  const localDate = new Date(date);
-  const year = localDate.getFullYear();
-  const month = String(localDate.getMonth() + 1).padStart(2, '0');
-  const day = String(localDate.getDate()).padStart(2, '0');
-  
-  const formattedDate = `${year}-${month}-${day}`; 
+    const start = startOfDay(new Date(date));
+    const end = endOfDay(new Date(date));
 
-  const { data, error } = await this.supabase
-    .from(TableName.DailySummaryPerCategory)
-    .select('*')
-    .eq('user_id', userId)
-    .eq('date', formattedDate); 
+    const { data, error } = await this.supabase
+      .from(TableName.DailySummaryPerCategory)
+      .select('*')
+      .eq('user_id', userId)
+      .gte('date', start.toISOString())
+      .lt('date', end.toISOString());
 
-  if (error) {
-    console.error(error);
-    throw error;
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    return data;
   }
-
-  return data;
-}
 }
