@@ -124,15 +124,15 @@ export class SupervisorActivityFetcher {
   ): Promise<DailySummaryPerCategory[]> {
     const userId = await this.getUserIdByUsername(username);
 
-    const start = startOfDay(new Date(date));
-    const end = endOfDay(new Date(date));
+    const formattedDate = new Date(date).toLocaleDateString('en-CA', {
+      timeZone: 'Asia/Jakarta',
+    });
 
     const { data, error } = await this.supabase
       .from(TableName.DailySummaryPerCategory)
       .select('*')
       .eq('user_id', userId)
-      .gte('date', start.toISOString())
-      .lt('date', end.toISOString());
+      .eq('date', formattedDate);
 
     if (error) {
       console.error(error);
