@@ -1,11 +1,15 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import axios from 'axios';
 import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { TableName } from 'src/services/supabase/supabase.interface';
+import { DailySummaryPerCategory } from '../../interface/daily_summary_per_category.interface';
 
 @Injectable()
 export class ActivitiesDailySummaryPerCategoryCronHelper {
+  private readonly logger = new Logger(
+    ActivitiesDailySummaryPerCategoryCronHelper.name,
+  );
   private readonly endpoint: string =
     'https://open.bigmodel.cn/api/coding/paas/v4/chat/completions';
   private readonly apiKey: string = `Bearer ${process.env.Z_AI_API_KEY}`;
@@ -16,33 +20,56 @@ export class ActivitiesDailySummaryPerCategoryCronHelper {
     private readonly supabase: SupabaseClient,
   ) {}
 
-  async getUserDailyActivity(userId: string): Promise<AIScreenReportDb[]> {
+  async getUserDailyActivity(userIds: string[]): Promise<AIScreenReportDb[]> {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
     const { data, error } = await this.supabase
       .from(TableName.AIScreenReport)
       .select('*')
-      .eq('user_id', userId);
+      .gte('created_at', startOfDay.toISOString())
+      .lte('created_at', endOfDay.toISOString())
+      .in('user_id', userIds);
 
     if (error) {
-      console.error(error);
-      return null;
+      this.logger.error(`Error fetch activity: ${error.message}`);
+      return []; // Sebaiknya return array kosong agar loop tidak error
     }
 
     return data;
   }
 
-  async getDailyAiSummary(reports: AIScreenReportDb[], categories: string[]) {
+  async getDailyAiSummary(
+    reports: AIScreenReportDb[],
+    categories: string[],
+    user_id: string,
+  ): Promise<DailySummaryPerCategory[]> {
+    // 1. Pre-processing
+    const simplifiedReports = reports.map((r) => ({
+      activity: r.summary,
+      app: r.app_name,
+      time: r.created_at,
+    }));
+
     const prompt = `
     Anda adalah asisten audit produktivitas. 
-    Data berikut adalah log aktivitas user per 5 menit:
-    ${JSON.stringify(reports)}
+    Data berikut adalah log aktivitas dari user ID "${user_id}" per 5 menit:
+    ${JSON.stringify(simplifiedReports)}
 
     Tugas Anda:
-    1. Kelompokkan aktivitas ke dalam kategori ini saja: ${categories.join(', ')}.
-    2. Hitung durasi per kategori (1 log = 5 menit).
-    3. Buat satu summary singkat untuk masing-masing kategori tersebut.
+    1. Kelompokkan ke kategori: ${categories.join(', ')}.
+    2. Hitung durasi (1 log = 5 menit). Output "duration" harus angka (number).
+    3. Buat satu summary singkat per kategori.
     
-    Output WAJIB berupa JSON array dengan format:
-    [{"category": "string", "duration": number, "summary": "string"}]
+    Output WAJIB berupa JSON object dengan format:
+    {
+      "summaries": [
+        {"category": "string", "duration": number, "summary": "string"}
+      ]
+    }
   `;
 
     try {
@@ -61,13 +88,23 @@ export class ActivitiesDailySummaryPerCategoryCronHelper {
         },
       );
 
-      return response.data.choices[0].message.content;
-    } catch (error) {
-      console.error('Error AI Summary:', error.response?.data || error.message);
-      throw error;
-    }
+      // 2. Parsing Response
+      const content = JSON.parse(response.data.choices[0].message.content);
+      const aiData = content.summaries || [];
 
-    // return JSON.parse(result.choices[0].message.content);
+      // 3. Enrichment (Menambahkan user_id dan date secara manual)
+      const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
+      return aiData.map((item: any) => ({
+        ...item,
+        user_id: user_id,
+        date: today,
+        created_at: new Date(),
+      }));
+    } catch (error) {
+      this.logger.error(`Error AI Summary for user ${user_id}:`, error.message);
+      return []; // Kembalikan array kosong agar loop utama tidak berhenti total
+    }
   }
 
   async getAllCategories(): Promise<string[]> {
@@ -83,7 +120,13 @@ export class ActivitiesDailySummaryPerCategoryCronHelper {
     return data.map((d) => d.category);
   }
 
-  async mappingToDbPerUser(userId: string) {
-    const data = await this.getUserDailyActivity(userId);
+  async saveToDb(payloads: DailySummaryPerCategory[]) {
+    const { error } = await this.supabase
+      .from(TableName.DailySummaryPerCategory)
+      .insert(payloads);
+    if (error) {
+      console.error(error);
+      throw error;
+    }
   }
 }

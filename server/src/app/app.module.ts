@@ -11,6 +11,10 @@ import { ActivitiesModule } from './activities/activities.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SupervisorModule } from './supervisor/supervisor.module';
 import { AWSS3Module } from 'src/services/aws-s3/aws-s3.module';
+import { ActivitiesDailySummaryCronHelper } from './activities/services/helpers/activites-cron-daily-summary-helper.service';
+import { ActivitiesSessionSummaryCronHelper } from './activities/services/helpers/activites-cron-session-summary-helper.service';
+import { ActivitiesFetcherHelper } from './activities/services/helpers/activities-fetcher-helper.service';
+import { ActivitiesDailySummaryPerCategoryCronHelper } from './activities/services/helpers/activities-cron-daily-summary-per-category.service';
 
 @Module({
   imports: [
@@ -26,7 +30,7 @@ import { AWSS3Module } from 'src/services/aws-s3/aws-s3.module';
     AuthModule,
     ActivitiesModule,
     SupervisorModule,
-    AWSS3Module
+    AWSS3Module,
   ],
   controllers: [AppController],
   providers: [AppService],
