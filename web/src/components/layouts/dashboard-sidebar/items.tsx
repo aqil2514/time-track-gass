@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users } from "lucide-react";
+import { Activity, LayoutDashboard, Users } from "lucide-react";
 
 export const navItems = [
   {
@@ -8,9 +8,10 @@ export const navItems = [
     ],
   },
   {
-    label: "Organization",
+    label: "Organisasi",
     items: [
-      { title: "Team", url: "/teams", icon: Users },
+      { title: "Tim", url: "/teams", icon: Users },
+      { title: "Aktivitas", url: "/activity", icon: Activity },
     ],
   },
 ];

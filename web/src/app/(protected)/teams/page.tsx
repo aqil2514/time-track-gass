@@ -2,7 +2,7 @@ import { TeamsTemplate } from "@/features/teams/teams.template";
 import { Metadata } from "next";
 
 export const metadata:Metadata = {
-    title:"Team Management"
+    title:"Manajemen Tim"
 }
 
 export default function TeamPage(){

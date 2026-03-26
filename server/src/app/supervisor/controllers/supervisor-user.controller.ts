@@ -6,12 +6,18 @@ import {
   Param,
   Body,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { SupervisorUserService } from '../services/supervisor-user.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { ProfilesWithNoPassword } from 'src/app/auth/interfaces/profiles.interface';
+import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
+import { RoleGuard } from 'src/guards/role.guard';
+import { Roles } from 'src/decorators/roles.decorator';
 
+@UseGuards(JwtAuthSupervisorGuard, RoleGuard)
+@Roles('supervisor')
 @Controller('supervisor/user')
 export class SupervisorUserController {
   constructor(private readonly supervisorUserService: SupervisorUserService) {}

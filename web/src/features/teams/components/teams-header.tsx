@@ -3,6 +3,7 @@
 import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTeams } from "../providers/teams.provider";
+import { TitleAndSub } from "@/components/atoms/title-and-sub";
 
 export function TeamsHeader() {
   const { dispatch } = useTeams();
@@ -10,14 +11,7 @@ export function TeamsHeader() {
 
   return (
     <div className="flex items-center justify-between">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100 tracking-tight">
-          Team Management
-        </h1>
-        <p className="text-slate-500 text-sm">
-          Manage your organization members and their roles.
-        </p>
-      </div>
+      <TitleAndSub title="Team Management" sub="Manage your organization members and their roles." />
 
       <Button
         onClick={() => dispatch({ type: "OPEN_ADD_USER_MODAL" })}

@@ -14,3 +14,5 @@ export interface ErrorServerMapper<T extends FieldValues> {
     formError?: string;
   };
 }
+
+export type BaseModalOpen = "detail" | "edit" | "delete" | "add" | null

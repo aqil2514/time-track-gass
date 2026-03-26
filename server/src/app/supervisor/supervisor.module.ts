@@ -5,10 +5,21 @@ import { SupervisorActivityFetcher } from './services/helpers/supervisor-activit
 import { ActivitiesModule } from '../activities/activities.module';
 import { SupervisorUserController } from './controllers/supervisor-user.controller';
 import { SupervisorUserService } from './services/supervisor-user.service';
+import { SupervisorTrackerController } from './controllers/supervisor-tracker.controller';
+import { SupervisorTrackerService } from './services/supervisor-tracker.service';
 
 @Module({
-  imports:[ActivitiesModule],
-  controllers: [SupervisorController, SupervisorUserController],
-  providers: [SupervisorService, SupervisorActivityFetcher, SupervisorUserService],
+  imports: [ActivitiesModule],
+  controllers: [
+    SupervisorController,
+    SupervisorUserController,
+    SupervisorTrackerController,
+  ],
+  providers: [
+    SupervisorService,
+    SupervisorActivityFetcher,
+    SupervisorUserService,
+    SupervisorTrackerService
+  ],
 })
 export class SupervisorModule {}

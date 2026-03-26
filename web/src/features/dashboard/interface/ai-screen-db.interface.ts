@@ -17,4 +17,6 @@ export interface AIScreenReportDb {
   window_title: string;
   category: ActivityType;
   summary: string;
+  user_id: string;
+  s3_key: string;
 }

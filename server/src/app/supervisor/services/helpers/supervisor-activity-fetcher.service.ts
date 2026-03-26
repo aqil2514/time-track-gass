@@ -73,6 +73,29 @@ export class SupervisorActivityFetcher {
     return data;
   }
 
+  async getActivityDataByUsernameAndDate(username: string, date: string) {
+    const start = new Date(date);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
+    const userId = await this.getUserIdByUsername(username);
+
+    const { data, error } = await this.supabase
+      .from(TableName.AIScreenReport)
+      .select('*')
+      .eq('user_id', userId)
+      .gte('created_at', start.toISOString())
+      .lt('created_at', end.toISOString())
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    return data;
+  }
+
   mapToActivityData(
     allReports: AIScreenReportDb[],
     summariesData: SessionSummaryDb[],
