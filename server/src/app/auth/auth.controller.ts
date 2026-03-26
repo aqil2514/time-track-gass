@@ -62,7 +62,7 @@ export class AuthController {
         email: user.email,
       },
       {
-        expiresIn: '1d',
+        expiresIn: '30d',
       },
     );
 

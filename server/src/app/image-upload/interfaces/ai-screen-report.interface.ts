@@ -6,6 +6,7 @@ export interface AIScreenReportDb {
   category: string;
   summary: string;
   user_id: string;
+  s3_key:string
 }
 
 export type AIScreenReportDbInsert = Omit<

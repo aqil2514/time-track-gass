@@ -31,19 +31,22 @@ export class ImageScannerService {
     const buffer = Buffer.from(imageDataUrl.split(',')[1], 'base64');
     const extension = mimeType.split('/')[1];
 
+    const s3Key = `Activity-${userId}-${Date.now()}.${extension}`;
+
     const command = new PutObjectCommand({
       Bucket: 'tracker',
-      Key: `Activity-${userId}-${Date.now()}.${extension}`,
+      Key: s3Key,
       Body: buffer,
       ContentType: mimeType,
     });
 
     await this.s3Client.send(command);
-    
+
     const { data } = await this.zAi.getAiImageAnalyze(imageDataUrl);
     const mappedData: AIScreenReportDbInsert = {
       ...data,
       user_id: userId,
+      s3_key: s3Key,
     };
     await this.createNewData(mappedData);
   }
