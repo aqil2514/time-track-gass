@@ -7,12 +7,29 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useActivity } from "../provider/activity.provider";
+import { buildUrl } from "@/utils/build-url";
+import { useFetch } from "@/hooks/use-fetch";
+import { AIScreenReportPopulateUserAndS3Image } from "@/features/dashboard/interface/ai-screen-db.interface";
+import { webUrl } from "@/constants/server-url";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
+import { Skeleton } from "@/components/ui/skeleton";
+import Image from "next/image";
+import { ScrollArea } from "@/components/ui/scroll-area"; // Pastikan sudah install: npx shadcn@latest add scroll-area
+import { ImageIcon } from "lucide-react";
 
 export function DetailDialog() {
   const { state, dispatch } = useActivity();
 
   const open = state.modal.openedModal === "detail";
   const activityId = state.modal.activityId;
+
+  const url = activityId
+    ? buildUrl(`/api/user-activity-tracker/${activityId}`, webUrl)
+    : null;
+
+  const { data, isLoading } =
+    useFetch<AIScreenReportPopulateUserAndS3Image>(url);
 
   return (
     <Dialog
@@ -22,14 +39,82 @@ export function DetailDialog() {
           dispatch({ type: "UPDATE_OPENED_MODAL", payload: { state: null } });
       }}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Detail Aktivitas</DialogTitle>
-          <DialogDescription>
-            This action cannot be undone. This will permanently delete your
-            account and remove your data from our servers.
+      <DialogContent className="sm:max-w-2xl bg-[#0b0b14] border-slate-800 text-slate-200 p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle className="text-xl font-bold text-slate-100">
+            Detail Aktivitas
+          </DialogTitle>
+          <DialogDescription className="text-slate-400">
+            Informasi lengkap mengenai aktivitas layar yang tercatat.
           </DialogDescription>
         </DialogHeader>
+
+        <ScrollArea className="max-h-[80vh] px-6 pb-6">
+          {isLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-48 w-full bg-slate-800" />
+              <Skeleton className="h-4 w-3/4 bg-slate-800" />
+              <Skeleton className="h-4 w-1/2 bg-slate-800" />
+            </div>
+          ) : data ? (
+            <div className="space-y-6">
+              {/* Image with Fallback */}
+              <div className="relative overflow-hidden rounded-lg border border-slate-800 bg-slate-900/50 min-h-50 flex items-center justify-center">
+                {data.image_url ? (
+                  <Image
+                    src={data.image_url}
+                    alt={data.window_title}
+                    width={800}
+                    height={450}
+                    className="w-full h-auto object-contain max-h-100"
+                    priority
+                    placeholder="blur"
+                    blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/+ZNPQAIXwM4ihps7wAAAABJRU5ErkJggg=="
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center space-y-2 text-slate-600">
+                    <ImageIcon className="w-12 h-12 opacity-20" />
+                    <p className="text-xs italic">Tangkapan layar tidak tersedia</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Metadata Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="space-y-1">
+                  <p className="text-slate-500 text-xs uppercase tracking-wider">Aplikasi</p>
+                  <p className="font-medium text-purple-400">{data.app_name}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-slate-500 text-xs uppercase tracking-wider">Kategori</p>
+                  <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-xs border border-slate-700">
+                    {data.category}
+                  </span>
+                </div>
+                <div className="space-y-1 col-span-2">
+                  <p className="text-slate-500 text-xs uppercase tracking-wider">Judul Jendela</p>
+                  <p className="text-slate-300 italic">&quot;{data.window_title}&quot;</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-slate-500 text-xs uppercase tracking-wider">Waktu</p>
+                  <p>{format(new Date(data.created_at), "eeee, dd MMMM yyyy HH:mm", { locale: id })}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-slate-500 text-xs uppercase tracking-wider">User</p>
+                  <p>{data.user.full_name} <span className="text-slate-600">({data.user.division})</span></p>
+                </div>
+              </div>
+
+              {/* Summary Section */}
+              <div className="p-3 rounded-md bg-slate-900/80 border border-slate-800">
+                <p className="text-slate-500 text-xs uppercase tracking-wider mb-2">Ringkasan AI</p>
+                <p className="text-sm leading-relaxed text-slate-300">{data.summary}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="py-10 text-center text-slate-500">Data tidak ditemukan</div>
+          )}
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

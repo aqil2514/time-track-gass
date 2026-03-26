@@ -6,7 +6,27 @@ export interface AIScreenReportDb {
   category: string;
   summary: string;
   user_id: string;
-  s3_key:string
+  s3_key: string;
+}
+
+export interface AIScreenReportPopulateUser extends Omit<
+  AIScreenReportDb,
+  'user_id'
+> {
+  user: {
+    role: string;
+    email: string;
+    division: string;
+    username: string;
+    full_name: string;
+  };
+}
+
+export interface AIScreenReportPopulateUserAndS3Image extends Omit<
+  AIScreenReportPopulateUser,
+  's3_key'
+> {
+  image_url: string;
 }
 
 export type AIScreenReportDbInsert = Omit<

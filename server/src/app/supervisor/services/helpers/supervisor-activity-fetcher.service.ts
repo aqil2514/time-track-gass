@@ -5,7 +5,10 @@ import { ActivityData } from 'src/app/activities/interface/activities_data.inter
 import { DailySummaryDb } from 'src/app/activities/interface/daily_summary.interface';
 import { DailySummaryPerCategory } from 'src/app/activities/interface/daily_summary_per_category.interface';
 import { SessionSummaryDb } from 'src/app/activities/interface/session_summary.interface';
-import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
+import {
+  AIScreenReportDb,
+  AIScreenReportPopulateUser,
+} from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { TableName } from 'src/services/supabase/supabase.interface';
 
 @Injectable()
@@ -94,6 +97,32 @@ export class SupervisorActivityFetcher {
     }
 
     return data;
+  }
+
+  async getActivityByActivityId(
+    activityId: string,
+  ): Promise<AIScreenReportPopulateUser | null> {
+    const { error, data } = await this.supabase
+      .from(TableName.AIScreenReport)
+      .select(
+        'id, created_at, app_name, window_title, category, summary, s3_key, user:user_id(role, email, division, username, full_name)',
+      )
+      .eq('id', activityId)
+      .maybeSingle();
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    if (!data) return null;
+
+    const result: AIScreenReportPopulateUser = {
+      ...data,
+      user: Array.isArray(data.user) ? data.user[0] : data.user,
+    };
+
+    return result;
   }
 
   mapToActivityData(

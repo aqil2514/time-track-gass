@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { Roles } from 'src/decorators/roles.decorator';
 import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
 import { RoleGuard } from 'src/guards/role.guard';
@@ -17,5 +17,10 @@ export class SupervisorTrackerController {
       query.user,
       query.date,
     );
+  }
+
+  @Get("id/:id")
+  async getTrackerById(@Param("id") id:string){
+    return await this.trackerService.getTrackerByActivityId(id)
   }
 }
