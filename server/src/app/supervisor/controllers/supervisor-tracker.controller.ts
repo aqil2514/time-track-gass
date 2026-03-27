@@ -14,7 +14,6 @@ export class SupervisorTrackerController {
   @Get('')
   async getTrackerActivity(@Query() query: SupervisorQueryDto) {
 
-    console.log(query)
     return await this.trackerService.getTrackerActivityData(
       query.user,
       query.date,
