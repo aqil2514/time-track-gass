@@ -14,6 +14,7 @@ export interface AIScreenReportPopulateUser extends Omit<
   'user_id'
 > {
   user: {
+    id:string;
     role: string;
     email: string;
     division: string;

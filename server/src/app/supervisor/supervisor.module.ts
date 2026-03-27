@@ -8,6 +8,7 @@ import { SupervisorUserService } from './services/supervisor-user.service';
 import { SupervisorTrackerController } from './controllers/supervisor-tracker.controller';
 import { SupervisorTrackerService } from './services/supervisor-tracker.service';
 import { SupervisorActivityMapper } from './services/helpers/supervisor-activity-mapper.service';
+import { SupervisorMatrixService } from './services/helpers/supervisor-matrix.service';
 
 @Module({
   imports: [ActivitiesModule],
@@ -18,10 +19,13 @@ import { SupervisorActivityMapper } from './services/helpers/supervisor-activity
   ],
   providers: [
     SupervisorService,
+    SupervisorUserService,
+    SupervisorTrackerService,
+
+    // Helper
+    SupervisorMatrixService,
     SupervisorActivityFetcher,
     SupervisorActivityMapper,
-    SupervisorUserService,
-    SupervisorTrackerService
   ],
 })
 export class SupervisorModule {}

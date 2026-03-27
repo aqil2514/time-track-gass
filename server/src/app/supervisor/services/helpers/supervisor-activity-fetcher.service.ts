@@ -105,7 +105,7 @@ export class SupervisorActivityFetcher {
     const { error, data } = await this.supabase
       .from(TableName.AIScreenReport)
       .select(
-        'id, created_at, app_name, window_title, category, summary, s3_key, user:user_id(role, email, division, username, full_name)',
+        'id, created_at, app_name, window_title, category, summary, s3_key, user:user_id(id,role, email, division, username, full_name)',
       )
       .eq('id', activityId)
       .maybeSingle();

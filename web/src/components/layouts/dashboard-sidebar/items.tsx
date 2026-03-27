@@ -1,10 +1,11 @@
-import { Activity, LayoutDashboard, Users } from "lucide-react";
+import { Activity, LayoutDashboard, TableProperties, Users } from "lucide-react";
 
 export const navItems = [
   {
     label: "Main Menu",
     items: [
       { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+      { title: "Matriks Aktivitas", url: "/matrix", icon: TableProperties },
     ],
   },
   {

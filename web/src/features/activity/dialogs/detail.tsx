@@ -15,7 +15,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
-import { ScrollArea } from "@/components/ui/scroll-area"; // Pastikan sudah install: npx shadcn@latest add scroll-area
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ImageIcon } from "lucide-react";
 
 export function DetailDialog() {
