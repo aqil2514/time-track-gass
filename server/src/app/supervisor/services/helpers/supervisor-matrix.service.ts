@@ -98,7 +98,10 @@ export class SupervisorMatrixService {
       for (let hour = 0; hour < 24; hour++) {
         const activityInThisHour = selectedActivity.filter((data) => {
           const reportDate = new Date(data.created_at);
-          return reportDate.getHours() === hour;
+          const wibHour = new Date(
+            reportDate.getTime() + 7 * 60 * 60 * 1000,
+          ).getUTCHours();
+          return wibHour === hour;
         });
 
         hourlyActivity[hour] = activityInThisHour.length;
