@@ -43,17 +43,12 @@ export class SupervisorMatrixService {
     let hasMore = true;
     const finalData: AIScreenReportPopulateUser[] = [];
 
-    const TIMEZONE = 'Asia/Jakarta';
+    const dateOnly = new Date(new Date(date).getTime() + 7 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0];
+    const startStr = `${dateOnly}T00:00:00+07:00`;
+    const endStr = `${dateOnly}T23:59:59+07:00`;
 
-    const zonedDate = toZonedTime(new Date(date), TIMEZONE);
-    const start = startOfDay(zonedDate);
-    const end = endOfDay(zonedDate);
-
-    const startStr = format(start, "yyyy-MM-dd'T'HH:mm:ssxxx");
-    const endStr = format(end, "yyyy-MM-dd'T'HH:mm:ssxxx");
-
-    console.log('date param:', date);
-    console.log('zonedDate:', zonedDate);
     console.log('startStr:', startStr);
     console.log('endStr:', endStr);
 
