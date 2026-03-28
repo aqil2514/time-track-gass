@@ -52,6 +52,11 @@ export class SupervisorMatrixService {
     const startStr = format(start, "yyyy-MM-dd'T'HH:mm:ssxxx");
     const endStr = format(end, "yyyy-MM-dd'T'HH:mm:ssxxx");
 
+    console.log('date param:', date);
+    console.log('zonedDate:', zonedDate);
+    console.log('startStr:', startStr);
+    console.log('endStr:', endStr);
+
     while (hasMore) {
       const { data, error } = await this.supabase
         .from(TableName.AIScreenReport)
