@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { endOfDay, format, startOfDay } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { ProfilesDb } from 'src/app/auth/interfaces/profiles.interface';
 import { AIScreenReportPopulateUser } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { TableName } from 'src/services/supabase/supabase.interface';
@@ -42,8 +43,11 @@ export class SupervisorMatrixService {
     let hasMore = true;
     const finalData: AIScreenReportPopulateUser[] = [];
 
-    const start = startOfDay(new Date(date));
-    const end = endOfDay(new Date(date));
+    const TIMEZONE = 'Asia/Jakarta';
+
+    const zonedDate = toZonedTime(new Date(date), TIMEZONE);
+    const start = startOfDay(zonedDate);
+    const end = endOfDay(zonedDate);
 
     const startStr = format(start, "yyyy-MM-dd'T'HH:mm:ssxxx");
     const endStr = format(end, "yyyy-MM-dd'T'HH:mm:ssxxx");
