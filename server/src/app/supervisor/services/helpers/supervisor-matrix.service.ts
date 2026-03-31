@@ -49,9 +49,6 @@ export class SupervisorMatrixService {
     const startStr = `${dateOnly}T00:00:00+07:00`;
     const endStr = `${dateOnly}T23:59:59+07:00`;
 
-    console.log('startStr:', startStr);
-    console.log('endStr:', endStr);
-
     while (hasMore) {
       const { data, error } = await this.supabase
         .from(TableName.AIScreenReport)
