@@ -11,6 +11,13 @@ export function useCapture() {
     const os = platform();
 
     if (os === "macos") {
+      const hasPermission = await invoke<boolean>("check_screen_permission_macos");
+
+      if (!hasPermission) {
+        await invoke("request_screen_permission_macos");
+        throw new Error("Screen Recording permission belum diaktifkan. Aktifkan di System Settings lalu restart aplikasi.");
+      }
+
       return await invoke<string>("capture_screen_macos");
     }
 

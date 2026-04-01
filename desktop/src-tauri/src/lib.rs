@@ -82,6 +82,32 @@ async fn capture_screen_macos() -> Result<String, String> {
     Ok(format!("data:image/webp;base64,{b64}"))
 }
 
+#[tauri::command]
+async fn check_screen_permission_macos() -> bool {
+    // Coba screencapture ke /dev/null, kalau gagal berarti belum ada permission
+    let output = Command::new("screencapture")
+        .args(["-x", "-t", "png", "/tmp/permission_test.png"])
+        .output();
+
+    match output {
+        Ok(o) if o.status.success() => {
+            let _ = std::fs::remove_file("/tmp/permission_test.png");
+            true
+        }
+        _ => false,
+    }
+}
+
+#[tauri::command]
+async fn request_screen_permission_macos() -> Result<(), String> {
+    // Buka System Settings langsung ke Screen Recording
+    Command::new("open")
+        .args(["x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"])
+        .spawn()
+        .map_err(|e| format!("Failed to open settings: {e}"))?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -95,6 +121,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             resize_and_encode,
             capture_screen_macos,
+            check_screen_permission_macos,
+            request_screen_permission_macos
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
