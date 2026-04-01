@@ -22,10 +22,8 @@ async fn resize_and_encode(file_path: String) -> Result<String, String> {
 
     let rgba = img.to_rgba8();
     let (w, h) = (rgba.width(), rgba.height());
-
     let encoder = webp::Encoder::from_rgba(&rgba, w, h);
     let webp_data = encoder.encode(70.0);
-
     let b64 = base64::engine::general_purpose::STANDARD.encode(&*webp_data);
 
     if let Err(e) = std::fs::remove_file(&file_path) {
@@ -56,6 +54,16 @@ async fn capture_screen_macos() -> Result<String, String> {
         ));
     }
 
+    // Validasi file benar-benar ter-capture (bukan blank akibat permission ditolak)
+    let file_size = std::fs::metadata(&temp_path)
+        .map(|m| m.len())
+        .unwrap_or(0);
+
+    if file_size < 1000 {
+        let _ = std::fs::remove_file(&temp_path);
+        return Err("screencapture menghasilkan file kosong. Kemungkinan Screen Recording permission belum diaktifkan.".to_string());
+    }
+
     let img = image::open(&temp_path).map_err(|e| format!("Failed to open image: {e}"))?;
 
     let max_width = 1440u32;
@@ -84,15 +92,20 @@ async fn capture_screen_macos() -> Result<String, String> {
 
 #[tauri::command]
 async fn check_screen_permission_macos() -> bool {
-    // Coba screencapture ke /dev/null, kalau gagal berarti belum ada permission
+    let test_path = "/tmp/permission_test.png";
+
     let output = Command::new("screencapture")
-        .args(["-x", "-t", "png", "/tmp/permission_test.png"])
+        .args(["-x", "-t", "png", test_path])
         .output();
 
     match output {
         Ok(o) if o.status.success() => {
-            let _ = std::fs::remove_file("/tmp/permission_test.png");
-            true
+            // File kosong/kecil = permission ditolak macOS
+            let valid = std::fs::metadata(test_path)
+                .map(|m| m.len() > 1000)
+                .unwrap_or(false);
+            let _ = std::fs::remove_file(test_path);
+            valid
         }
         _ => false,
     }
@@ -100,7 +113,6 @@ async fn check_screen_permission_macos() -> bool {
 
 #[tauri::command]
 async fn request_screen_permission_macos() -> Result<(), String> {
-    // Buka System Settings langsung ke Screen Recording
     Command::new("open")
         .args(["x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"])
         .spawn()
@@ -122,7 +134,7 @@ pub fn run() {
             resize_and_encode,
             capture_screen_macos,
             check_screen_permission_macos,
-            request_screen_permission_macos
+            request_screen_permission_macos,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
