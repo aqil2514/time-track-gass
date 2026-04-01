@@ -20,11 +20,11 @@ jobs:
             target: x86_64-pc-windows-msvc
             label: windows-x64
 
-          - os: macos-13
+          - os: macos-latest
             target: x86_64-apple-darwin
             label: macos-x64
 
-          - os: macos-14
+          - os: macos-latest
             target: aarch64-apple-darwin
             label: macos-arm64
 
@@ -69,6 +69,25 @@ jobs:
         working-directory: desktop
         run: npm ci
 
+      # ↓ Tambahkan di sini
+      - name: Debug signing secrets
+        shell: bash
+        run: |
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "❌ TAURI_SIGNING_PRIVATE_KEY is EMPTY"
+          else
+            echo "✅ TAURI_SIGNING_PRIVATE_KEY is set (length: ${#TAURI_SIGNING_PRIVATE_KEY})"
+          fi
+
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" ]; then
+            echo "⚠️ TAURI_SIGNING_PRIVATE_KEY_PASSWORD is EMPTY (ok if no password)"
+          else
+            echo "✅ TAURI_SIGNING_PRIVATE_KEY_PASSWORD is set"
+          fi
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
       - name: Build Tauri App
         uses: tauri-apps/tauri-action@v0
         env:
@@ -87,8 +106,7 @@ jobs:
             - **Windows**: `.msi` atau `.exe`
             - **macOS**: `.dmg`
             - **Linux**: `.deb` atau `.AppImage`
-          releaseDraft: false
+          releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}
           includeUpdaterJson: true
-          updaterJsonPreferNsis: true
