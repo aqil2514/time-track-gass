@@ -1,4 +1,4 @@
-import { Activity, LayoutDashboard, TableProperties, Users } from "lucide-react";
+import { Activity, Boxes, LayoutDashboard, TableProperties, Users } from "lucide-react";
 
 export const navItems = [
   {
@@ -13,6 +13,7 @@ export const navItems = [
     items: [
       { title: "Tim", url: "/teams", icon: Users },
       { title: "Aktivitas", url: "/activity", icon: Activity },
+      { title: "Divisi", url: "/divisions", icon: Boxes },
     ],
   },
 ];

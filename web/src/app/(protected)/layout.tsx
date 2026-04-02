@@ -7,6 +7,8 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { cookies } from "next/headers";
 import { DashboardSidebar } from "@/components/layouts/dashboard-sidebar";
 
+export const dynamic = 'force-dynamic'
+
 export default async function ProtectedLayout({
   children,
 }: {
