@@ -1,10 +1,8 @@
 "use client";
 import { TitleAndSub } from "@/components/atoms/title-and-sub";
 import { TemplateContainer } from "@/components/containers/template-container";
-import {
-  DivisionsProvider,
-  useDivisionContext,
-} from "./provider/divisions.provider";
+import { DivisionsProvider } from "./provider/divisions.provider";
+import { DivisionsTable } from "./components/table/divisions-table";
 
 export function DivisionTemplate() {
   return (
@@ -15,9 +13,6 @@ export function DivisionTemplate() {
 }
 
 const InnerTemplate = () => {
-  const { data } = useDivisionContext();
-
-  console.log(data);
   return (
     <>
       <TemplateContainer>
@@ -25,6 +20,8 @@ const InnerTemplate = () => {
           title="Manajemen Divisi"
           sub="Kelola departemen dan struktur organisasi Anda di sini"
         />
+        
+        <DivisionsTable />
       </TemplateContainer>
     </>
   );
