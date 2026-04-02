@@ -22,7 +22,7 @@ export function DivisionTableActions({ data }: DivisionTableActionsProps) {
 
   const menuItems = [
     {
-      label: "Lihat Aktivitas",
+      label: "Detail Divisi",
       icon: Eye,
       className:
         "cursor-pointer focus:bg-blue-500/10 focus:text-blue-400 text-blue-400/90",
@@ -48,7 +48,7 @@ export function DivisionTableActions({ data }: DivisionTableActionsProps) {
           align="end"
           className="w-40 bg-slate-900 border-slate-800 text-slate-200"
         >
-          <DropdownMenuLabel>{data.name}</DropdownMenuLabel>
+          <DropdownMenuLabel>Divisi {data.name}</DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-slate-800" />
 
           {menuItems.map((item, index) => {
