@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, MoreHorizontal } from "lucide-react";
+import { Eye, MoreHorizontal, Pen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -30,6 +30,16 @@ export function DivisionTableActions({ data }: DivisionTableActionsProps) {
         dispatch({
           type: "UPDATE_OPENED_MODAL",
           payload: { state: "detail", divisionId: data.id },
+        }),
+    },
+    {
+      label: "Edit Divisi",
+      icon: Pen,
+      className: "cursor-pointer",
+      onClick: () =>
+        dispatch({
+          type: "UPDATE_OPENED_MODAL",
+          payload: { state: "edit", divisionId: data.id },
         }),
     },
   ];
