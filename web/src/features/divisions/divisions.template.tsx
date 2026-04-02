@@ -1,7 +1,10 @@
 "use client";
 import { TitleAndSub } from "@/components/atoms/title-and-sub";
 import { TemplateContainer } from "@/components/containers/template-container";
-import { DivisionsProvider } from "./provider/divisions.provider";
+import {
+  DivisionsProvider,
+  useDivisionContext,
+} from "./provider/divisions.provider";
 
 export function DivisionTemplate() {
   return (
@@ -12,6 +15,9 @@ export function DivisionTemplate() {
 }
 
 const InnerTemplate = () => {
+  const { data } = useDivisionContext();
+
+  console.log(data);
   return (
     <>
       <TemplateContainer>

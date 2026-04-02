@@ -24,7 +24,8 @@ export class SupervisorMatrixService {
     const { error, data } = await this.supabase
       .from(TableName.Profiles)
       .select('*')
-      .is('deleted_at', null);
+      .is('deleted_at', null)
+      .order("username");
     if (error) {
       console.error(error);
       throw error;
