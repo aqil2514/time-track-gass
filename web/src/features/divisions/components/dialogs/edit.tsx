@@ -9,12 +9,13 @@ import { useDivisionContext } from "../../provider/divisions.provider";
 import { DivisionForm } from "../forms";
 import { useMemo } from "react";
 import { DivisionSchemaType } from "../../schemas/division.schema";
+import axios from "axios";
 
 export function EditDialogs() {
   const { state, dispatch, data } = useDivisionContext();
 
   const open = state.modal.openedModal === "edit";
-  const id = state.modal.divisionId
+  const id = state.modal.divisionId;
 
   const onOpenChange = (open: boolean) => {
     if (!open)
@@ -25,22 +26,33 @@ export function EditDialogs() {
   };
 
   const valuesData = useMemo(() => {
-    if(!open || !id) return undefined
+    if (!open || !id) return undefined;
 
-    const selected =data.data.find((div) => div.id === id)
+    const selected = data.data.find((div) => div.id === id);
 
-    if (!selected) return undefined
+    if (!selected) return undefined;
 
-    const mapped:DivisionSchemaType = {
+    const mapped: DivisionSchemaType = {
       description: selected?.description ?? "",
       name: selected.name,
-      vision_config: selected.vision_config
-    }
+      vision_config: selected.vision_config,
+    };
 
-    return mapped
-  }, [open, id, data.data])
+    return mapped;
+  }, [open, id, data.data]);
 
   if (!open) return;
+
+  const editHandler = async (values: DivisionSchemaType) => {
+    try {
+      await axios.patch(`/api/divisions/${id}`, values);
+      alert("Divisi berhasil diupdate");
+      dispatch({ type: "UPDATE_OPENED_MODAL", payload: { state: null, divisionId: undefined } });
+      data.mutate();
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -55,7 +67,7 @@ export function EditDialogs() {
         </DialogHeader>
 
         <DivisionForm
-          submitHandler={(values) => console.log(values)}
+          submitHandler={editHandler}
           onCancelButton={() => onOpenChange(false)}
           defaultValues={valuesData}
         />

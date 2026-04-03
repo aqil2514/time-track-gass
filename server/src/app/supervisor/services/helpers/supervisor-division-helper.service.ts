@@ -14,7 +14,8 @@ export class SupervisorDivisionHelperService {
   async getAllDivisions(): Promise<DivisionsDb[]> {
     const { data, error } = await this.supabase
       .from(TableName.Divisions)
-      .select('*');
+      .select('*')
+      .order("name");
 
     if (error) {
       console.error(error);
@@ -32,6 +33,15 @@ export class SupervisorDivisionHelperService {
     if (error) {
       console.error(error);
       throw error;
+    }
+  }
+
+  async editDivisionById(payload:CreateDivisionDto, oldId:string){
+    const {error} = await this.supabase.from(TableName.Divisions).update(payload).eq("id", oldId);
+
+    if(error){
+      console.log(error);
+      throw error
     }
   }
 }

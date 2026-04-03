@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { Roles } from 'src/decorators/roles.decorator';
 import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
 import { RoleGuard } from 'src/guards/role.guard';
@@ -18,6 +26,11 @@ export class SupervisorDivisionsController {
 
   @Post()
   async createNewDivision(@Body() body: CreateDivisionDto) {
-    return await this.service.createNewDivision(body)
+    return await this.service.createNewDivision(body);
+  }
+
+  @Patch(':id')
+  async editDivision(@Body() body: CreateDivisionDto, @Param('id') id: string) {
+    return await this.service.editDivision(body, id)
   }
 }

@@ -6,6 +6,7 @@ import { DivisionsTable } from "./components/table/divisions-table";
 import { AddDialogs } from "./components/dialogs/add";
 import { DivisionController } from "./components/controllers";
 import { EditDialogs } from "./components/dialogs/edit";
+import { DetailDialogs } from "./components/dialogs/detail";
 
 export function DivisionTemplate() {
   return (
@@ -25,10 +26,11 @@ const InnerTemplate = () => {
         />
 
         <DivisionController />
-        
+
         <DivisionsTable />
       </TemplateContainer>
 
+      <DetailDialogs />
       <AddDialogs />
       <EditDialogs />
     </>

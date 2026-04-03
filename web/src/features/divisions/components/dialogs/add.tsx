@@ -11,7 +11,7 @@ import { DivisionSchemaType } from "../../schemas/division.schema";
 import axios from "axios";
 
 export function AddDialogs() {
-  const { state, dispatch } = useDivisionContext();
+  const { state, dispatch, data } = useDivisionContext();
 
   const open = state.modal.openedModal === "add";
 
@@ -23,14 +23,17 @@ export function AddDialogs() {
       });
   };
 
-  const addHandler = async (values:DivisionSchemaType) => {
+  const addHandler = async (values: DivisionSchemaType) => {
     try {
-      await axios.post("/api/divisions", values)
+      await axios.post("/api/divisions", values);
+      alert("Divisi berhasil ditambah")
+      dispatch({ type: "UPDATE_OPENED_MODAL", payload: { state: null } });
+      data.mutate()
     } catch (error) {
       console.error(error);
       throw error;
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

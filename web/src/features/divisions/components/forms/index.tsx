@@ -9,17 +9,20 @@ import { FormFieldText } from "@/components/forms/form-field-text";
 import { FormFieldTextArea } from "@/components/forms/form-field-textarea";
 import { VisionForm } from "./vision-form";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react"; 
+import { Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Props {
   defaultValues?: DivisionSchemaType;
   submitHandler: (values: DivisionSchemaType) => Promise<void> | void;
-  onCancelButton: () => void
+  onCancelButton: () => void;
 }
 
-
-export function DivisionForm({ submitHandler, defaultValues, onCancelButton }: Props) {
+export function DivisionForm({
+  submitHandler,
+  defaultValues,
+  onCancelButton,
+}: Props) {
   const form = useForm<DivisionSchemaType>({
     defaultValues: defaultValues ?? divisionSchemaDefault,
     resolver: zodResolver(divisionSchema),
@@ -28,7 +31,13 @@ export function DivisionForm({ submitHandler, defaultValues, onCancelButton }: P
   const isSubmitting = form.formState.isSubmitting;
 
   return (
-    <form onSubmit={form.handleSubmit(submitHandler)}>
+    <form
+      onSubmit={form.handleSubmit(submitHandler, () =>
+        alert(
+          "Data yang diminta belum lengkap. Pastikan Konfigurasi Kategori juga diisi",
+        ),
+      )}
+    >
       <ScrollArea className="h-96 px-4">
         <div className="space-y-6 ">
           <div className="space-y-4">

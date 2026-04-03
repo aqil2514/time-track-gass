@@ -17,4 +17,7 @@ export class SupervisorDivisionsService {
     return await this.divisionHelper.createNewDivision(payload)
   }
 
+  async editDivision(paylaod:CreateDivisionDto, oldId:string){
+    return await this.divisionHelper.editDivisionById(paylaod, oldId)
+  }
 }
