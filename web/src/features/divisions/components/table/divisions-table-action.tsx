@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, MoreHorizontal, Pen } from "lucide-react";
+import { Eye, MoreHorizontal, Pen, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -40,6 +40,17 @@ export function DivisionTableActions({ data }: DivisionTableActionsProps) {
         dispatch({
           type: "UPDATE_OPENED_MODAL",
           payload: { state: "edit", divisionId: data.id },
+        }),
+    },
+    {
+      label: "Hapus Divisi",
+      icon: Trash,
+      className:
+        "cursor-pointer focus:bg-red-500/10 focus:text-red-400 text-red-400/90",
+      onClick: () =>
+        dispatch({
+          type: "UPDATE_OPENED_MODAL",
+          payload: { state: "delete", divisionId: data.id },
         }),
     },
   ];

@@ -20,4 +20,8 @@ export class SupervisorDivisionsService {
   async editDivision(paylaod:CreateDivisionDto, oldId:string){
     return await this.divisionHelper.editDivisionById(paylaod, oldId)
   }
+
+  async deleteDivision(id:string){
+    return await this.divisionHelper.softDeleteDivisionById(id)
+  }
 }

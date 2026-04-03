@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -32,5 +33,10 @@ export class SupervisorDivisionsController {
   @Patch(':id')
   async editDivision(@Body() body: CreateDivisionDto, @Param('id') id: string) {
     return await this.service.editDivision(body, id)
+  }
+
+  @Delete(':id')
+  async deleteDivision(@Param('id') id: string) {
+    return await this.service.deleteDivision(id)
   }
 }

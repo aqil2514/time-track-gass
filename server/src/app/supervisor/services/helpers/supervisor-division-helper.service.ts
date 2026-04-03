@@ -15,7 +15,8 @@ export class SupervisorDivisionHelperService {
     const { data, error } = await this.supabase
       .from(TableName.Divisions)
       .select('*')
-      .order("name");
+      .order('name')
+      .is("deleted_at", null);
 
     if (error) {
       console.error(error);
@@ -36,11 +37,26 @@ export class SupervisorDivisionHelperService {
     }
   }
 
-  async editDivisionById(payload:CreateDivisionDto, oldId:string){
-    const {error} = await this.supabase.from(TableName.Divisions).update(payload).eq("id", oldId);
+  async editDivisionById(payload: CreateDivisionDto, oldId: string) {
+    const { error } = await this.supabase
+      .from(TableName.Divisions)
+      .update(payload)
+      .eq('id', oldId);
 
-    if(error){
+    if (error) {
       console.log(error);
+      throw error;
+    }
+  }
+
+  async softDeleteDivisionById(id: string) {
+    const { error } = await this.supabase
+      .from(TableName.Divisions)
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error){
+      console.error(error);
       throw error
     }
   }

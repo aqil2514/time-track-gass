@@ -7,6 +7,7 @@ import { AddDialogs } from "./components/dialogs/add";
 import { DivisionController } from "./components/controllers";
 import { EditDialogs } from "./components/dialogs/edit";
 import { DetailDialogs } from "./components/dialogs/detail";
+import { DeleteDialogs } from "./components/dialogs/delete";
 
 export function DivisionTemplate() {
   return (
@@ -33,6 +34,7 @@ const InnerTemplate = () => {
       <DetailDialogs />
       <AddDialogs />
       <EditDialogs />
+      <DeleteDialogs />
     </>
   );
 };
