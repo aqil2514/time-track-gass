@@ -6,6 +6,7 @@ import {
   ZImageAnalyzeReturn,
 } from './interface/ai-z.interface';
 import { ActivityData } from 'src/app/activities/interface/activities_data.interface';
+import { AnalyzeImageService } from './helper/analyze-image.service';
 
 @Injectable()
 export class ZAIService {
@@ -13,6 +14,10 @@ export class ZAIService {
     'https://open.bigmodel.cn/api/coding/paas/v4/chat/completions';
   private readonly apiKey: string = `Bearer ${process.env.Z_AI_API_KEY}`;
   private readonly model: string = 'glm-4.6v';
+
+  constructor(
+    private readonly analyzeImageSerivice: AnalyzeImageService
+  ){}
 
   private cleanAiJson(text: string): string {
     return text
@@ -48,61 +53,8 @@ export class ZAIService {
     };
   }
 
-  async getAiImageAnalyze(imageDataUrl: string): Promise<ZImageAnalyzeReturn> {
-    const content = [
-      {
-        type: 'image_url',
-        image_url: { url: imageDataUrl },
-      },
-      {
-        type: 'text',
-        text: `
-Analyze this image and extract the relevant information.
-
-Return ONLY valid JSON in the following format:
-
-{
-  "app_name": "main application visible on the screen",
-  "window_title": "visible window title",
-  "category": "choose one of the following: active_support, client_farming, technical_escalation, admin_reporting, coding, debugging, research, database, devops, review, meeting, communication, design, planning",
-  "summary": "concise description of the activity"
-}
-
-Category Definitions:
-- active_support: Focus on responding to client chats/tickets or providing quick solutions in CRM.
-- client_farming: Proactive activity of contacting old clients to maintain relationships (weekly follow-up).
-- technical_escalation: Process of creating tickets in "Task Gass" for technical issues to be handled by the dev team.
-- admin_reporting: Filling out reports in Google Sheets, attendance forms, or internal database updates.
-
-Rules:
-- Respond with JSON only.
-- Do NOT wrap the response in markdown.
-- Do NOT include explanations.
-- All values must be written in English.
-`,
-      },
-    ];
-
-    try {
-      const { rawText, cleanJson, reasoning } =
-        await this.chatCompletion(content);
-      const parsed = JSON.parse(cleanJson);
-      const { app_name, window_title, category, summary } = parsed;
-
-      return {
-        message: rawText,
-        aiText: rawText,
-        aiReasoning: reasoning,
-        data: { app_name, window_title, category, summary },
-      };
-    } catch (error) {
-      console.error('AI Image Analyze Error:', error);
-      if (isAxiosError(error)) {
-        const data = error.response.data;
-        console.error(data)
-      }
-      throw error;
-    }
+  async getAiImageAnalyze(imageDataUrl: string, userId:string): Promise<ZImageAnalyzeReturn> {
+    return await this.analyzeImageSerivice.getAiImageAnalyze(imageDataUrl, userId)
   }
 
   async getAiSessionSummaryTitleAndDescription(

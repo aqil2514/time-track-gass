@@ -42,7 +42,7 @@ export class ImageScannerService {
 
     await this.s3Client.send(command);
 
-    const { data } = await this.zAi.getAiImageAnalyze(imageDataUrl);
+    const { data } = await this.zAi.getAiImageAnalyze(imageDataUrl, userId);
     const mappedData: AIScreenReportDbInsert = {
       ...data,
       user_id: userId,
