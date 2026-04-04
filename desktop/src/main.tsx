@@ -29,7 +29,7 @@ const root = document.getElementById("root") as HTMLElement;
 async function checkUpdate() {
   try {
     const update = await check();
-    console.log("Update check result:", update);
+    console.info("Update check result:", update);
     if (update) {
       const yes = await ask(
         `Versi baru ${update.version} tersedia. Update sekarang?`,

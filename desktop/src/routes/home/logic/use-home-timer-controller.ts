@@ -14,10 +14,8 @@ export type TimerStatus =
   | "uploading"
   | "error";
 
-export function useHomeTimerController(
-  mutate: KeyedMutator<ActivityData[]>,
-) {
-  const { capture } = useCapture();
+export function useHomeTimerController(mutate: KeyedMutator<ActivityData[]>) {
+  const { capture, compareImage } = useCapture();
 
   const [status, setStatus] = useState<TimerStatus>("idle");
   const [countdown, setCountdown] = useState(TIME_TO_SCREENSHOT);
@@ -60,38 +58,44 @@ export function useHomeTimerController(
   // ==============================
   // CAPTURE PROCESS
   // ==============================
-const captureHandler = useCallback(async () => {
-  if (isCapturingRef.current) return;
+  const captureHandler = useCallback(async () => {
+    if (isCapturingRef.current) return;
 
-  try {
-    isCapturingRef.current = true;
-    setStatus("capturing");
+    try {
+      isCapturingRef.current = true;
+      setStatus("capturing");
 
-    const dataUrl = await capture();
-    if (!dataUrl) throw new Error("Capture failed");
+      const dataUrl = await capture();
+      await compareImage(dataUrl)
+      return;
+      if (!dataUrl) throw new Error("Capture failed");
 
-    setStatus("uploading");
+      setStatus("uploading");
 
-    const store = await load("auth.json");
-    const token = await store.get<string>("accessToken");
+      const store = await load("auth.json");
+      const token = await store.get<string>("accessToken");
 
-    await api.post(buildUrl("image-upload"), { image: dataUrl }, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      await api.post(
+        buildUrl("image-upload"),
+        { image: dataUrl },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
 
-    await mutate();
-  } catch (error) {
-    console.error(error);
-    setStatus("error");
-    return;
-  } finally {
-    isCapturingRef.current = false;
-  }
+      await mutate();
+    } catch (error) {
+      console.error(error);
+      setStatus("error");
+      return;
+    } finally {
+      isCapturingRef.current = false;
+    }
 
-  setStatus("countdown");
-}, [capture, mutate]);
+    setStatus("countdown");
+  }, [capture, mutate]);
 
   // ==============================
   // MAIN LOOP (ANTI DRIFT)

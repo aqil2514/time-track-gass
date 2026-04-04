@@ -3,6 +3,8 @@ use image::imageops::FilterType;
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+mod utils;
+
 #[tauri::command]
 async fn resize_and_encode(file_path: String) -> Result<String, String> {
     let img = image::open(&file_path).map_err(|e| format!("Failed to open image: {e}"))?;
@@ -120,6 +122,11 @@ async fn request_screen_permission_macos() -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+async fn check_if_images_match(path_a:String, path_b:String) -> bool{
+    utils::compare_image::is_identical(&path_a, &path_b)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -135,6 +142,8 @@ pub fn run() {
             capture_screen_macos,
             check_screen_permission_macos,
             request_screen_permission_macos,
+
+            check_if_images_match,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
