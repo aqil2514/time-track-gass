@@ -34,6 +34,7 @@ const FALLBACK_PROMPT = `
 @Injectable()
 export class AnalyzeImageService {
   private readonly ALL_DIVISIONS_ID = 8;
+  private IS_READY = false;
   constructor(
     private readonly helper: ZAIHelperService,
     @Inject('SUPABASE_CLIENT')
@@ -75,6 +76,7 @@ export class AnalyzeImageService {
   }
 
   private async buildPrompt(userId: string): Promise<string> {
+    if (!this.IS_READY) return FALLBACK_PROMPT;
     const [divisionConfig, generalConfig] = await Promise.all([
       this.getUserDivisionByUserId(userId),
       this.getGeneralDivisionConfig(),
