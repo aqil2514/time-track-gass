@@ -15,7 +15,8 @@ export class AuthMapperService {
       password: hashedPassword,
       role: raw.role ?? 'worker',
       username: raw.username,
-      division: "No Set",
+      division_id: 2,
+      division:"No Set",
       updated_at: new Date().toISOString(),
     };
   }

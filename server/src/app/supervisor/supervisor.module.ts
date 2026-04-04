@@ -12,6 +12,7 @@ import { SupervisorMatrixService } from './services/helpers/supervisor-matrix.se
 import { SupervisorDivisionsController } from './controllers/supervisor-divisions.controller';
 import { SupervisorDivisionsService } from './services/supervisor-division.service';
 import { SupervisorDivisionHelperService } from './services/helpers/supervisor-division-helper.service';
+import { SupervisorUserHelper } from './services/helpers/supervisor-user-helper.service';
 
 @Module({
   imports: [ActivitiesModule],
@@ -28,6 +29,7 @@ import { SupervisorDivisionHelperService } from './services/helpers/supervisor-d
     SupervisorDivisionsService,
 
     // Helper
+    SupervisorUserHelper,
     SupervisorMatrixService,
     SupervisorActivityFetcher,
     SupervisorActivityMapper,

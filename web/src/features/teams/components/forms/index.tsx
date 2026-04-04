@@ -1,22 +1,15 @@
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { addUserSchema, AddUserSchema } from "../../schema/user-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Field,
-  FieldError,
   FieldGroup,
-  FieldLabel,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { FormFieldText } from "@/components/forms/form-field-text";
+import { FormFieldSelect } from "@/components/forms/form-field-select";
+import { DivisionForm } from "./division-form";
+import { FormFieldPassword } from "@/components/forms/form-field-password";
 
 interface Props {
   defaultValues?: Partial<AddUserSchema>;
@@ -32,7 +25,7 @@ export function UserForm({ defaultValues, onSubmit }: Props) {
       username: "",
       email: "",
       role: "worker",
-      division: "Unsetting",
+      division: "2",
       password: "",
       confirmPassword: "",
     },
@@ -56,145 +49,47 @@ export function UserForm({ defaultValues, onSubmit }: Props) {
       <FieldGroup className="space-y-4 py-4">
         {/* Row 1: Name & Username */}
         <div className="grid grid-cols-2 gap-4">
-          <Controller
-            name="fullName"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Full Name</FieldLabel>
-                <Input
-                  {...field}
-                  placeholder="John Doe"
-                  aria-invalid={fieldState.invalid}
-                  className="bg-slate-700 border-slate-800"
-                />
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </Field>
-            )}
-          />
-          <Controller
-            name="username"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Username</FieldLabel>
-                <Input
-                  {...field}
-                  placeholder="johndoe"
-                  disabled={isEdit}
-                  aria-invalid={fieldState.invalid}
-                  className="bg-slate-700 border-slate-800"
-                />
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </Field>
-            )}
-          />
+          <FormFieldText name="fullName" form={form} label="Full Name" />
+          <FormFieldText name="username" form={form} label="Username" />
         </div>
 
         {/* Email */}
-        <Controller
-          name="email"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Email</FieldLabel>
-              <Input
-                {...field}
-                type="email"
-                placeholder="john@example.com"
-                aria-invalid={fieldState.invalid}
-                className="bg-slate-700 border-slate-800"
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
+        <FormFieldText name="email" form={form} label="Email" />
 
         {/* Role & Division */}
         <div className="grid grid-cols-2 gap-4">
-          <Controller
+          <FormFieldSelect
+            form={form}
             name="role"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Role</FieldLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="bg-slate-700 border-slate-800">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-700 border-slate-800 text-white">
-                    <SelectItem value="worker">Worker</SelectItem>
-                    <SelectItem value="supervisor">Supervisor</SelectItem>
-                  </SelectContent>
-                </Select>
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </Field>
-            )}
+            label="Role"
+            options={[
+              {
+                label: "Worker",
+                value: "worker",
+              },
+              {
+                label: "Supervisor",
+                value: "supervisor",
+              },
+            ]}
           />
-          <Controller
-            name="division"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Division</FieldLabel>
-                <Input
-                  {...field}
-                  placeholder="Engineering"
-                  aria-invalid={fieldState.invalid}
-                  className="bg-slate-700 border-slate-800"
-                />
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </Field>
-            )}
-          />
+          <DivisionForm form={form} />
         </div>
 
         {/* Password Section - Only for New User */}
         {!isEdit && (
           <div className="grid grid-cols-2 gap-4">
-            <Controller
+            <FormFieldPassword
+              form={form}
               name="password"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Password</FieldLabel>
-                  <Input
-                    {...field}
-                    type="password"
-                    aria-invalid={fieldState.invalid}
-                    className="bg-slate-700 border-slate-800"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
+              label="Password"
+              showForgotPassword={false}
             />
-            <Controller
+            <FormFieldPassword
+              form={form}
               name="confirmPassword"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Confirm Password</FieldLabel>
-                  <Input
-                    {...field}
-                    type="password"
-                    aria-invalid={fieldState.invalid}
-                    className="bg-slate-700 border-slate-800"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
+              label="Confirm Password"
+              showForgotPassword={false}
             />
           </div>
         )}

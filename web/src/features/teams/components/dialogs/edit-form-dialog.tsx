@@ -23,6 +23,7 @@ export function EditFormDialog() {
   const { state, dispatch, userData } = useTeams();
 
   const open = state.modal.edit.isOpen;
+  const userId = state.modal.edit.userId
   const onOpenChange = (open: boolean) =>
     open
       ? dispatch({
@@ -32,19 +33,20 @@ export function EditFormDialog() {
       : dispatch({ type: "CLOSE_EDIT_USER_MODAL" });
 
   const url = open
-    ? buildUrl(`api/user/${state.modal.edit.userId}`, webUrl)
+    ? buildUrl(`api/user/${userId}`, webUrl)
     : null;
 
   const rawData = useFetch<AuthUser>(url);
 
-  if (!rawData.data) return null;
+  if (!rawData.data || !userId) return null;
 
   const defaultValues = mapUserToSchema(rawData.data);
 
   const onFormSubmit = async (formData: AddUserSchema) => {
     try {
-      await axios.patch(`/api/user/${state.modal.edit.userId}`, formData);
+      await axios.patch(`/api/user/${userId}`, formData);
       userData.mutate();
+      rawData.mutate();
       dispatch({ type: "CLOSE_EDIT_USER_MODAL" });
     } catch (error) {
       if (isAxiosError(error)) {

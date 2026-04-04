@@ -6,6 +6,7 @@ export interface ProfilesDb {
   password: string;
   role: string;
   division: string;
+  division_id: number;
   created_at: string;
   updated_at?: string;
 }

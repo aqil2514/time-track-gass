@@ -5,4 +5,5 @@ export interface AuthUser {
   username: string;
   full_name: string;
   division: string;
+  division_id: number;
 }

@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json(data);
   } catch (error) {
     if (isAxiosError(error)) {
-      console.log(error)
+      console.error(error)
       return NextResponse.json(
         { message: "Fetch data failed" },
         { status: error?.status ?? 500 },

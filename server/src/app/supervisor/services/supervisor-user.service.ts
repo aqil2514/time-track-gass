@@ -9,12 +9,15 @@ import { ProfilesWithNoPassword } from 'src/app/auth/interfaces/profiles.interfa
 import { TableName } from 'src/services/supabase/supabase.interface';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
+import { SupervisorUserHelper } from './helpers/supervisor-user-helper.service';
 
 @Injectable()
 export class SupervisorUserService {
   constructor(
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
+
+    private readonly helper:SupervisorUserHelper
   ) {}
 
   async getAllUserData(): Promise<ProfilesWithNoPassword[]> {
@@ -35,7 +38,7 @@ export class SupervisorUserService {
   async getUserById(id: string): Promise<ProfilesWithNoPassword> {
     const { data, error } = await this.supabase
       .from(TableName.Profiles)
-      .select('id, email, username, full_name, role, division')
+      .select('id, email, username, full_name, role, division, division_id')
       .eq('id', id)
       .single();
 
@@ -51,38 +54,12 @@ export class SupervisorUserService {
     return data as ProfilesWithNoPassword;
   }
 
-  private async checkUniqueness(
-    email: string,
-    username: string,
-    excludeId?: string,
-  ) {
-    let query = this.supabase
-      .from(TableName.Profiles)
-      .select('id, email, username')
-      .or(`email.eq.${email},username.eq.${username}`)
-      .is('deleted_at', null);
-
-    if (excludeId) {
-      query = query.neq('id', excludeId);
-    }
-
-    const { data } = await query;
-
-    if (data && data.length > 0) {
-      const conflict = data[0];
-      if (conflict.email === email) {
-        throw new ConflictException('Email already exists');
-      }
-      if (conflict.username === username) {
-        throw new ConflictException('Username already exists');
-      }
-    }
-  }
-
   async createUserData(
     createUserDto: CreateUserDto,
   ): Promise<ProfilesWithNoPassword> {
-    await this.checkUniqueness(createUserDto.email, createUserDto.username);
+    await this.helper.checkUniqueness(createUserDto.email, createUserDto.username);
+
+    const division = await this.helper.getDivisionNameByDivisionId(createUserDto.division)
 
     const { data, error } = await this.supabase
       .from(TableName.Profiles)
@@ -93,7 +70,8 @@ export class SupervisorUserService {
           email: createUserDto.email,
           password: createUserDto.password,
           role: createUserDto.role,
-          division: createUserDto.division,
+          division,
+          division_id: createUserDto.division,
         },
       ])
       .select('id, email, username, full_name, role, division')
@@ -119,11 +97,13 @@ export class SupervisorUserService {
       .eq('id', id)
       .single();
 
-    await this.checkUniqueness(
+    await this.helper.checkUniqueness(
       updateUserDto.email,
       currentUser?.username || '',
       id,
     );
+
+    const division = await this.helper.getDivisionNameByDivisionId(updateUserDto.division)
 
     const { data, error } = await this.supabase
       .from(TableName.Profiles)
@@ -131,7 +111,8 @@ export class SupervisorUserService {
         full_name: updateUserDto.fullName,
         email: updateUserDto.email,
         role: updateUserDto.role,
-        division: updateUserDto.division,
+        division,
+        division_id: updateUserDto.division,
       })
       .eq('id', id)
       .select('id, email, username, full_name, role, division')
@@ -161,7 +142,7 @@ export class SupervisorUserService {
   async deleteUserPassword(id: string): Promise<void> {
     const { error } = await this.supabase
       .from(TableName.Profiles)
-      .update({ password: ""})
+      .update({ password: '' })
       .eq('id', id);
 
     if (error) {
