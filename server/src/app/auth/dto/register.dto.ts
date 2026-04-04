@@ -30,6 +30,9 @@ export class RegisterDto {
   @IsNotEmpty({ message: 'Email is required' })
   email: string;
 
+  @IsString()
+  division: string;
+
   @IsEnum(['worker', 'supervisor'])
   @IsOptional()
   role?: 'worker' | 'supervisor';

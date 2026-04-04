@@ -5,6 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { AuthMapperService } from './services/auth-mapper.service';
 import { AuthService } from './services/auth.service';
+import { AuthFetcherService } from './services/auth-fetcher.service';
 
 @Global()
 @Module({
@@ -19,7 +20,7 @@ import { AuthService } from './services/auth.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, AuthMapperService],
-  exports:[JwtModule]
+  providers: [AuthService, AuthMapperService, AuthFetcherService],
+  exports: [JwtModule],
 })
 export class AuthModule {}

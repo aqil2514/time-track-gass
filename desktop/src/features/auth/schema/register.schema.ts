@@ -22,6 +22,8 @@ export const registerSchema = z
       .email("Please enter a valid email address")
       .min(1, "Email is required"),
 
+    division: z.string().min(1, "Divisi wajib diisi"),
+
     password: z
       .string()
       .min(1, "Password is required")
@@ -41,6 +43,7 @@ export type RegisterFormValues = z.infer<typeof registerSchema>;
 export const defaultRegisterForm: RegisterFormValues = {
   confirmPassword: "",
   email: "",
+  division:"",
   fullName: "",
   password: "",
   username: "",

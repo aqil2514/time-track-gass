@@ -14,6 +14,7 @@ import { JwtService } from '@nestjs/jwt';
 import { JwtAuthGuard } from 'src/guards/jwt.guard';
 import { CookieOptions, Response } from 'express';
 import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
+import { AuthFetcherService } from './services/auth-fetcher.service';
 
 @Controller('auth')
 export class AuthController {
@@ -28,6 +29,7 @@ export class AuthController {
   constructor(
     private readonly service: AuthService,
     private readonly jwt: JwtService,
+    private readonly fetcher: AuthFetcherService,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -35,6 +37,11 @@ export class AuthController {
   async getMe(@Req() req) {
     const user = req.user;
     return user;
+  }
+
+  @Get('/divisions')
+  async getAllDivisions() {
+    return await this.fetcher.getAllDivisions();
   }
 
   @UseGuards(JwtAuthSupervisorGuard)
@@ -47,6 +54,7 @@ export class AuthController {
 
   @Post('/register')
   async register(@Body() body: RegisterDto) {
+    
     return await this.service.createNewProfile(body);
   }
 

@@ -16,6 +16,7 @@ import axios, { isAxiosError } from "axios";
 import { buildUrl } from "@/utils/build-url";
 import { useAuth } from "@/hooks/use-auth";
 import { Loading } from "@/components/layout/loading";
+import { DivisionForm } from "./division-form";
 
 // Struktur error response NestJS
 interface NestErrorResponse {
@@ -213,6 +214,8 @@ export default function RegisterPage() {
                 placeholder="john@example.com"
               />
 
+              <DivisionForm form={form} />
+
               <FormFieldPassword
                 form={form}
                 showForgotPassword={false}
@@ -280,7 +283,7 @@ export default function RegisterPage() {
 
         {/* Footer */}
         <p className="text-center text-slate-600 text-xs mt-6">
-          © 2026 Time Tracker. All rights reserved.
+          © {new Date().getFullYear()} Time Tracker. All rights reserved.
         </p>
       </div>
     </div>
