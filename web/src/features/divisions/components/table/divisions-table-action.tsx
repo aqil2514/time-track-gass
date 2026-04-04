@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useDivisionContext } from "../../provider/divisions.provider";
 import { DivisionsDb } from "../../interfaces/divisions.interface";
+import { useMemo } from "react";
 
 interface DivisionTableActionsProps {
   data: DivisionsDb;
@@ -20,40 +21,50 @@ interface DivisionTableActionsProps {
 export function DivisionTableActions({ data }: DivisionTableActionsProps) {
   const { dispatch } = useDivisionContext();
 
-  const menuItems = [
-    {
-      label: "Detail Divisi",
-      icon: Eye,
-      className:
-        "cursor-pointer focus:bg-blue-500/10 focus:text-blue-400 text-blue-400/90",
-      onClick: () =>
-        dispatch({
-          type: "UPDATE_OPENED_MODAL",
-          payload: { state: "detail", divisionId: data.id },
-        }),
-    },
-    {
-      label: "Edit Divisi",
-      icon: Pen,
-      className: "cursor-pointer",
-      onClick: () =>
-        dispatch({
-          type: "UPDATE_OPENED_MODAL",
-          payload: { state: "edit", divisionId: data.id },
-        }),
-    },
-    {
-      label: "Hapus Divisi",
-      icon: Trash,
-      className:
-        "cursor-pointer focus:bg-red-500/10 focus:text-red-400 text-red-400/90",
-      onClick: () =>
-        dispatch({
-          type: "UPDATE_OPENED_MODAL",
-          payload: { state: "delete", divisionId: data.id },
-        }),
-    },
-  ];
+  const isGeneralConfig = data.id === 8;
+
+  const menuItems = useMemo(() => {
+    const base = [
+      {
+        label: "Detail Divisi",
+        icon: Eye,
+        className:
+          "cursor-pointer focus:bg-blue-500/10 focus:text-blue-400 text-blue-400/90",
+        onClick: () =>
+          dispatch({
+            type: "UPDATE_OPENED_MODAL",
+            payload: { state: "detail", divisionId: data.id },
+          }),
+      },
+      {
+        label: "Edit Divisi",
+        icon: Pen,
+        className: "cursor-pointer",
+        onClick: () =>
+          dispatch({
+            type: "UPDATE_OPENED_MODAL",
+            payload: { state: "edit", divisionId: data.id },
+          }),
+      },
+    ];
+
+    if (isGeneralConfig) return base;
+
+    return [
+      ...base,
+      {
+        label: "Hapus Divisi",
+        icon: Trash,
+        className:
+          "cursor-pointer focus:bg-red-500/10 focus:text-red-400 text-red-400/90",
+        onClick: () =>
+          dispatch({
+            type: "UPDATE_OPENED_MODAL",
+            payload: { state: "delete", divisionId: data.id },
+          }),
+      },
+    ];
+  }, [isGeneralConfig, data.id, dispatch]);
   return (
     <div className="text-left">
       <DropdownMenu>
