@@ -34,12 +34,19 @@ export class SupervisorTrackerService {
   }
 
   async getTrackerMatrix(date: string) {
-    const users = await this.matrixHelper.getActiveUsers();
+    const [users, trackerWeekly] = await Promise.all([
+      this.matrixHelper.getActiveUsers(),
+      this.matrixHelper.getTrackerWeekly(date),
+    ]);
     const userIds = users.map((user) => user.id);
 
     const rawData = await this.matrixHelper.getOneDayActivity(userIds, date);
 
-    const mappedUser = this.matrixHelper.mapToMatrixData(rawData, users);
+    const mappedUser = this.matrixHelper.mapToMatrixData(
+      rawData,
+      users,
+      trackerWeekly,
+    );
 
     return mappedUser;
   }

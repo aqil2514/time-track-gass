@@ -3,7 +3,10 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { endOfDay, format, startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { ProfilesDb } from 'src/app/auth/interfaces/profiles.interface';
-import { AIScreenReportPopulateUser } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
+import {
+  AIScreenReportPopulateUser,
+  TotalWeeklyActivity,
+} from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { TableName } from 'src/services/supabase/supabase.interface';
 
 export interface MatrixResponse {
@@ -11,10 +14,13 @@ export interface MatrixResponse {
   userId: string;
   fullName: string;
   activity: number[];
+  totalWeeklyActivity: number;
 }
 
 @Injectable()
 export class SupervisorMatrixService {
+  // TODO Ini nanti intervalnya ambil dari databse kalo fitur udah siap
+  private readonly INTERVAL = 5;
   constructor(
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
@@ -25,7 +31,7 @@ export class SupervisorMatrixService {
       .from(TableName.Profiles)
       .select('*')
       .is('deleted_at', null)
-      .order("username");
+      .order('username');
     if (error) {
       console.error(error);
       throw error;
@@ -59,6 +65,7 @@ export class SupervisorMatrixService {
         .in('user_id', userIds)
         .gte('created_at', startStr)
         .lte('created_at', endStr)
+        .neq('category', 'unclassified')
         .range(from, to)
         .order('created_at', { ascending: true });
 
@@ -83,12 +90,45 @@ export class SupervisorMatrixService {
     return finalData;
   }
 
-  mapToMatrixData(rawData: AIScreenReportPopulateUser[], users: ProfilesDb[]) {
+  async getTrackerWeekly(date: string) {
+    const localDate = new Date(new Date(date).getTime() + 7 * 60 * 60 * 1000);
+    const dayOfWeek = localDate.getUTCDay();
+
+    const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+
+    const endOfWeek = new Date(localDate);
+    endOfWeek.setUTCDate(localDate.getUTCDate() + daysUntilSunday);
+    const endDateOnly = endOfWeek.toISOString().split('T')[0];
+
+    const endStr = `${endDateOnly}T23:59:59+07:00`;
+
+
+    const { data, error } = await this.supabase.rpc(
+      'get_weekly_user_activity_by_date',
+      { client_date: endStr },
+    );
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    return data;
+  }
+
+  mapToMatrixData(
+    rawData: AIScreenReportPopulateUser[],
+    users: ProfilesDb[],
+    weeklyActivity: TotalWeeklyActivity[],
+  ) {
     const finalMatrix: MatrixResponse[] = [];
 
     for (const user of users) {
       const selectedActivity = rawData.filter(
         (data) => data.user.id === user.id,
+      );
+      const selectedWeeklyActivity = weeklyActivity.find(
+        (activity) => activity.user_id === user.id,
       );
 
       const hourlyActivity: number[] = new Array(24).fill(0);
@@ -105,11 +145,15 @@ export class SupervisorMatrixService {
         hourlyActivity[hour] = activityInThisHour.length;
       }
 
+      const totalWeeklyActivity =
+        selectedWeeklyActivity?.total_activity * this.INTERVAL || 0;
+
       const matrixData: MatrixResponse = {
         fullName: user.full_name,
         userId: user.id,
         userName: user.username,
         activity: hourlyActivity,
+        totalWeeklyActivity,
       };
 
       finalMatrix.push(matrixData);

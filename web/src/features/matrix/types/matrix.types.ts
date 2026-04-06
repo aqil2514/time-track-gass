@@ -1,6 +1,7 @@
 export interface MatrixResponse {
   userName: string;
-  fullName: string;
   userId: string;
+  fullName: string;
   activity: number[];
+  totalWeeklyActivity: number;
 }

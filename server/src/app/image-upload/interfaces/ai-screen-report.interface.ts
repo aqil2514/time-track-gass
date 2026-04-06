@@ -14,7 +14,7 @@ export interface AIScreenReportPopulateUser extends Omit<
   'user_id'
 > {
   user: {
-    id:string;
+    id: string;
     role: string;
     email: string;
     division: string;
@@ -34,3 +34,8 @@ export type AIScreenReportDbInsert = Omit<
   AIScreenReportDb,
   'id' | 'created_at'
 >;
+
+export interface TotalWeeklyActivity {
+  user_id: string;
+  total_activity: number;
+}
