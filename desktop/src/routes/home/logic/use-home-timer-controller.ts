@@ -66,8 +66,12 @@ export function useHomeTimerController(mutate: KeyedMutator<ActivityData[]>) {
       setStatus("capturing");
 
       const dataUrl = await capture();
-      await compareImage(dataUrl)
-      return;
+      const isSameImage = await compareImage(dataUrl);
+      if (isSameImage) {
+        setStatus("countdown")
+        return;
+      }
+
       if (!dataUrl) throw new Error("Capture failed");
 
       setStatus("uploading");

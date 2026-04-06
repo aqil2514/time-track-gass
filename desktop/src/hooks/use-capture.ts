@@ -5,7 +5,21 @@ import {
 import { invoke } from "@tauri-apps/api/core";
 import { platform } from "@tauri-apps/plugin-os";
 import { useCallback } from "react";
-import { load } from "@tauri-apps/plugin-store";
+import { load, Store } from "@tauri-apps/plugin-store";
+
+let store: null | Store = null;
+
+const getStore = async () => {
+  if(!store)
+    store = await load("compare-capture.json")
+  return store
+}
+
+const addToOldStore = async (pathUrl: string) => {
+  const store = await getStore()
+  await store.set("old_path", pathUrl);
+  await store.save();
+};
 
 export function useCapture() {
   const capture = useCallback(async () => {
@@ -32,28 +46,22 @@ export function useCapture() {
     return await invoke<string>("resize_and_encode", { filePath: tempPath });
   }, []);
 
-  const addToOldStore = async (pathUrl: string) => {
-    const store = await load("compare-capture.json");
-    await store.set("old_path", pathUrl);
-    await store.save();
-  };
-
   const compareImage = async (newPathUrl: string) => {
     const store = await load("compare-capture.json");
     const oldPath = await store.get("old_path");
-    if (!oldPath) return await addToOldStore(newPathUrl);
-
-    console.log(oldPath)
+    if (!oldPath) {
+      await addToOldStore(newPathUrl);
+      return false;
+    }
 
     const isSameImage = await invoke<boolean>("check_if_images_match", {
       pathA: oldPath,
       pathB: newPathUrl,
     });
 
-    console.log(newPathUrl);
-    console.log(isSameImage)
+    await addToOldStore(newPathUrl);
 
-    await addToOldStore(newPathUrl)
+    return isSameImage;
   };
 
   return { capture, compareImage };
