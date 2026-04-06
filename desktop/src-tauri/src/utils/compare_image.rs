@@ -5,11 +5,11 @@ pub fn is_identical(img_a_base64: &str, img_b_base64: &str) -> bool {
     let decode = |b64: &str| -> Option<image::DynamicImage> {
         // Hapus prefix "data:image/png;base64," jika ada
         let data = b64.split(',').last().unwrap_or(b64);
-        
+
         let bytes = base64::engine::general_purpose::STANDARD
             .decode(data)
             .ok()?;
-        
+
         image::load_from_memory(&bytes).ok()
     };
 

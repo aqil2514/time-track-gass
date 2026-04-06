@@ -1,5 +1,5 @@
-import { LogoutButton } from "@/components/atoms/logout-button";
 import { Timer } from "lucide-react";
+import { ProfileAvatar } from "./profile-avatar";
 
 export function DashboardHeader() {
   return (
@@ -23,7 +23,7 @@ export function DashboardHeader() {
         </div>
       </div>
 
-      <LogoutButton />
+      <ProfileAvatar />
     </header>
   );
 }

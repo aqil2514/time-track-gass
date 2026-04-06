@@ -57,9 +57,7 @@ async fn capture_screen_macos() -> Result<String, String> {
     }
 
     // Validasi file benar-benar ter-capture (bukan blank akibat permission ditolak)
-    let file_size = std::fs::metadata(&temp_path)
-        .map(|m| m.len())
-        .unwrap_or(0);
+    let file_size = std::fs::metadata(&temp_path).map(|m| m.len()).unwrap_or(0);
 
     if file_size < 1000 {
         let _ = std::fs::remove_file(&temp_path);
@@ -123,13 +121,14 @@ async fn request_screen_permission_macos() -> Result<(), String> {
 }
 
 #[tauri::command]
-async fn check_if_images_match(path_a:String, path_b:String) -> bool{
+async fn check_if_images_match(path_a: String, path_b: String) -> bool {
     utils::compare_image::is_identical(&path_a, &path_b)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_screenshots::init())
@@ -142,7 +141,6 @@ pub fn run() {
             capture_screen_macos,
             check_screen_permission_macos,
             request_screen_permission_macos,
-
             check_if_images_match,
         ])
         .run(tauri::generate_context!())

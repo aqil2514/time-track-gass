@@ -1,17 +1,9 @@
-import { useNavigate } from "react-router";
 import { Button } from "../ui/button";
 import { LogOut } from "lucide-react";
-import { load } from "@tauri-apps/plugin-store";
+import { useAuth } from "@/hooks/use-auth";
 
 export function LogoutButton() {
-  const navigate = useNavigate();
-
-  const logoutHandler = async () => {
-    const store = await load("auth.json");
-    await store.delete("accessToken");
-    await store.save();
-    navigate("/login");
-  };
+  const { logoutHandler } = useAuth();
 
   return (
     <Button

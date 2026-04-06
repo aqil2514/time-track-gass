@@ -33,4 +33,5 @@ image = "0.25"
 webp = "0.3"
 base64 = "0.22"
 tauri-plugin-updater = { version = "2.10.0", features = ["rustls-tls"] }
+tauri-plugin-shell = "2"
 

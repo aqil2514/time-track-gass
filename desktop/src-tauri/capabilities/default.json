@@ -10,6 +10,7 @@
     "dialog:default",
     "store:default",
     "updater:default",
+    "shell:default",
 
     "http:default",
     "http:allow-fetch",
