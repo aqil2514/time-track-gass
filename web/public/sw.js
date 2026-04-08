@@ -13,7 +13,8 @@ setInterval(() => {
 
   const currentTime = `${hrs}:${mins.toString().padStart(2, "0")}`;
 
-  sendNotification("Test Notifikasi", "Ini test notifikasi")
+  sendNotification("Test Notifikasi", "Ini test notifikasi");
+  console.log(currentTime)
 
   if (currentTime === "11:00") {
     sendNotification(
