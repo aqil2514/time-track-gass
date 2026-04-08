@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { NotifService } from "@/components/layouts/notif-service";
 
 export const metadata: Metadata = {
   title: {
@@ -15,7 +16,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={` antialiased bg-slate-900`}>{children}</body>
+      <body className={` antialiased bg-slate-900`}>{children}
+        <NotifService />
+      </body>
     </html>
   );
 }
