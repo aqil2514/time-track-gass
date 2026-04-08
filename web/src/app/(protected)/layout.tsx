@@ -6,6 +6,7 @@ import React from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { cookies } from "next/headers";
 import { DashboardSidebar } from "@/components/layouts/dashboard-sidebar";
+import { NotifService } from "@/components/layouts/notif-service";
 
 export const dynamic = 'force-dynamic'
 
@@ -29,6 +30,8 @@ export default async function ProtectedLayout({
           {children}
         </div>
       </AuthProvider>
+
+      <NotifService />
     </SidebarProvider>
   );
 }
