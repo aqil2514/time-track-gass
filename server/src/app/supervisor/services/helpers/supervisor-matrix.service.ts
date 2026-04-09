@@ -1,7 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { endOfDay, format, startOfDay } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
 import { ProfilesDb } from 'src/app/auth/interfaces/profiles.interface';
 import {
   AIScreenReportPopulateUser,
