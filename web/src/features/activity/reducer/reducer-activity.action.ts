@@ -10,6 +10,7 @@ export function activityAction(
         modal: {
           openedModal: action.payload.state,
           activityId: action.payload.activityId,
+          activityIds: action.payload.activityIds
         },
       };
 

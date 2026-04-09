@@ -4,5 +4,6 @@ export const activityReducerInitial: ActivityState = {
   modal: {
     openedModal: null,
     activityId: undefined,
+    activityIds: undefined
   },
 };
