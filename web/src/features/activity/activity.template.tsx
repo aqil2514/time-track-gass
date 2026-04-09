@@ -2,6 +2,7 @@ import { ActivityController } from "./components/activity-controller";
 import { ActivityData } from "./components/activity-data";
 import { ActivityHeader } from "./components/activity-header";
 import { BulkDeleteDialog } from "./dialogs/bulk-delete";
+import { BulkEditCategoryDialog } from "./dialogs/bulk-edit-category";
 import { DetailDialog } from "./dialogs/detail";
 import { ActivityProvider } from "./provider/activity.provider";
 
@@ -24,6 +25,7 @@ const InnerTemplate = () => {
 
       <DetailDialog />
       <BulkDeleteDialog />
+      <BulkEditCategoryDialog />
     </>
   );
 };

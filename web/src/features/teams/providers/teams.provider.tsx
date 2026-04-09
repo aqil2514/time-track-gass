@@ -19,7 +19,7 @@ const TeamsContext = createContext<TeamManagemetContext>(
 
 export function TeamProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(teamManagemetAction, reducerTeamInitial);
-  const userData = useUserData(state);
+  const userData = useUserData();
 
   const values: TeamManagemetContext = {
     dispatch,

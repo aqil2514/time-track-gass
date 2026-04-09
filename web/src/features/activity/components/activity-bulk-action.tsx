@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AIScreenReportDb } from "@/features/dashboard/interface/ai-screen-db.interface";
-import { Trash } from "lucide-react";
+import { Pencil, Trash } from "lucide-react";
 import { useActivity } from "../provider/activity.provider";
 
 interface Props {
@@ -35,14 +35,14 @@ export function ActivityBulkAction({ selectedData }: Props) {
     },
     {
       label: "Edit Kategori",
-      icon: Trash,
+      icon: Pencil,
       className:
-        "cursor-pointer focus:bg-red-500/10 focus:text-red-400 text-red-400/90",
+        "cursor-pointer focus:bg-blue-500/10 focus:text-blue-400 text-blue-400/90",
       onClick: () =>
         dispatch({
           type: "UPDATE_OPENED_MODAL",
           payload: {
-            state: "bulk-delete",
+            state: "bulk-edit-category",
             activityIds: selectedData.map((data) => data.id),
           },
         }),
