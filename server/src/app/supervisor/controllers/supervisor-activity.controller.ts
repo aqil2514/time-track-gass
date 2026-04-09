@@ -9,9 +9,19 @@ import { SupervisorACtivityService } from '../services/supervisor-activity.servi
 @Controller('supervisor/activity')
 export class SupervisorActivityController {
   constructor(private readonly service: SupervisorACtivityService) {}
-  
+
   @Patch('delete')
   async softDelete(@Body() activityIds: string[]) {
     return await this.service.softDeleteActivity(activityIds);
+  }
+
+  @Patch('category')
+  async bulkEditCategory(
+    @Body() body: { activityIds: string[]; newCategory: string },
+  ) {
+    return await this.service.bulkEditCategory(
+      body.activityIds,
+      body.newCategory,
+    );
   }
 }

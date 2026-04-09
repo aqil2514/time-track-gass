@@ -20,4 +20,16 @@ export class SupervisorACtivityService {
       throw error;
     }
   }
+
+  async bulkEditCategory(activityIds: string[], newCategory: string) {
+    const { error } = await this.supabase
+      .from(TableName.AIScreenReport)
+      .update({ category: newCategory })
+      .in('id', activityIds);
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+  }
 }

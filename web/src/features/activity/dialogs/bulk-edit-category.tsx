@@ -24,6 +24,7 @@ import { AppWindow, Clock, Tag, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { useDivisions } from "@/features/divisions/hooks/use-divisions";
 import { useUserData } from "@/features/teams/hooks/use-user-data";
+import axios from "axios";
 
 export function BulkEditCategoryDialog() {
   const { state, dispatch, data } = useActivity();
@@ -62,7 +63,10 @@ export function BulkEditCategoryDialog() {
     );
     if (!selectedDivision) return [];
 
-    return ["unclassified", ...selectedDivision.vision_config.allowed_categories];
+    return [
+      "unclassified",
+      ...selectedDivision.vision_config.allowed_categories,
+    ];
   }, [divisionData, userData, selectedData]);
 
   if (!items) return null;
@@ -74,9 +78,22 @@ export function BulkEditCategoryDialog() {
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!selectedCategory) return;
-    handleClose(false);
+
+    try {
+      await axios.patch("/api/user-activity/bulk/category", {
+        activityIds: items,
+        newCategory: selectedCategory,
+      });
+
+      alert("Data aktivitas user berhasil diupdate");
+      handleClose(false);
+      data.mutate();
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   };
 
   return (
