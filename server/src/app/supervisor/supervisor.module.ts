@@ -13,6 +13,8 @@ import { SupervisorDivisionsController } from './controllers/supervisor-division
 import { SupervisorDivisionsService } from './services/supervisor-division.service';
 import { SupervisorDivisionHelperService } from './services/helpers/supervisor-division-helper.service';
 import { SupervisorUserHelper } from './services/helpers/supervisor-user-helper.service';
+import { SupervisorActivityController } from './controllers/supervisor-activity.controller';
+import { SupervisorACtivityService } from './services/supervisor-activity.service';
 
 @Module({
   imports: [ActivitiesModule],
@@ -20,13 +22,15 @@ import { SupervisorUserHelper } from './services/helpers/supervisor-user-helper.
     SupervisorController,
     SupervisorUserController,
     SupervisorTrackerController,
-    SupervisorDivisionsController
+    SupervisorDivisionsController,
+    SupervisorActivityController
   ],
   providers: [
     SupervisorService,
     SupervisorUserService,
     SupervisorTrackerService,
     SupervisorDivisionsService,
+    SupervisorACtivityService,
 
     // Helper
     SupervisorUserHelper,

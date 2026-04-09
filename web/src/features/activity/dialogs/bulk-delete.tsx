@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, AppWindow, Clock, Tag } from "lucide-react";
 import { format } from "date-fns";
+import axios from "axios";
 
 export function BulkDeleteDialog() {
   const { state, dispatch, data } = useActivity();
@@ -43,9 +44,19 @@ export function BulkDeleteDialog() {
     }
   };
 
-  const handleConfirmDelete = () => {
-    // TODO: implement delete action
-    dispatch({ type: "UPDATE_OPENED_MODAL", payload: { state: null } });
+  const handleConfirmDelete = async () => {
+    try {
+      await axios.patch("/api/user-activity/bulk/delete", {
+        activityIds : items
+      })
+      
+      alert("Data aktivitas user berhasil dihapus")
+      dispatch({ type: "UPDATE_OPENED_MODAL", payload: { state: null } });
+      data.mutate()
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   };
 
   return (
