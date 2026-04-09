@@ -64,6 +64,7 @@ export class SupervisorMatrixService {
         .gte('created_at', startStr)
         .lte('created_at', endStr)
         .neq('category', 'unclassified')
+        .is("deleted_at", null)
         .range(from, to)
         .order('created_at', { ascending: true });
 

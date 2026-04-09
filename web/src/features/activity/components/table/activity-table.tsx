@@ -14,7 +14,7 @@ export function ActivityTable() {
 
   return (
     <div>
-      {isSelectedData && <ActivityBulkAction selectedData={selectData} /> }
+      {isSelectedData && <ActivityBulkAction selectedData={selectData} />}
       <DataTable
         columns={activityColumns}
         data={data.data}
