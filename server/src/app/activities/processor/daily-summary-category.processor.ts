@@ -36,7 +36,7 @@ export class DailySummaryCategoryProcessor extends WorkerHost {
     );
     await job.updateProgress(80);
     
-    // await this.helper.saveToDb(summary);
+    await this.helper.saveToDb(summary);
     await job.updateProgress(100);
   }
 

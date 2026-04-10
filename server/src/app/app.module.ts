@@ -32,6 +32,14 @@ import { ExpressAdapter } from '@bull-board/express';
           host: config.get<string>('BULL_MQ_REDIS_HOST'),
           port: parseInt(config.get<string>('BULL_MQ_REDIS_PORT')),
           password: config.get<string>('BULL_MQ_REDIS_PASSWORD'),
+
+          maxRetriesPerRequest: null,
+          connectTimeout: 30000,
+          enableReadyCheck: false,
+
+          retryStrategy:(times:number) => {
+            return Math.min(times * 50, 2000)
+          }
         },
       }),
     }),
