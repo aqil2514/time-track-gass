@@ -2,7 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { json } from 'express';
-import * as cookieParser from 'cookie-parser';
+import cookieParser from 'cookie-parser';
+import 'module-alias/register';
 
 async function bootstrap() {
   const logger = new Logger('CORS');
@@ -31,7 +32,7 @@ async function bootstrap() {
       if (
         requestOrigin === 'http://localhost:1420' || // dev desktop
         requestOrigin === 'http://localhost:3001' || // dev web
-        requestOrigin === "https://supervisortime.gass.co.id" || // prod web
+        requestOrigin === 'https://supervisortime.gass.co.id' || // prod web
         requestOrigin === 'http://tauri.localhost' || // Windows production
         requestOrigin === 'tauri://localhost' || // macOS & Linux production
         requestOrigin.startsWith('tauri://') || // fallback Tauri
