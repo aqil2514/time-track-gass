@@ -15,6 +15,8 @@ export class ActivitiesCronService {
   constructor(
     @InjectQueue('daily-summary-queue')
     private readonly dailySummaryQueue: Queue,
+    @InjectQueue('daily-category-summary-queue')
+    private readonly dailySummaryCategoryQueue: Queue,
     private readonly sessionSummaryHelper: ActivitiesSessionSummaryCronHelper,
     private readonly dailySummaryHelper: ActivitiesDailySummaryCronHelper,
     private readonly dailySummaryPerCategoryHelper: ActivitiesDailySummaryPerCategoryCronHelper,
@@ -91,85 +93,28 @@ export class ActivitiesCronService {
     }
   }
 
-  // @Cron(CronExpression.EVERY_DAY_AT_10PM, {
-  //   timeZone: 'Asia/Jakarta',
-  // })
-  // async createDailySummary() {
-  //   const allUser = await this.sessionSummaryHelper.getAllUser();
-
-  //   const summariesData =
-  //     await this.dailySummaryHelper.getSessionActivityByUserId(allUser);
-
-  //   const allRawIds = summariesData.flatMap((data) => data.raw_ids);
-
-  //   const allReports = await this.helper.getRawActivityRawIds(allRawIds);
-
-  //   const data = this.helper.mapToActivityData(allReports, summariesData);
-
-  //   const mappedData =
-  //     await this.dailySummaryHelper.mapToDailySummaryDbInsert(data);
-
-  //   await this.dailySummaryHelper.createNewDailySummary(mappedData);
-
-  //   this.logger.log(`Daily summary generated for ${mappedData.length} entries`);
-  // }
-
   @Cron(CronExpression.EVERY_DAY_AT_11PM, {
     timeZone: 'Asia/Jakarta',
   })
   async createDailySummaryPerCategory() {
     this.logger.log('Memanggil fungsi buat summary daily per kategori');
 
-    const [allUser, allCategories] = await Promise.all([
-      this.sessionSummaryHelper.getAllUser(),
-      this.dailySummaryPerCategoryHelper.getAllCategories(),
-    ]);
+    const allUser = await this.sessionSummaryHelper.getAllUser();
 
-    this.logger.log(`Jumlah user : ${allUser.length}`);
-    this.logger.log(`Jumlah kategori : ${allCategories.length}`);
-
-    this.logger.log(`Mencari data aktivitas dari ${allUser.length} user...`);
-    const userActivites =
-      await this.dailySummaryPerCategoryHelper.getUserDailyActivity(allUser);
-
-    this.logger.log(`Data aktivitas dari ${allUser.length} ditemukan`);
-    const userMap = new Map<string, AIScreenReportDb[]>();
-
-    this.logger.log(`memulai mapping...`);
-    for (const activity of userActivites) {
-      const existing = userMap.get(activity.user_id);
-
-      existing
-        ? existing.push(activity)
-        : userMap.set(activity.user_id, [activity]);
+    for (const user of allUser) {
+      await this.dailySummaryCategoryQueue.add(
+        'daily-category-summary',
+        {
+          userId: user,
+        },
+        {
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 5000,
+          },
+        },
+      );
     }
-
-    this.logger.log(
-      `Mapping selesai. Terdapat ${userMap.size} data setelah dimapping`,
-    );
-
-    this.logger.log('Menganalisis dengan AI');
-    const userMapEntries = userMap.entries();
-
-    const finalResult: DailySummaryPerCategory[] = [];
-
-    let i = 1;
-    for (const [userId, data] of userMapEntries) {
-      this.logger.log(`Menganalisis user ${i} dari ${userMap.size}...`);
-      const summary =
-        await this.dailySummaryPerCategoryHelper.getDailyAiSummary(
-          data,
-          allCategories,
-          userId,
-        );
-      finalResult.push(...summary);
-      i++;
-    }
-
-    this.logger.log('Analisis oleh AI selesai, lanjut simpan ke database');
-
-    await this.dailySummaryPerCategoryHelper.saveToDb(finalResult);
-
-    this.logger.log('Berhasil simpan ke database');
   }
 }

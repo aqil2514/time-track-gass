@@ -8,12 +8,16 @@ import { ActivitiesDailySummaryCronHelper } from './services/helpers/activites-c
 import { ActivitiesDailySummaryPerCategoryCronHelper } from './services/helpers/activities-cron-daily-summary-per-category.service';
 import { BullModule } from '@nestjs/bullmq';
 import { DailySummaryProcessor } from './processor/daily-summary.processor';
+import { DailySummaryCategoryProcessor } from './processor/daily-summary-category.processor';
 
 @Global()
 @Module({
   imports: [
     BullModule.registerQueue({
       name: 'daily-summary-queue',
+    }),
+    BullModule.registerQueue({
+      name: 'daily-category-summary-queue',
     }),
   ],
   controllers: [ActivitiesController],
@@ -28,7 +32,8 @@ import { DailySummaryProcessor } from './processor/daily-summary.processor';
     ActivitiesDailySummaryPerCategoryCronHelper,
 
     // Processor
-    DailySummaryProcessor
+    DailySummaryProcessor,
+    DailySummaryCategoryProcessor
   ],
   exports: [ActivitiesCronService],
 })

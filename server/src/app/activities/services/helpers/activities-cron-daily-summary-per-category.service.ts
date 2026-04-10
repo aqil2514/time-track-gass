@@ -102,6 +102,7 @@ export class ActivitiesDailySummaryPerCategoryCronHelper {
         created_at: new Date(),
       }));
     } catch (error) {
+      // @ts-ignore
       this.logger.error(`Error AI Summary for user ${user_id}:`, error.message);
       return []; // Kembalikan array kosong agar loop utama tidak berhenti total
     }
@@ -118,6 +119,20 @@ export class ActivitiesDailySummaryPerCategoryCronHelper {
     }
 
     return data.map((d) => d.category);
+  }
+
+  async getCategoryByUser(userId: string): Promise<string[] | null> {
+    const { data, error } = await this.supabase.rpc(
+      'get_user_allowed_categories',
+      { target_user_id: userId },
+    );
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    return data;
   }
 
   async saveToDb(payloads: DailySummaryPerCategory[]) {

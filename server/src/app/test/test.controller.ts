@@ -27,4 +27,12 @@ export class TestController {
       message: 'Tugas Ditambah',
     };
   }
+
+  @Get('/daily-summary-category')
+  async bullDailySummaryCategory() {
+    await this.cronTest.createDailySummaryPerCategory()
+    return {
+      message: 'Tugas Ditambah',
+    };
+  }
 }

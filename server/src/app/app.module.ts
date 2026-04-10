@@ -47,6 +47,10 @@ import { ExpressAdapter } from '@bull-board/express';
       name: 'daily-summary-queue',
       adapter: BullMQAdapter,
     }),
+    BullBoardModule.forFeature({
+      name: 'daily-category-summary-queue',
+      adapter: BullMQAdapter,
+    }),
     TestModule,
 
     AIGeminiModule,
