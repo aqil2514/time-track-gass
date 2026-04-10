@@ -6,11 +6,15 @@ import { ActivitiesFetcherHelper } from './helpers/activities-fetcher-helper.ser
 import { ActivitiesDailySummaryPerCategoryCronHelper } from './helpers/activities-cron-daily-summary-per-category.service';
 import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { DailySummaryPerCategory } from '../interface/daily_summary_per_category.interface';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class ActivitiesCronService {
   private logger = new Logger(ActivitiesCronService.name);
   constructor(
+    @InjectQueue('daily-summary-queue')
+    private readonly dailySummaryQueue: Queue,
     private readonly sessionSummaryHelper: ActivitiesSessionSummaryCronHelper,
     private readonly dailySummaryHelper: ActivitiesDailySummaryCronHelper,
     private readonly dailySummaryPerCategoryHelper: ActivitiesDailySummaryPerCategoryCronHelper,
@@ -72,22 +76,43 @@ export class ActivitiesCronService {
   async createDailySummary() {
     const allUser = await this.sessionSummaryHelper.getAllUser();
 
-    const summariesData =
-      await this.dailySummaryHelper.getSessionActivityByUserId(allUser);
-
-    const allRawIds = summariesData.flatMap((data) => data.raw_ids);
-
-    const allReports = await this.helper.getRawActivityRawIds(allRawIds);
-
-    const data = this.helper.mapToActivityData(allReports, summariesData);
-
-    const mappedData =
-      await this.dailySummaryHelper.mapToDailySummaryDbInsert(data);
-
-    await this.dailySummaryHelper.createNewDailySummary(mappedData);
-
-    this.logger.log(`Daily summary generated for ${mappedData.length} entries`);
+    for (const user of allUser) {
+      await this.dailySummaryQueue.add(
+        'daily-summary',
+        { userId: user },
+        {
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 5000,
+          },
+        },
+      );
+    }
   }
+
+  // @Cron(CronExpression.EVERY_DAY_AT_10PM, {
+  //   timeZone: 'Asia/Jakarta',
+  // })
+  // async createDailySummary() {
+  //   const allUser = await this.sessionSummaryHelper.getAllUser();
+
+  //   const summariesData =
+  //     await this.dailySummaryHelper.getSessionActivityByUserId(allUser);
+
+  //   const allRawIds = summariesData.flatMap((data) => data.raw_ids);
+
+  //   const allReports = await this.helper.getRawActivityRawIds(allRawIds);
+
+  //   const data = this.helper.mapToActivityData(allReports, summariesData);
+
+  //   const mappedData =
+  //     await this.dailySummaryHelper.mapToDailySummaryDbInsert(data);
+
+  //   await this.dailySummaryHelper.createNewDailySummary(mappedData);
+
+  //   this.logger.log(`Daily summary generated for ${mappedData.length} entries`);
+  // }
 
   @Cron(CronExpression.EVERY_DAY_AT_11PM, {
     timeZone: 'Asia/Jakarta',
@@ -123,23 +148,28 @@ export class ActivitiesCronService {
       `Mapping selesai. Terdapat ${userMap.size} data setelah dimapping`,
     );
 
-    this.logger.log("Menganalisis dengan AI")
+    this.logger.log('Menganalisis dengan AI');
     const userMapEntries = userMap.entries();
 
-    const finalResult:DailySummaryPerCategory[] = []
+    const finalResult: DailySummaryPerCategory[] = [];
 
     let i = 1;
-    for (const [userId, data] of userMapEntries){
+    for (const [userId, data] of userMapEntries) {
       this.logger.log(`Menganalisis user ${i} dari ${userMap.size}...`);
-      const summary = await this.dailySummaryPerCategoryHelper.getDailyAiSummary(data, allCategories,userId);
-      finalResult.push(...summary)
-      i++
+      const summary =
+        await this.dailySummaryPerCategoryHelper.getDailyAiSummary(
+          data,
+          allCategories,
+          userId,
+        );
+      finalResult.push(...summary);
+      i++;
     }
 
-    this.logger.log("Analisis oleh AI selesai, lanjut simpan ke database")
+    this.logger.log('Analisis oleh AI selesai, lanjut simpan ke database');
 
     await this.dailySummaryPerCategoryHelper.saveToDb(finalResult);
-    
-    this.logger.log("Berhasil simpan ke database")
+
+    this.logger.log('Berhasil simpan ke database');
   }
 }

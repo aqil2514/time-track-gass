@@ -6,8 +6,16 @@ import { ActivitiesSessionSummaryCronHelper } from './services/helpers/activites
 import { ActivitiesFetcherHelper } from './services/helpers/activities-fetcher-helper.service';
 import { ActivitiesDailySummaryCronHelper } from './services/helpers/activites-cron-daily-summary-helper.service';
 import { ActivitiesDailySummaryPerCategoryCronHelper } from './services/helpers/activities-cron-daily-summary-per-category.service';
+import { BullModule } from '@nestjs/bullmq';
+import { DailySummaryProcessor } from './processor/daily-summary.processor';
 
+@Global()
 @Module({
+  imports: [
+    BullModule.registerQueue({
+      name: 'daily-summary-queue',
+    }),
+  ],
   controllers: [ActivitiesController],
   providers: [
     ActivitiesService,
@@ -17,7 +25,10 @@ import { ActivitiesDailySummaryPerCategoryCronHelper } from './services/helpers/
     ActivitiesDailySummaryCronHelper,
     ActivitiesSessionSummaryCronHelper,
     ActivitiesFetcherHelper,
-    ActivitiesDailySummaryPerCategoryCronHelper
+    ActivitiesDailySummaryPerCategoryCronHelper,
+
+    // Processor
+    DailySummaryProcessor
   ],
   exports: [ActivitiesCronService],
 })
