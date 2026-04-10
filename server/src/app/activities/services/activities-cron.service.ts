@@ -61,7 +61,7 @@ export class ActivitiesCronService {
         `Session summary generated for ${mappedData.length} entries from ${from.toISOString()} to ${to.toISOString()}`,
       );
     } catch (error) {
-      this.logger.error(`Failed to generate session summary: ${error.message}`);
+      this.logger.error(`Failed to generate session summary: ${error}`);
       throw error;
     }
   }
