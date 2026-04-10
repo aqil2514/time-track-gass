@@ -3,7 +3,6 @@ import { AppModule } from './app/app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { json } from 'express';
 import cookieParser from 'cookie-parser';
-import 'module-alias/register';
 
 async function bootstrap() {
   const logger = new Logger('CORS');
