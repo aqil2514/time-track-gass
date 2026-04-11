@@ -10,6 +10,7 @@ import {
 import { DataTable } from "@/components/containers/data-table";
 import { useListNoteColumns } from "./table/columns";
 import { ListNoteEditDialog } from "./dialogs/edit";
+import { ListNoteDeleteDialog } from "./dialogs/delete";
 
 export function AttendanceListNote() {
   return (
@@ -45,6 +46,7 @@ const InnerTemplate = () => {
 
       <ListNoteAddDialog />
       <ListNoteEditDialog />
+      <ListNoteDeleteDialog />
     </>
   );
 };

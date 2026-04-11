@@ -47,4 +47,16 @@ export class AttendanceListnoteService {
       throw error;
     }
   }
+
+  async softDeleteListNotes(listId: string) {
+    const { error } = await this.supabase
+      .from(TableName.ActivityAdjusmentList)
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', listId);
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+  }
 }

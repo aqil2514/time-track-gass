@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -34,5 +35,10 @@ export class SupervisorAttendanceListNoteController {
     @Body() body: CreateListNoteDto,
   ) {
     return await this.service.editAttendanceListNotes(listId, body);
+  }
+
+  @Delete(':listId')
+  async softDeleteListNote(@Param('listId') listId: string) {
+    return await this.service.softDeleteListNotes(listId);
   }
 }
