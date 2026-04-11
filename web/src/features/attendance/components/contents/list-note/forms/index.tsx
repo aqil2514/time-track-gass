@@ -21,6 +21,8 @@ export function ListNoteForm({ submitHandler, defaultValues }: Props) {
     defaultValues: defaultValues ?? defaultListSchema,
     resolver: zodResolver(listSchema),
   });
+
+  const isSubmitting = form.formState.isSubmitting;
   return (
     <form
       onSubmit={form.handleSubmit(submitHandler, () =>
@@ -49,7 +51,9 @@ export function ListNoteForm({ submitHandler, defaultValues }: Props) {
         label="Deskripsi Penyesuaian"
         placeholder="cth: Penyesuaian untuk karyawan yang mengambil cuti atau libur nasional"
       />
-      <Button variant={"accent"}>Simpan</Button>
+      <Button variant={"accent"} disabled={isSubmitting}>
+        {isSubmitting ? "Menyimpan..." : "Simpan"}
+      </Button>
     </form>
   );
 }
