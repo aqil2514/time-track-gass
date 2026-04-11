@@ -3,12 +3,23 @@ import { Button } from "@/components/ui/button";
 import { useQueryParams } from "@/hooks/use-query-params";
 import { Plus } from "lucide-react";
 import { ListNoteAddDialog } from "./dialogs/add";
-import { ListNoteProvider } from "@/features/attendance/provider/list-note-provider";
+import { ListNoteProvider, useListNote } from "@/features/attendance/provider/list-note-provider";
+import { DataTable } from "@/components/containers/data-table";
+import { listNoteColumn } from "./table/columns";
 
 export function AttendanceListNote() {
-  const { set } = useQueryParams();
   return (
     <ListNoteProvider>
+      <InnerTemplate />
+    </ListNoteProvider>
+  );
+}
+
+const InnerTemplate = () => {
+  const { set } = useQueryParams();
+  const {data} = useListNote()
+  return (
+    <>
       <ContentContainer
         title="Master Kategori Penyesuaian"
         description="Atur template kategori absensi (Cuti, Sakit, dll) dan otomatisasi penambahan menit kerja."
@@ -23,10 +34,10 @@ export function AttendanceListNote() {
           </Button>
         }
       >
-        List Note
+        <DataTable data={data ?? []} columns={listNoteColumn} />
       </ContentContainer>
 
       <ListNoteAddDialog />
-    </ListNoteProvider>
+    </>
   );
-}
+};
