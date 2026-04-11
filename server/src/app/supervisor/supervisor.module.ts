@@ -15,6 +15,8 @@ import { SupervisorDivisionHelperService } from './services/helpers/supervisor-d
 import { SupervisorUserHelper } from './services/helpers/supervisor-user-helper.service';
 import { SupervisorActivityController } from './controllers/supervisor-activity.controller';
 import { SupervisorACtivityService } from './services/supervisor-activity.service';
+import { SupervisorAttendanceListNoteController } from './controllers/attendance/attendance-listnote.controller';
+import { AttendanceListnoteService } from './services/attendance/attendance-listnote.service';
 
 @Module({
   imports: [ActivitiesModule],
@@ -23,7 +25,10 @@ import { SupervisorACtivityService } from './services/supervisor-activity.servic
     SupervisorUserController,
     SupervisorTrackerController,
     SupervisorDivisionsController,
-    SupervisorActivityController
+    SupervisorActivityController,
+
+    // Attendance
+    SupervisorAttendanceListNoteController,
   ],
   providers: [
     SupervisorService,
@@ -31,13 +36,16 @@ import { SupervisorACtivityService } from './services/supervisor-activity.servic
     SupervisorTrackerService,
     SupervisorDivisionsService,
     SupervisorACtivityService,
+    
+    // Attendance
+    AttendanceListnoteService,
 
     // Helper
     SupervisorUserHelper,
     SupervisorMatrixService,
     SupervisorActivityFetcher,
     SupervisorActivityMapper,
-    SupervisorDivisionHelperService
+    SupervisorDivisionHelperService,
   ],
 })
 export class SupervisorModule {}

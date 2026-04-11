@@ -11,6 +11,8 @@ export function ListNoteAddDialog() {
   const submitHandler = async (values:ListSchemaType) => {
     try {
       await axios.post("/api/attendance/list-note", values)
+      alert("Data berhasil ditambah")
+      remove("action");
     } catch (error) {
       console.error(error);
       throw error;
