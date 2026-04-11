@@ -3,9 +3,12 @@ import { Button } from "@/components/ui/button";
 import { useQueryParams } from "@/hooks/use-query-params";
 import { Plus } from "lucide-react";
 import { ListNoteAddDialog } from "./dialogs/add";
-import { ListNoteProvider, useListNote } from "@/features/attendance/provider/list-note-provider";
+import {
+  ListNoteProvider,
+  useListNote,
+} from "@/features/attendance/provider/list-note-provider";
 import { DataTable } from "@/components/containers/data-table";
-import { listNoteColumn } from "./table/columns";
+import { useListNoteColumns } from "./table/columns";
 
 export function AttendanceListNote() {
   return (
@@ -17,7 +20,9 @@ export function AttendanceListNote() {
 
 const InnerTemplate = () => {
   const { set } = useQueryParams();
-  const {data} = useListNote()
+  const { data } = useListNote();
+
+  const columns = useListNoteColumns()
   return (
     <>
       <ContentContainer
@@ -34,7 +39,7 @@ const InnerTemplate = () => {
           </Button>
         }
       >
-        <DataTable data={data ?? []} columns={listNoteColumn} />
+        <DataTable data={data ?? []} columns={columns} />
       </ContentContainer>
 
       <ListNoteAddDialog />

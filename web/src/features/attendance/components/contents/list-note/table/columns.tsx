@@ -1,8 +1,11 @@
+import { createActionColumn } from "@/components/molecules/action-column";
 import { ActivityAdjusmentListDb } from "@/features/attendance/interfaces/activity-adjusment-list.interface";
+import { useQueryParams } from "@/hooks/use-query-params";
 import { formatToTime } from "@/utils/format-to-time";
 import { ColumnDef } from "@tanstack/react-table";
+import { Pencil, Trash } from "lucide-react";
 
-export const listNoteColumn: ColumnDef<ActivityAdjusmentListDb>[] = [
+const columns: ColumnDef<ActivityAdjusmentListDb>[] = [
   {
     accessorKey: "name",
     header: "Nama List",
@@ -17,3 +20,30 @@ export const listNoteColumn: ColumnDef<ActivityAdjusmentListDb>[] = [
     header: "Deskripsi List",
   },
 ];
+
+export function useListNoteColumns() {
+  const { update } = useQueryParams();
+  const listNoteColumn = createActionColumn(columns, (row) => [
+    {
+      label: "Edit",
+      icon: Pencil,
+      onClick: () =>
+        update({
+          listId: String(row.id),
+          action: "edit",
+        }),
+    },
+    {
+      label: "Hapus",
+      icon: Trash,
+      className: "text-red-400 focus:text-red-400",
+      onClick: () =>
+        update({
+          listId: String(row.id),
+          action: "delete",
+        }),
+    },
+  ]);
+
+  return listNoteColumn;
+}
