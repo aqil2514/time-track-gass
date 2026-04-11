@@ -30,7 +30,7 @@ export function ListNoteForm({ submitHandler, defaultValues }: Props) {
       )}
       className="space-y-4"
     >
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 items-center">
         <FormFieldText
           form={form}
           name="name"

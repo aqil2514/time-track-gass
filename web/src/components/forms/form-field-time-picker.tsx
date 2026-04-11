@@ -5,12 +5,11 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { Controller, FieldValues } from "react-hook-form";
 import { labelTextMapper } from "./form-constants";
 import { BasicFormFieldProps } from "./form.interface";
 import z from "zod";
+import { TimePicker } from "../molecules/time-picker/time-picker";
 
 export interface FormFieldTimePickerProps<
   T extends FieldValues,
@@ -44,9 +43,6 @@ export function FormFieldTimePicker<
   form,
   name,
   label,
-  placeholder = "Isi field ini",
-  datalist,
-  className,
   textVariant = "default",
 }: FormFieldTimePickerProps<T, TTransformedValues>) {
   const isSubmitting = form.formState.isSubmitting;
@@ -56,7 +52,21 @@ export function FormFieldTimePicker<
         name={name}
         control={form.control}
         render={({ field, fieldState }) => {
-          const datalistId = datalist ? `${field.name}-list` : undefined;
+          const toDate = (value: string): Date | undefined => {
+            if (!value) return undefined;
+            const [hours, minutes] = value.split(":").map(Number);
+            const date = new Date();
+            date.setHours(hours, minutes, 0, 0);
+            return date;
+          };
+
+          const fromDate = (date: Date | undefined) => {
+            if (!date) return field.onChange("");
+            const hh = date.getHours().toString().padStart(2, "0");
+            const mm = date.getMinutes().toString().padStart(2, "0");
+            field.onChange(`${hh}:${mm}`);
+          };
+
           return (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel
@@ -65,19 +75,11 @@ export function FormFieldTimePicker<
               >
                 {label}
               </FieldLabel>
-              <Input
-                {...field}
-                type="time"
-                step={60}
+              <TimePicker
+                date={toDate(field.value)}
+                setDate={fromDate}
                 disabled={isSubmitting}
-                id={field.name}
-                aria-invalid={fieldState.invalid}
-                placeholder={placeholder}
-                list={datalistId}
-                className={cn(
-                  "bg-slate-800/60 border-slate-700 text-white placeholder:text-slate-500 focus:border-amber-500 focus:ring-amber-500/20 h-11 rounded-lg transition-colors [&::-webkit-datetime-edit-ampm-field]:hidden",
-                  className,
-                )}
+                show={["hours", "minutes"]}
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
