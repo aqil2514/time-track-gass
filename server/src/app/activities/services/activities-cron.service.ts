@@ -1,11 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ActivitiesSessionSummaryCronHelper } from './helpers/activites-cron-session-summary-helper.service';
-import { ActivitiesDailySummaryCronHelper } from './helpers/activites-cron-daily-summary-helper.service';
-import { ActivitiesFetcherHelper } from './helpers/activities-fetcher-helper.service';
-import { ActivitiesDailySummaryPerCategoryCronHelper } from './helpers/activities-cron-daily-summary-per-category.service';
-import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
-import { DailySummaryPerCategory } from '../interface/daily_summary_per_category.interface';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 
@@ -18,9 +13,6 @@ export class ActivitiesCronService {
     @InjectQueue('daily-category-summary-queue')
     private readonly dailySummaryCategoryQueue: Queue,
     private readonly sessionSummaryHelper: ActivitiesSessionSummaryCronHelper,
-    private readonly dailySummaryHelper: ActivitiesDailySummaryCronHelper,
-    private readonly dailySummaryPerCategoryHelper: ActivitiesDailySummaryPerCategoryCronHelper,
-    private readonly helper: ActivitiesFetcherHelper,
   ) {}
 
   @Cron(CronExpression.EVERY_HOUR, {

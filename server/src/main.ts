@@ -31,6 +31,8 @@ async function bootstrap() {
       if (
         requestOrigin === 'http://localhost:1420' || // dev desktop
         requestOrigin === 'http://localhost:3001' || // dev web
+        requestOrigin === 'http://localhost:3000' || // dev server
+        requestOrigin === 'https://timetrack.gass.co.id' || // prod server
         requestOrigin === 'https://supervisortime.gass.co.id' || // prod web
         requestOrigin === 'http://tauri.localhost' || // Windows production
         requestOrigin === 'tauri://localhost' || // macOS & Linux production

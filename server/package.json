@@ -46,6 +46,7 @@
     "cookie-parser": "^1.4.7",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
+    "express-basic-auth": "^1.2.1",
     "ioredis": "^5.10.1",
     "module-alias": "^2.3.4",
     "reflect-metadata": "^0.2.0",

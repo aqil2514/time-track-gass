@@ -16,6 +16,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
+import basicAuth from 'express-basic-auth';
 
 @Module({
   imports: [
@@ -37,15 +38,26 @@ import { ExpressAdapter } from '@bull-board/express';
           connectTimeout: 30000,
           enableReadyCheck: false,
 
-          retryStrategy:(times:number) => {
-            return Math.min(times * 50, 2000)
-          }
+          retryStrategy: (times: number) => {
+            return Math.min(times * 50, 2000);
+          },
         },
       }),
     }),
-    BullBoardModule.forRoot({
-      route: '/queue',
-      adapter: ExpressAdapter,
+    BullBoardModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        route: '/queue',
+        adapter: ExpressAdapter,
+        middleware: basicAuth({
+          challenge: true,
+          users: {
+            [config.get<string>('BULL_MQ_DASHBOARD_USERNAME')]:
+              config.get<string>('BULL_MQ_DASHBOARD_PASSWORD'),
+          },
+        }),
+      }),
     }),
     BullBoardModule.forFeature({
       name: 'test-queue',
