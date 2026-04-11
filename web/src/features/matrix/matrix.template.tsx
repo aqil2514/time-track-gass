@@ -4,6 +4,7 @@ import { MatrixController } from "./components/controller";
 import { MatrixData } from "./components/data";
 import { MatrixProvider, useMatrixContext } from "./provider/matrix.provider";
 import { MutateButton } from "@/components/atoms/mutate-button";
+import { TemplateContainer } from "@/components/containers/template-container";
 
 export function MatrixTemplate() {
   return (
@@ -17,7 +18,7 @@ const InnerTemplate = () => {
   const { mutate } = useMatrixContext();
   return (
     <>
-      <div className="w-full space-y-6 p-8">
+      <TemplateContainer>
         <div className="flex gap-4 items-center">
           <MutateButton mutate={mutate} size="icon-xs" />
           <TitleAndSub
@@ -27,7 +28,7 @@ const InnerTemplate = () => {
         </div>
         <MatrixController />
         <MatrixData />
-      </div>
+      </TemplateContainer>
     </>
   );
 };

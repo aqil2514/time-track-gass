@@ -1,4 +1,4 @@
-import { Activity, Boxes, LayoutDashboard, TableProperties, Users } from "lucide-react";
+import { Activity, Boxes, CalendarCheck, LayoutDashboard, TableProperties, Users } from "lucide-react";
 
 export const navItems = [
   {
@@ -6,6 +6,7 @@ export const navItems = [
     items: [
       { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
       { title: "Matriks Aktivitas", url: "/matrix", icon: TableProperties },
+      { title: "Absensi Kehadiran", url: "/attendance", icon: CalendarCheck },
     ],
   },
   {
