@@ -30,7 +30,7 @@ export function ContextManager({ defaultValue, tabsConfig }: Props) {
           <TabsTrigger 
             key={tab.value} 
             value={tab.value}
-            className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-slate-200 transition-all"
+            className="data-[state=active]:cursor-default cursor-pointer data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-slate-200 transition-all"
           >
             {tab.label}
           </TabsTrigger>

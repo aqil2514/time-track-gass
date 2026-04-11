@@ -13,19 +13,23 @@ import { BasicFormFieldProps } from "./form.interface";
 
 export interface FormFieldTextProps<
   T extends FieldValues,
-> extends BasicFormFieldProps<T> {
+  TTransformedValues extends FieldValues = T,
+> extends BasicFormFieldProps<T, TTransformedValues> {
   datalist?: LabelValue[];
 }
 
-export function FormFieldText<T extends FieldValues>({
+export function FormFieldText<
+  T extends FieldValues,
+  TTransformedValues extends FieldValues = T,
+>({
   form,
   name,
   label,
   placeholder = "Isi field ini",
   datalist,
   className,
-  textVariant = 'default'
-}: FormFieldTextProps<T>) {
+  textVariant = "default",
+}: FormFieldTextProps<T, TTransformedValues>) {
   const isSubmitting = form.formState.isSubmitting;
   return (
     <FieldGroup>
@@ -36,7 +40,12 @@ export function FormFieldText<T extends FieldValues>({
           const datalistId = datalist ? `${field.name}-list` : undefined;
           return (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={field.name} className={labelTextMapper[textVariant]} >{label}</FieldLabel>
+              <FieldLabel
+                htmlFor={field.name}
+                className={labelTextMapper[textVariant]}
+              >
+                {label}
+              </FieldLabel>
               <Input
                 {...field}
                 disabled={isSubmitting}

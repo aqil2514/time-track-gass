@@ -1,3 +1,4 @@
+"use client";
 import { TitleAndSub } from "@/components/atoms/title-and-sub";
 import { TemplateContainer } from "@/components/containers/template-container";
 import { AttendanceContextManager } from "./components/contents";
