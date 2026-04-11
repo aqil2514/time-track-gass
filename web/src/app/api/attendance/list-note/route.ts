@@ -22,3 +22,16 @@ export async function POST(req: NextRequest) {
     throw error;
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  const body = await req.json();
+  const {listId, ...rest} = body;
+
+  try {
+    await apiServer.patch(`/supervisor/attendance/list-note/${listId}`, rest);
+    return NextResponse.json({ message: "OK" });
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}

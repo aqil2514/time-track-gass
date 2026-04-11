@@ -22,7 +22,7 @@ export class AttendanceListnoteService {
     }
   }
 
-  async getAttendanceListNotes():Promise<ActivityAdjusmentListDb[]> {
+  async getAttendanceListNotes(): Promise<ActivityAdjusmentListDb[]> {
     const { data, error } = await this.supabase
       .from(TableName.ActivityAdjusmentList)
       .select('*')
@@ -34,5 +34,17 @@ export class AttendanceListnoteService {
     }
 
     return data;
+  }
+
+  async editAttendanceListNotes(oldId: string, body: CreateListNoteDto) {
+    const { error } = await this.supabase
+      .from(TableName.ActivityAdjusmentList)
+      .update(body)
+      .eq('id', oldId);
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
   }
 }

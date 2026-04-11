@@ -36,6 +36,14 @@ export const timeToMinutesSchema = z
     return hours * 60 + minutes;
   });
 
+export function minutesToTimeString(minutes: number): string {
+  const hh = Math.floor(minutes / 60)
+    .toString()
+    .padStart(2, "0");
+  const mm = (minutes % 60).toString().padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
 export function FormFieldTimePicker<
   T extends FieldValues,
   TTransformedValues extends FieldValues = T,

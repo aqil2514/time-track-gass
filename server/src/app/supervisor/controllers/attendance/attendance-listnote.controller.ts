@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { Roles } from 'src/decorators/roles.decorator';
 import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
 import { RoleGuard } from 'src/guards/role.guard';
@@ -18,5 +26,13 @@ export class SupervisorAttendanceListNoteController {
   @Get()
   async getListNote() {
     return await this.service.getAttendanceListNotes();
+  }
+
+  @Patch(':listId')
+  async updateListNote(
+    @Param('listId') listId: string,
+    @Body() body: CreateListNoteDto,
+  ) {
+    return await this.service.editAttendanceListNotes(listId, body);
   }
 }

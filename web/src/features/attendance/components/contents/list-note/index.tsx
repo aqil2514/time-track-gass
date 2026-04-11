@@ -9,6 +9,7 @@ import {
 } from "@/features/attendance/provider/list-note-provider";
 import { DataTable } from "@/components/containers/data-table";
 import { useListNoteColumns } from "./table/columns";
+import { ListNoteEditDialog } from "./dialogs/edit";
 
 export function AttendanceListNote() {
   return (
@@ -43,6 +44,7 @@ const InnerTemplate = () => {
       </ContentContainer>
 
       <ListNoteAddDialog />
+      <ListNoteEditDialog />
     </>
   );
 };
