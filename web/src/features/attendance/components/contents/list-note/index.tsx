@@ -6,7 +6,7 @@ import { ListNoteAddDialog } from "./dialogs/add";
 import {
   ListNoteProvider,
   useListNote,
-} from "@/features/attendance/provider/list-note-provider";
+} from "@/features/attendance/provider/list-note.provider";
 import { DataTable } from "@/components/containers/data-table";
 import { useListNoteColumns } from "./table/columns";
 import { ListNoteEditDialog } from "./dialogs/edit";

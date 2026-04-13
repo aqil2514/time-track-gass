@@ -3,7 +3,7 @@ import { useQueryParams } from "@/hooks/use-query-params";
 import { ListNoteForm } from "../forms";
 import { ListSchemaType } from "@/features/attendance/schema/list-schema";
 import axios from "axios";
-import { useListNote } from "@/features/attendance/provider/list-note-provider";
+import { useListNote } from "@/features/attendance/provider/list-note.provider";
 
 export function ListNoteAddDialog() {
   const { get, remove } = useQueryParams();

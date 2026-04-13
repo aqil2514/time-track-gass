@@ -1,6 +1,6 @@
 import { ControlledDialogContainer } from "@/components/containers/controlled-dialog-container";
 import { useQueryParams } from "@/hooks/use-query-params";
-import { useListNote } from "@/features/attendance/provider/list-note-provider";
+import { useListNote } from "@/features/attendance/provider/list-note.provider";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 

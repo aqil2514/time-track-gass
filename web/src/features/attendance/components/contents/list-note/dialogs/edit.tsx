@@ -6,7 +6,7 @@ import {
   ListSchemaType,
 } from "@/features/attendance/schema/list-schema";
 import axios from "axios";
-import { useListNote } from "@/features/attendance/provider/list-note-provider";
+import { useListNote } from "@/features/attendance/provider/list-note.provider";
 import { useMemo } from "react";
 import { minutesToTimeString } from "@/components/forms/form-field-time-picker";
 

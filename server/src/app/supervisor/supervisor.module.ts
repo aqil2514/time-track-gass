@@ -17,6 +17,8 @@ import { SupervisorActivityController } from './controllers/supervisor-activity.
 import { SupervisorACtivityService } from './services/supervisor-activity.service';
 import { SupervisorAttendanceListNoteController } from './controllers/attendance/attendance-listnote.controller';
 import { AttendanceListnoteService } from './services/attendance/attendance-listnote.service';
+import { AttendanceProfileConfigController } from './controllers/attendance/attendance-profile-config.controller';
+import { AttendanceProfileConfigService } from './services/attendance/attendance-profile-config.service';
 
 @Module({
   imports: [ActivitiesModule],
@@ -29,6 +31,7 @@ import { AttendanceListnoteService } from './services/attendance/attendance-list
 
     // Attendance
     SupervisorAttendanceListNoteController,
+    AttendanceProfileConfigController
   ],
   providers: [
     SupervisorService,
@@ -39,6 +42,7 @@ import { AttendanceListnoteService } from './services/attendance/attendance-list
     
     // Attendance
     AttendanceListnoteService,
+    AttendanceProfileConfigService,
 
     // Helper
     SupervisorUserHelper,

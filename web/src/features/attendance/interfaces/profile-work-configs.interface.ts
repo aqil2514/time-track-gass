@@ -1,5 +1,3 @@
-import { ProfilesDb } from 'src/app/auth/interfaces/profiles.interface';
-
 export interface ProfileWorkConfigsDb {
   id: number;
   profile_id: string;
@@ -12,7 +10,12 @@ export interface ProfileWorkConfigsDb {
 
 export interface ProfileWorkConfigsPopulateProfile extends Omit<
   ProfileWorkConfigsDb,
-  'profile_id'
+  "profile_id"
 > {
-  profile: ProfilesDb;
+  profile: {
+    id: string;
+    username: string;
+    full_name: string;
+    division: string;
+  };
 }
