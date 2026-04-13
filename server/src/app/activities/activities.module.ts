@@ -9,6 +9,8 @@ import { ActivitiesDailySummaryPerCategoryCronHelper } from './services/helpers/
 import { BullModule } from '@nestjs/bullmq';
 import { DailySummaryProcessor } from './processor/daily-summary.processor';
 import { DailySummaryCategoryProcessor } from './processor/daily-summary-category.processor';
+import { HttpModule } from '@nestjs/axios';
+import { ActivitiesCronMessageHelper } from './services/helpers/activities-cron-message.service';
 
 @Global()
 @Module({
@@ -19,6 +21,7 @@ import { DailySummaryCategoryProcessor } from './processor/daily-summary-categor
     BullModule.registerQueue({
       name: 'daily-category-summary-queue',
     }),
+    HttpModule,
   ],
   controllers: [ActivitiesController],
   providers: [
@@ -30,10 +33,11 @@ import { DailySummaryCategoryProcessor } from './processor/daily-summary-categor
     ActivitiesSessionSummaryCronHelper,
     ActivitiesFetcherHelper,
     ActivitiesDailySummaryPerCategoryCronHelper,
+    ActivitiesCronMessageHelper,
 
     // Processor
     DailySummaryProcessor,
-    DailySummaryCategoryProcessor
+    DailySummaryCategoryProcessor,
   ],
   exports: [ActivitiesCronService],
 })
