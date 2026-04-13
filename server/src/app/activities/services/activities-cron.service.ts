@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { ActivitiesSessionSummaryCronHelper } from './helpers/activites-cron-session-summary-helper.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { ActivitiesCronMessageHelper } from './helpers/activities-cron-message.service';
 
 @Injectable()
 export class ActivitiesCronService {
@@ -13,6 +14,7 @@ export class ActivitiesCronService {
     @InjectQueue('daily-category-summary-queue')
     private readonly dailySummaryCategoryQueue: Queue,
     private readonly sessionSummaryHelper: ActivitiesSessionSummaryCronHelper,
+    private readonly waService: ActivitiesCronMessageHelper,
   ) {}
 
   @Cron(CronExpression.EVERY_HOUR, {
@@ -109,4 +111,30 @@ export class ActivitiesCronService {
       );
     }
   }
+
+  @Cron(CronExpression.EVERY_DAY_AT_11AM)
+  async checkMorningBatch() {
+    this.waService.sendMessageBulk(
+      'Cek Batch Pagi\nPastikan semua sudah Start Session (min. 2-3 jam).',
+    );
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_3PM)
+  async checkAfternoonBatch() {
+    this.waService.sendMessageBulk(
+      'Cek Batch Siang\Rawan lupa! Aktifkan sesi setelah istirahat.',
+    );
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_5PM)
+  async finalCheck() {
+    this.waService.sendMessageBulk(
+      'Final Check\Verifikasi akhir sebelum operasional tutup.',
+    );
+  }
+
+  // @Cron(CronExpression.EVERY_10_SECONDS)
+  // async test(){
+  //   this.waService.sendMessageBulk("Test dari timetrack server")
+  // }
 }

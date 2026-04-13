@@ -7,16 +7,16 @@ export class ActivitiesCronMessageHelper {
   constructor(private readonly service: HttpService) {}
 
   private readonly url = process.env.SERVICE_KONEKWA_ENDPOINT;
-  private readonly logger = new Logger(ActivitiesCronMessageHelper.name)
+  private readonly logger = new Logger(ActivitiesCronMessageHelper.name);
 
-  async sendMessage(message:string) {
+  private async sendMessage(message: string, to: string) {
     try {
       const connection = this.service
         .post(
           this.url,
           {
-            session_id: '62811251852',
-            to: '628985606632',
+            session_id: process.env.SERVICE_KONEKWA_SESSION_ID,
+            to,
             type: 'text',
             body: message,
           },
@@ -39,5 +39,16 @@ export class ActivitiesCronMessageHelper {
       this.logger.error(error);
       throw error;
     }
+  }
+  
+  async sendMessageBulk(message: string) {
+    this.logger.log("Mengirim pesan : ", message)
+    const receivers = [
+      process.env.SERVICE_KONEKWA_NO_MBAK_NISA,
+      process.env.SERVICE_KONEKWA_NO_MAS_DETHO,
+    ];
+    await Promise.all(
+      receivers.map((receiver) => this.sendMessage(message, receiver)),
+    );
   }
 }
