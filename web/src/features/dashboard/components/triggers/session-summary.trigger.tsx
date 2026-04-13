@@ -12,8 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw, Clock } from "lucide-react";
 import { useState } from "react";
-import { buildUrl } from "@/utils/build-url";
-import { api } from "@/lib/api";
+import axios from "axios";
 
 export function SessionSummaryTriggerPopover() {
   const [from, setFrom] = useState("");
@@ -31,15 +30,18 @@ export function SessionSummaryTriggerPopover() {
     setMessage(null);
 
     try {
-      await api.post(buildUrl("supervisor/trigger/session-summary"), {
-        from,
-        to,
+      await axios.post("/api/trigger/session-summary", { from, to });
+      setMessage({
+        type: "success",
+        text: "Session summary generated successfully!",
       });
-      setMessage({ type: "success", text: "Session summary generated successfully!" });
       setFrom("");
       setTo("");
     } catch {
-      setMessage({ type: "error", text: "Failed to generate session summary." });
+      setMessage({
+        type: "error",
+        text: "Failed to generate session summary.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +69,8 @@ export function SessionSummaryTriggerPopover() {
             Session Summary
           </PopoverTitle>
           <PopoverDescription className="text-gray-400">
-            Manually trigger session summary generation for a specific time range.
+            Manually trigger session summary generation for a specific time
+            range.
           </PopoverDescription>
         </PopoverHeader>
 

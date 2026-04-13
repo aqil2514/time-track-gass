@@ -21,7 +21,7 @@ export class AttendanceProfileConfigService {
         username,
         full_name,
         division
-      ), 
+      ),
       min_hours_weekly, 
       min_hours_monthly, 
       penalty_per_hour, 
