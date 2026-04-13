@@ -17,6 +17,9 @@ import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
 import basicAuth from 'express-basic-auth';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import Redis from 'ioredis';
 
 @Module({
   imports: [
@@ -25,6 +28,7 @@ import basicAuth from 'express-basic-auth';
       isGlobal: true,
     }),
     ScheduleModule.forRoot(),
+
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -71,6 +75,29 @@ import basicAuth from 'express-basic-auth';
       name: 'daily-category-summary-queue',
       adapter: BullMQAdapter,
     }),
+
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        throttlers: [
+          {
+            name: 'short',
+            limit: 1,
+            ttl: 300000,
+            blockDuration: 300000,
+          },
+        ],
+        storage: new ThrottlerStorageRedisService(
+          new Redis({
+            host: config.get<string>('BULL_MQ_REDIS_HOST'),
+            port: parseInt(config.get<string>('BULL_MQ_REDIS_PORT')),
+            password: config.get<string>('BULL_MQ_REDIS_PASSWORD'),
+          }),
+        ),
+      }),
+    }),
+
     TestModule,
 
     AIGeminiModule,

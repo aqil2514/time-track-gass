@@ -1,20 +1,15 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ImageScannerService } from '../services/image-scanner.service';
 import { JwtAuthGuard } from 'src/guards/jwt.guard';
 import { ImageUploadDto } from '../dto/image-upload.dto';
+import { UserThrottlerGuard } from 'src/guards/throttler.guard';
 
 @UseGuards(JwtAuthGuard)
 @Controller('image-upload')
 export class ImageUploadController {
   constructor(private readonly scannerService: ImageScannerService) {}
 
+  @UseGuards(UserThrottlerGuard)
   @Post('')
   async uploadFile(@Body() body: ImageUploadDto, @Req() req: any) {
     const user = req.user;
