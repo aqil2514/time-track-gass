@@ -23,7 +23,10 @@ interface ActionCellProps {
   menuItems: MenuItems[];
 }
 
-const ActionCell: React.FC<ActionCellProps> = ({ dropdownLabel, menuItems }) => {
+const ActionCell: React.FC<ActionCellProps> = ({
+  dropdownLabel,
+  menuItems,
+}) => {
   return (
     <div className="text-right">
       <DropdownMenu>
@@ -63,7 +66,7 @@ const ActionCell: React.FC<ActionCellProps> = ({ dropdownLabel, menuItems }) => 
 export function createActionColumn<TData>(
   columns: ColumnDef<TData>[],
   getMenuItems: (row: TData) => MenuItems[],
-  dropdownLabel: string = "Aksi",
+  dropdownLabel: ((row: TData) => string) | string = "Aksi",
 ): ColumnDef<TData>[] {
   return [
     ...columns,
@@ -72,7 +75,11 @@ export function createActionColumn<TData>(
       header: () => <div className="text-right">Aksi</div>,
       cell: ({ row }) => (
         <ActionCell
-          dropdownLabel={dropdownLabel}
+          dropdownLabel={
+            typeof dropdownLabel === "function"
+              ? dropdownLabel(row.original)
+              : dropdownLabel
+          }
           menuItems={getMenuItems(row.original)}
         />
       ),

@@ -17,20 +17,31 @@ import { Controller, FieldValues } from "react-hook-form";
 import { labelTextMapper } from "./form-constants";
 import { BasicFormFieldProps } from "./form.interface";
 
-export interface FormFieldSelectProps<T extends FieldValues>
-  extends BasicFormFieldProps<T> {
-  options: LabelValue[];
+export interface FormFieldSelectOptions extends LabelValue{
+  disabled?: boolean
 }
 
-export function FormFieldSelect<T extends FieldValues>({
+export interface FormFieldSelectProps<
+  T extends FieldValues,
+  TTransformedValues extends FieldValues = T,
+> extends BasicFormFieldProps<T, TTransformedValues> {
+  options: FormFieldSelectOptions[];
+  disabled?: boolean;
+}
+
+export function FormFieldSelect<
+  T extends FieldValues,
+  TTransformedValues extends FieldValues = T,
+>({
   form,
   name,
   label,
   placeholder = "Pilih opsi",
   options,
+  disabled,
   className,
   textVariant = "default",
-}: FormFieldSelectProps<T>) {
+}: FormFieldSelectProps<T, TTransformedValues>) {
   const isSubmitting = form.formState.isSubmitting;
 
   return (
@@ -51,7 +62,7 @@ export function FormFieldSelect<T extends FieldValues>({
               <Select
                 onValueChange={field.onChange}
                 value={field.value}
-                disabled={isSubmitting}
+                disabled={isSubmitting || disabled}
               >
                 <SelectTrigger
                   id={field.name}
@@ -68,6 +79,7 @@ export function FormFieldSelect<T extends FieldValues>({
                     <SelectItem 
                       key={option.value} 
                       value={option.value.toString()}
+                      disabled={option.disabled}
                       className="focus:bg-amber-500 focus:text-white"
                     >
                       {option.label}

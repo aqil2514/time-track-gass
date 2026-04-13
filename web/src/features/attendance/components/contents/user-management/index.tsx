@@ -7,6 +7,8 @@ import {
 import { useUserManagementColumns } from "./table/columns";
 import { Button } from "@/components/ui/button";
 import { useQueryParams } from "@/hooks/use-query-params";
+import { UserManagementAddDialog } from "./dialogs/add";
+import { UserManagementEditDialog } from "./dialogs/edit";
 
 export function AttendanceUserManagement() {
   return (
@@ -20,13 +22,21 @@ const InnerTemplate = () => {
   const { data } = useProfileConfig();
   const columns = useUserManagementColumns();
 
-  const {} = useQueryParams()
+  const { set } = useQueryParams();
   return (
     <>
       <ContentContainer
         title="Manajemen User"
         description="Manajemen User"
-        rightElement={<Button variant={"accent"} size={"sm"}>Tambah Data</Button>}
+        rightElement={
+          <Button
+            variant={"accent"}
+            size={"sm"}
+            onClick={() => set("action", "add")}
+          >
+            Tambah Data
+          </Button>
+        }
       >
         <DataTable
           columns={columns}
@@ -35,6 +45,9 @@ const InnerTemplate = () => {
           enableSorting={true}
         />
       </ContentContainer>
+
+      <UserManagementAddDialog />
+      <UserManagementEditDialog />
     </>
   );
 };

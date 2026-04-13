@@ -39,7 +39,7 @@ export function useUserManagementColumns() {
       icon: Pencil,
       onClick: () =>
         update({
-          username: row.profile.id,
+          userId: row.profile.id,
           action: "edit",
         }),
     },
@@ -49,11 +49,11 @@ export function useUserManagementColumns() {
       className: "text-red-400 focus:text-red-400",
       onClick: () =>
         update({
-          username: row.profile.id,
+          userId: row.profile.id,
           action: "delete",
         }),
     },
-  ]);
+  ], (row) => row.profile.username);
 
   return userManagementColumn;
 }
