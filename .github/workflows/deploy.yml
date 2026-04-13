@@ -40,7 +40,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           source: "web/.next,web/package.json,web/package-lock.json"
           target: "/home/aqil/time-track-gass/web"
-          strip_components: 2
+          strip_components: 1
           rm: false
 
       - name: Install production dependencies & restart PM2
