@@ -2,11 +2,15 @@ import { ControlledDialogContainer } from "@/components/containers/controlled-di
 import { useQueryParams } from "@/hooks/use-query-params";
 import { UserManagementForm } from "../forms";
 import { useMemo } from "react";
-import { UserManagementInput } from "@/features/attendance/schema/user-management-schema";
+import {
+  UserManagementInput,
+  UserManagementOutput,
+} from "@/features/attendance/schema/user-management-schema";
 import { useProfileConfig } from "@/features/attendance/provider/profile-config.provider";
+import axios from "axios";
 
 export function UserManagementEditDialog() {
-  const { data } = useProfileConfig();
+  const { data, mutate } = useProfileConfig();
   const { get, update } = useQueryParams();
   const open = get("action") === "edit";
   const userId = get("userId");
@@ -30,7 +34,19 @@ export function UserManagementEditDialog() {
     };
   }, [data, userId]);
 
-  if(!selectedData) return null;
+  if (!selectedData) return null;
+
+  const editHandler = async (values: UserManagementOutput) => {
+    try {
+      await axios.patch(`/api/attendance/profile-config/${userId}`, values);
+      await mutate();
+      alert("Data berhasil diupdate");
+      update({ action: null, userId: null });
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
 
   return (
     <ControlledDialogContainer
@@ -44,7 +60,7 @@ export function UserManagementEditDialog() {
     >
       <UserManagementForm
         defaultValues={selectedData}
-        submitHandler={(values) => console.log(values)}
+        submitHandler={editHandler}
       />
     </ControlledDialogContainer>
   );

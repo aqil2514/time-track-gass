@@ -7,8 +7,14 @@ export interface ProfileWorkConfigsDb {
   min_hours_monthly: number;
   penalty_per_hour: number;
   bonus_per_hour: number;
+  penalty_type: string;
   created_at: string;
 }
+
+export interface ProfileWorkConfigsDbInsert extends Omit<
+  ProfileWorkConfigsDb,
+  'id' | 'created_at'
+> {}
 
 export interface ProfileWorkConfigsPopulateProfile extends Omit<
   ProfileWorkConfigsDb,
