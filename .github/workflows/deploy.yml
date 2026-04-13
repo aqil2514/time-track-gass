@@ -39,9 +39,9 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           source: "web/.next,web/package.json,web/package-lock.json"
-          target: "/home/aqil/timetrack"
-          strip_components: 1
-          rm: true
+          target: "/home/aqil/time-track-gass/web"
+          strip_components: 2
+          rm: false
 
       - name: Install production dependencies & restart PM2
         uses: appleboy/ssh-action@v1.0.3
@@ -50,6 +50,6 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /home/aqil/timetrack/web
+            cd /home/aqil/time-track-gass/web
             npm install --omit=dev
             pm2 restart timetrack-web
