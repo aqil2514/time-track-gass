@@ -10,6 +10,7 @@ import { TableName } from 'src/services/supabase/supabase.interface';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { SupervisorUserHelper } from './helpers/supervisor-user-helper.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class SupervisorUserService {
@@ -17,7 +18,9 @@ export class SupervisorUserService {
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
 
-    private readonly helper:SupervisorUserHelper
+    private readonly helper: SupervisorUserHelper,
+
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async getAllUserData(): Promise<ProfilesWithNoPassword[]> {
@@ -57,25 +60,32 @@ export class SupervisorUserService {
   async createUserData(
     createUserDto: CreateUserDto,
   ): Promise<ProfilesWithNoPassword> {
-    await this.helper.checkUniqueness(createUserDto.email, createUserDto.username);
+    await this.helper.checkUniqueness(
+      createUserDto.email,
+      createUserDto.username,
+    );
 
-    const division = await this.helper.getDivisionNameByDivisionId(createUserDto.division)
+    const division = await this.helper.getDivisionNameByDivisionId(
+      createUserDto.division,
+    );
+
+    const payload = {
+      full_name: createUserDto.fullName,
+      username: createUserDto.username,
+      email: createUserDto.email,
+      password: createUserDto.password,
+      role: createUserDto.role,
+      division,
+      division_id: createUserDto.division,
+    };
 
     const { data, error } = await this.supabase
       .from(TableName.Profiles)
-      .insert([
-        {
-          full_name: createUserDto.fullName,
-          username: createUserDto.username,
-          email: createUserDto.email,
-          password: createUserDto.password,
-          role: createUserDto.role,
-          division,
-          division_id: createUserDto.division,
-        },
-      ])
+      .insert(payload)
       .select('id, email, username, full_name, role, division')
       .single();
+
+    this.eventEmitter.emit('profile.created', payload);
 
     if (error) {
       // 2. Backup check jika constraint DB yang kena
@@ -103,7 +113,9 @@ export class SupervisorUserService {
       id,
     );
 
-    const division = await this.helper.getDivisionNameByDivisionId(updateUserDto.division)
+    const division = await this.helper.getDivisionNameByDivisionId(
+      updateUserDto.division,
+    );
 
     const { data, error } = await this.supabase
       .from(TableName.Profiles)
@@ -137,6 +149,8 @@ export class SupervisorUserService {
       console.error(`Error deleting user ${id}:`, error);
       throw error;
     }
+
+    this.eventEmitter.emit("profile.deleted", id)
   }
 
   async deleteUserPassword(id: string): Promise<void> {

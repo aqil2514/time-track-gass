@@ -18,6 +18,7 @@ import {
 } from '../interfaces/profiles.interface';
 
 import * as bcrypt from 'bcryptjs';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +26,8 @@ export class AuthService {
     private readonly mapper: AuthMapperService,
 
     private readonly supabaseService: SupabaseService,
+
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   private isEmailIdentifier(identifier: string): boolean {
@@ -47,6 +50,7 @@ export class AuthService {
     const payload = await this.mapper.mapRegisterFormToDb(raw);
 
     await this.supabaseService.createNewData(TableName.Profiles, payload);
+    this.eventEmitter.emit('profile.created', payload);
   }
 
   async login(

@@ -19,6 +19,8 @@ import { SupervisorAttendanceListNoteController } from './controllers/attendance
 import { AttendanceListnoteService } from './services/attendance/attendance-listnote.service';
 import { AttendanceProfileConfigController } from './controllers/attendance/attendance-profile-config.controller';
 import { AttendanceProfileConfigService } from './services/attendance/attendance-profile-config.service';
+import { ProfileListenerEvent } from './listeners/profile.listener';
+import { ProfileListenerHelper } from './listeners/helpers/profile.listener-helper';
 
 @Module({
   imports: [ActivitiesModule],
@@ -31,18 +33,15 @@ import { AttendanceProfileConfigService } from './services/attendance/attendance
 
     // Attendance
     SupervisorAttendanceListNoteController,
-    AttendanceProfileConfigController
+    AttendanceProfileConfigController,
   ],
   providers: [
+    // Services
     SupervisorService,
     SupervisorUserService,
     SupervisorTrackerService,
     SupervisorDivisionsService,
     SupervisorACtivityService,
-    
-    // Attendance
-    AttendanceListnoteService,
-    AttendanceProfileConfigService,
 
     // Helper
     SupervisorUserHelper,
@@ -50,6 +49,17 @@ import { AttendanceProfileConfigService } from './services/attendance/attendance
     SupervisorActivityFetcher,
     SupervisorActivityMapper,
     SupervisorDivisionHelperService,
+
+    // Attendance
+    AttendanceListnoteService,
+    AttendanceProfileConfigService,
+
+    // Listeners
+    ProfileListenerEvent,
+
+    // Listener Helpers
+    ProfileListenerHelper,
+
   ],
 })
 export class SupervisorModule {}
