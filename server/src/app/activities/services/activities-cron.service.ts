@@ -11,8 +11,13 @@ export class ActivitiesCronService {
   constructor(
     @InjectQueue('daily-summary-queue')
     private readonly dailySummaryQueue: Queue,
+
     @InjectQueue('daily-category-summary-queue')
     private readonly dailySummaryCategoryQueue: Queue,
+
+    @InjectQueue('summary-session')
+    private summaryQueue: Queue,
+
     private readonly sessionSummaryHelper: ActivitiesSessionSummaryCronHelper,
     private readonly waService: ActivitiesCronMessageHelper,
   ) {}
@@ -21,48 +26,20 @@ export class ActivitiesCronService {
     disabled: process.env.NODE_ENV === 'development',
   })
   async createNewSummary() {
-    if (process.env.NODE_ENV === 'development') return;
+    const allUser = await this.sessionSummaryHelper.getAllUser();
 
-    const now = new Date();
-    const hourStart = new Date(now);
-    hourStart.setMinutes(0, 0, 0);
-
-    const oneHourBefore = new Date(hourStart.getTime() - 60 * 60 * 1000);
-    const nextHourStart = new Date(hourStart.getTime() + 60 * 60 * 1000);
-
-    await this.generateSessionSummary(oneHourBefore, nextHourStart);
-  }
-
-  async generateSessionSummary(from: Date, to: Date) {
-    try {
-      const allUser = await this.sessionSummaryHelper.getAllUser();
-
-      const oneHourActivites =
-        await this.sessionSummaryHelper.getDuringOneHourActivities(
-          from,
-          to,
-          allUser,
-        );
-
-      if (oneHourActivites.length === 0) {
-        this.logger.log(
-          `No activities found from ${from.toISOString()} to ${to.toISOString()}`,
-        );
-        return;
-      }
-
-      const mappedData =
-        await this.sessionSummaryHelper.mapToSessionSummaryDbInsert(
-          oneHourActivites,
-        );
-
-      await this.sessionSummaryHelper.createNewSessionSummary(mappedData);
-      this.logger.log(
-        `Session summary generated for ${mappedData.length} entries from ${from.toISOString()} to ${to.toISOString()}`,
+    for (const user of allUser) {
+      await this.summaryQueue.add(
+        'summary-session',
+        { userId: user },
+        {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 5000 },
+          jobId: `summary-${user}-${new Date().getFullYear()}-${new Date().getMonth()}-${new Date().getDate()}-${new Date().getHours()}`,
+          removeOnComplete: 100,
+          removeOnFail: 50,
+        },
       );
-    } catch (error) {
-      this.logger.error(`Failed to generate session summary: ${error}`);
-      throw error;
     }
   }
 
@@ -138,9 +115,4 @@ export class ActivitiesCronService {
       'Final Check\Verifikasi akhir sebelum operasional tutup.',
     );
   }
-
-  // @Cron(CronExpression.EVERY_10_SECONDS)
-  // async test(){
-  //   this.waService.sendMessageBulk("Test dari timetrack server")
-  // }
 }

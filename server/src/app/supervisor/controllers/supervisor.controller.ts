@@ -31,14 +31,15 @@ export class SupervisorController {
 
   @Get('user-daily-percategory')
   async getUserDailyActivityPerCategory(@Query() query: SupervisorQueryDto) {
-    return await this.service.getDailyActivityPerCategory(query.user, query.date);
+    return await this.service.getDailyActivityPerCategory(
+      query.user,
+      query.date,
+    );
   }
 
   @Post('trigger/session-summary')
-  async triggerSessionSummary(@Body() body: { from: string; to: string }) {
-    return await this.cronService.generateSessionSummary(
-      new Date(body.from),
-      new Date(body.to),
-    );
+  async triggerSessionSummary() {
+    await this.cronService.createNewSummary();
+    return { message: 'Tugas dibuat' };
   }
 }

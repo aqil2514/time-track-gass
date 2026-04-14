@@ -77,6 +77,10 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
       name: 'daily-category-summary-queue',
       adapter: BullMQAdapter,
     }),
+    BullBoardModule.forFeature({
+      name: 'summary-session',
+      adapter: BullMQAdapter,
+    }),
 
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],

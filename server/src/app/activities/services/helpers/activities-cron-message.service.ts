@@ -45,7 +45,7 @@ export class ActivitiesCronMessageHelper {
     this.logger.log("Mengirim pesan : ", message)
     const receivers = [
       process.env.SERVICE_KONEKWA_NO_MBAK_NISA,
-      process.env.SERVICE_KONEKWA_NO_MAS_DETHO,
+      // process.env.SERVICE_KONEKWA_NO_MAS_DETHO,
     ];
     await Promise.all(
       receivers.map((receiver) => this.sendMessage(message, receiver)),

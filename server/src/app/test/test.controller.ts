@@ -42,4 +42,10 @@ export class TestController {
   async sendMessage(){
     return this.axiosTest.sendMessage()
   }
+
+  @Get("/summary-session")
+  async summarySession(){
+    await this.bullService.testSummaryQueue()
+    return "OK"
+  }
 }
