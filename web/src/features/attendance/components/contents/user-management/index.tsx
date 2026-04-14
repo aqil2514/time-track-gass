@@ -5,8 +5,6 @@ import {
   useProfileConfig,
 } from "@/features/attendance/provider/profile-config.provider";
 import { useUserManagementColumns } from "./table/columns";
-import { Button } from "@/components/ui/button";
-import { useQueryParams } from "@/hooks/use-query-params";
 import { UserManagementAddDialog } from "./dialogs/add";
 import { UserManagementEditDialog } from "./dialogs/edit";
 
@@ -22,22 +20,9 @@ const InnerTemplate = () => {
   const { data } = useProfileConfig();
   const columns = useUserManagementColumns();
 
-  const { set } = useQueryParams();
   return (
     <>
-      <ContentContainer
-        title="Manajemen User"
-        description="Manajemen User"
-        rightElement={
-          <Button
-            variant={"accent"}
-            size={"sm"}
-            onClick={() => set("action", "add")}
-          >
-            Tambah Data
-          </Button>
-        }
-      >
+      <ContentContainer title="Manajemen User" description="Manajemen User">
         <DataTable
           columns={columns}
           data={data ?? []}

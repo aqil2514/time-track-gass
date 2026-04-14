@@ -112,21 +112,27 @@ export class ActivitiesCronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_11AM)
+  @Cron(CronExpression.EVERY_DAY_AT_11AM, {
+    timeZone: 'Asia/Jakarta',
+  })
   async checkMorningBatch() {
     this.waService.sendMessageBulk(
       'Cek Batch Pagi\nPastikan semua sudah Start Session (min. 2-3 jam).',
     );
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_3PM)
+  @Cron(CronExpression.EVERY_DAY_AT_3PM, {
+    timeZone: 'Asia/Jakarta',
+  })
   async checkAfternoonBatch() {
     this.waService.sendMessageBulk(
       'Cek Batch Siang\Rawan lupa! Aktifkan sesi setelah istirahat.',
     );
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_5PM)
+  @Cron(CronExpression.EVERY_DAY_AT_5PM, {
+    timeZone: 'Asia/Jakarta',
+  })
   async finalCheck() {
     this.waService.sendMessageBulk(
       'Final Check\Verifikasi akhir sebelum operasional tutup.',
