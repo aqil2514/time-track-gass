@@ -56,10 +56,7 @@ export class TestBullService {
     }
   }
 
-  async testAttendanceLogs(){
-    const allUser = await this.getAllUser();
-    for(const user of allUser){
-      this.attendanceLogsQueue.add("attendance-logs", { userId: user })
-    }
+  async testAttendanceLogs() {
+    await this.attendanceLogsQueue.add('attendance-logs', {});
   }
 }

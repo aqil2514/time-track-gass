@@ -1,9 +1,19 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ActivitiesSessionSummaryCronHelper } from './helpers/activites-cron-session-summary-helper.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { ActivitiesCronMessageHelper } from './helpers/activities-cron-message.service';
+import { SupabaseClient } from '@supabase/supabase-js/dist/index.cjs';
+import {
+  RPCFunctionName,
+  TableName,
+} from 'src/services/supabase/supabase.interface';
+import {
+  AttendanceLogsDb,
+  AttendanceLogsDbInsert,
+  AttendanceLogsRpc,
+} from 'src/app/supervisor/interfaces/attendances/attendances-logs.interface';
 
 @Injectable()
 export class ActivitiesCronService {
@@ -17,6 +27,9 @@ export class ActivitiesCronService {
 
     @InjectQueue('summary-session')
     private summaryQueue: Queue,
+
+    @Inject('SUPABASE_CLIENT')
+    private readonly supabase: SupabaseClient,
 
     private readonly sessionSummaryHelper: ActivitiesSessionSummaryCronHelper,
     private readonly waService: ActivitiesCronMessageHelper,
@@ -116,5 +129,41 @@ export class ActivitiesCronService {
     this.waService.sendMessageBulk(
       'Final Check\Verifikasi akhir sebelum operasional tutup.',
     );
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_1AM, {
+    timeZone: 'Asia/Jakarta',
+  })
+  async createNewTotalWorkTime() {
+    const { data: dbData, error } = await this.supabase.rpc(
+      RPCFunctionName.GET_SCREEN_REPORT_YESTERDAY,
+    );
+
+    if (error) {
+      console.error('RPC Error:', error);
+      throw error;
+    }
+
+    if (!dbData || dbData.length === 0) {
+      console.log('Tidak ada data kerja untuk kemarin.');
+      return;
+    }
+
+    const payload: AttendanceLogsDbInsert[] = dbData.map((d) => ({
+      duration_minutes: Number(d.total_work_time), // Pastikan angka
+      profile_id: d.user_id,
+      work_date: d.date,
+    }));
+
+    const { error: errAddData } = await this.supabase
+      .from(TableName.AttendanceLogs)
+      .upsert(payload, { onConflict: 'profile_id, work_date' });
+
+    if (errAddData) {
+      console.error('Insert Error:', errAddData);
+      throw errAddData;
+    }
+
+    console.log(`Berhasil memindahkan ${payload.length} data kerja.`);
   }
 }
