@@ -95,7 +95,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
             name: 'short',
             limit: 1,
             ttl: 300000,
-            blockDuration: 300000,
+            // blockDuration: 300000,
           },
         ],
         storage: new ThrottlerStorageRedisService(

@@ -18,14 +18,11 @@ export class AttendanceLogsProcessor extends WorkerHost {
       RPCFunctionName.GET_SCREEN_REPORT_YESTERDAY,
     );
 
-    console.log(data);
-    console.log(rpcData);
-
     if (error) {
       console.error(error);
       throw error;
     }
 
-    return rpcData
+    return rpcData;
   }
 }

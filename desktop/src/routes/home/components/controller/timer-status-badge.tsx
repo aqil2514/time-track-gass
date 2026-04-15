@@ -7,7 +7,7 @@ export function TimerStatusBadge() {
   const { status, countdown } = controllerTime;
 
   const baseStyle =
-    "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium gap-1";
+    "inline-flex items-center rounded-full px-3 py-2 text-xs font-medium gap-1";
 
   const statusConfig = {
     idle: {

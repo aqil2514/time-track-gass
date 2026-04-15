@@ -21,35 +21,18 @@ export class ActivitiesService {
     return data;
   }
 
-// TODO : Nanti update yang ini
-  //   async getActivityData(
-  //   userId: string,
-  //   date: string,
-  // ): Promise<ActivityResponse> {
-  //   const summariesData = await this.helper.getSessionActivityByUserId(
-  //     userId,
-  //     date,
-  //   );
-  //   const summaryTime = await this.helper.getSummaryTime(userId, date);
+  async getTotalWork(userId: string, date: string) {
+    const { dailySummaryTime, weeklySummaryTime } =
+      await this.helper.getSummaryTime(userId, date);
 
-  //   const allRawIds = summariesData.flatMap((data) => data.raw_ids);
-
-  //   const allReports = await this.helper.getRawActivityRawIds(allRawIds);
-
-  //   const data = this.helper.mapToActivityData(allReports, summariesData);
-
-  //   return {
-  //     activities: data,
-  //     dailySummaryTime: summaryTime.dailySummaryTime,
-  //     weeklySummaryTime: summaryTime.weeklySummaryTime,
-  //   };
-  // }
+    return { dailySummaryTime, weeklySummaryTime };
+  }
 
   async getDailyActivity(userId: string, date: string) {
     return await this.helper.getDailyActivity(userId, date);
   }
-  
-  async getDailyActivityPerCategory(userId: string, date: string){
-    return await this.helper.getDailyActivityPerCategory(userId, date)
+
+  async getDailyActivityPerCategory(userId: string, date: string) {
+    return await this.helper.getDailyActivityPerCategory(userId, date);
   }
 }

@@ -23,7 +23,7 @@ export function TimelineItems() {
   if (isLoading) return <LoadingSpinner />;
 
   // Handle empty data
-  if (!data || data.activities.length === 0)
+  if (!data || data.length === 0)
     return (
       <div className="flex items-center justify-center h-96 text-slate-400 text-sm">
         No activity yet
@@ -44,7 +44,7 @@ export function TimelineItems() {
           collapsible
           className="space-y-6"
         >
-          {data.activities.map((item) => {
+          {data.map((item) => {
             const session_start = format(item.session_start, "HH:mm a");
             const session_end = format(item.session_end, "HH:mm a");
             const start = new Date(item.session_start);

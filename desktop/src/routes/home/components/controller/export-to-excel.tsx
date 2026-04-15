@@ -8,7 +8,7 @@ export function ExportToExcelButton() {
 
   const handleExport = async () => {
     if (isLoading) return;
-    const items = fetcher.data?.activities?.flatMap((data) => data.items);
+    const items = fetcher.data?.flatMap((data) => data.items);
     await exportToExcel(items ?? []);
   };
 

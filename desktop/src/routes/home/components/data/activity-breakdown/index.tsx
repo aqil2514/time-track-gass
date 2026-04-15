@@ -20,7 +20,7 @@ export function ActivityBreakdown() {
     );
 
   // 🔹 Total activity count
-  const items = data.activities.flatMap((d) => d.items);
+  const items = data.flatMap((d) => d.items);
   const total = items.length;
 
 
