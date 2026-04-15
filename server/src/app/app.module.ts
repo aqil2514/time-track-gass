@@ -81,6 +81,10 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
       name: 'summary-session',
       adapter: BullMQAdapter,
     }),
+    BullBoardModule.forFeature({
+      name: 'attendance-logs',
+      adapter: BullMQAdapter,
+    }),
 
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],

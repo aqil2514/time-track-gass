@@ -11,3 +11,10 @@ export enum TableName {
   DailySummary = 'daily_summary',
   DailySummaryPerCategory = 'daily_summary_per_categories',
 }
+
+export enum RPCFunctionName {
+  GET_SCREEN_REPORT_TODAY = 'get_screen_report_today',
+  GET_SCREEN_REPORT_YESTERDAY = 'get_screen_report_yesterday',
+  GET_USER_ALLOWED_CATEGORIES = 'get_user_allowed_categories',
+  GET_WEEKLY_USER_ACTIVITY_BY_DATE = 'get_weekly_user_activity_by_date',
+}

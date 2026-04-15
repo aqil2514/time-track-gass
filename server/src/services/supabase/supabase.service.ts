@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { TableName } from './supabase.interface';
+import { RPCFunctionName, TableName } from './supabase.interface';
 
 @Injectable()
 export class SupabaseService {
@@ -12,6 +12,20 @@ export class SupabaseService {
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
   ) {}
+
+  async callRpc<T>(
+    functionName: RPCFunctionName,
+    params?: Record<string, any>,
+  ): Promise<T> {
+    const { data, error } = await this.supabase.rpc(functionName, params);
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    return data;
+  }
 
   async createNewData(tableName: TableName, data: any) {
     const { error } = await this.supabase.from(tableName).insert(data);

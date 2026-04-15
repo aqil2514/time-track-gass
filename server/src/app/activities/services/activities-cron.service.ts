@@ -26,6 +26,8 @@ export class ActivitiesCronService {
     disabled: process.env.NODE_ENV === 'development',
   })
   async createNewSummary() {
+    if (process.env.NODE_ENV === 'development') return;
+
     const allUser = await this.sessionSummaryHelper.getAllUser();
 
     for (const user of allUser) {

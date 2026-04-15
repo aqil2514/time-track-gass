@@ -14,6 +14,9 @@ import { TestAxiosService } from './services/test-axios.service';
     BullModule.registerQueue({
       name: 'summary-session',
     }),
+    BullModule.registerQueue({
+      name: 'attendance-logs',
+    }),
 
     HttpModule
   ],

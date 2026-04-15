@@ -1,9 +1,30 @@
 import { ContentContainer } from "@/components/containers/content-container";
+import {
+  SummaryAttendanceProvider,
+  useSummaryAttendance,
+} from "@/features/attendance/provider/summary.provider";
+import { SummaryController } from "./controller";
+import { useAttendanceLogsColumns } from "./table/columns";
+import { DataTable } from "@/components/containers/data-table";
 
 export function AttendanceSummary() {
   return (
-    <ContentContainer title="Ringkasan" description="Ringkasan">
-      Ringaksan
-    </ContentContainer>
+    <SummaryAttendanceProvider>
+      <InnerTemplate />
+    </SummaryAttendanceProvider>
   );
 }
+
+const InnerTemplate = () => {
+  const { data } = useSummaryAttendance();
+
+  const columns = useAttendanceLogsColumns();
+  return (
+    <>
+      <ContentContainer title="Ringkasan" description="Ringkasan">
+        <SummaryController />
+        <DataTable enableSorting={true} data={data ?? []} columns={columns} />
+      </ContentContainer>
+    </>
+  );
+};

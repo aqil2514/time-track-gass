@@ -12,6 +12,10 @@ const columns: ColumnDef<ProfileWorkConfigsPopulateProfile>[] = [
     header: "Nama Lengkap",
   },
   {
+    accessorKey: "profile.username",
+    header: "Username",
+  },
+  {
     accessorKey: "profile.division",
     header: "Divisi",
   },

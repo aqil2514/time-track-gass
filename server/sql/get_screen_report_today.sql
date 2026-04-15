@@ -1,0 +1,23 @@
+CREATE OR REPLACE FUNCTION get_screen_report_today()
+RETURNS TABLE (
+  user_id UUID,
+  date DATE,
+  count BIGINT,
+  total_work_time NUMERIC
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    asr.user_id,
+    DATE(asr.created_at) AS date,
+    COUNT(*) AS count,
+    SUM(asr."interval") AS total_work_time
+  FROM ai_screen_report asr
+  WHERE 
+    DATE(asr.created_at) = CURRENT_DATE
+    AND asr.category <> 'unclassified'
+  GROUP BY asr.user_id, DATE(asr.created_at);
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT * FROM get_screen_report_today();

@@ -48,4 +48,10 @@ export class TestController {
     await this.bullService.testSummaryQueue()
     return "OK"
   }
+
+  @Get("/attendance-logs")
+  async testAttendanceLogs(){
+    await this.bullService.testAttendanceLogs()
+    return "OK"
+  }
 }

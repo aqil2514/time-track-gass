@@ -13,6 +13,9 @@ export class TestBullService {
     @InjectQueue('summary-session')
     private summaryQueue: Queue,
 
+    @InjectQueue('attendance-logs')
+    private attendanceLogsQueue: Queue,
+
     private readonly supabaseService: SupabaseService,
   ) {}
 
@@ -50,6 +53,13 @@ export class TestBullService {
           removeOnFail: 50,
         },
       );
+    }
+  }
+
+  async testAttendanceLogs(){
+    const allUser = await this.getAllUser();
+    for(const user of allUser){
+      this.attendanceLogsQueue.add("attendance-logs", { userId: user })
     }
   }
 }

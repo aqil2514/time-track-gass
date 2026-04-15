@@ -21,6 +21,11 @@ import { AttendanceProfileConfigController } from './controllers/attendance/atte
 import { AttendanceProfileConfigService } from './services/attendance/attendance-profile-config.service';
 import { ProfileListenerEvent } from './listeners/profile.listener';
 import { ProfileListenerHelper } from './listeners/helpers/profile.listener-helper';
+import { AttendanceSummaryController } from './controllers/attendance/attendance-summary.controller';
+import { AttendanceSummaryService } from './services/attendance/attendance-summary.service';
+import { AttendanceLogsProcessor } from './processors/attendance-logs.processor';
+import { AttendanceSummaryHelper } from './services/attendance/helpers/attendance-summary-helper.service';
+import { AttendanceSummaryMapper } from './services/attendance/helpers/attedance-summary-mapper.service';
 
 @Module({
   imports: [ActivitiesModule],
@@ -33,6 +38,7 @@ import { ProfileListenerHelper } from './listeners/helpers/profile.listener-help
 
     // Attendance
     SupervisorAttendanceListNoteController,
+    AttendanceSummaryController,
     AttendanceProfileConfigController,
   ],
   providers: [
@@ -53,12 +59,18 @@ import { ProfileListenerHelper } from './listeners/helpers/profile.listener-help
     // Attendance
     AttendanceListnoteService,
     AttendanceProfileConfigService,
+    AttendanceSummaryService,
+    AttendanceSummaryHelper,
+    AttendanceSummaryMapper,
 
     // Listeners
     ProfileListenerEvent,
 
     // Listener Helpers
     ProfileListenerHelper,
+
+    // Processor
+    AttendanceLogsProcessor,
 
   ],
 })
