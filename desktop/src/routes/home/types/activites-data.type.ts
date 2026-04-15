@@ -4,3 +4,26 @@ import { SessionSummaryDb } from "./session-summary.type";
 export interface ActivityData extends Omit<SessionSummaryDb, 'raw_ids'> {
   items: AIScreenReportDb[];
 }
+
+export interface DailySummaryResponse {
+  user_id: string;
+  report_date: string;
+  total_count: number;
+  total_work_time_minutes: number;
+}
+
+export interface WeeklySummaryResponse {
+  user_id: string;
+  week_start: string;
+  week_end: string;
+  total_work_time_minutes: number;
+}
+
+export interface UserSummaryTimeResponse {
+  dailySummaryTime: DailySummaryResponse;
+  weeklySummaryTime: WeeklySummaryResponse;
+}
+
+export interface ActivityResponse extends UserSummaryTimeResponse {
+  activities: ActivityData[];
+}

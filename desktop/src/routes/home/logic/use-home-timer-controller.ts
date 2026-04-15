@@ -3,7 +3,7 @@ import { useCapture } from "@/hooks/use-capture";
 import { buildUrl } from "@/utils/build-url";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { KeyedMutator } from "swr";
-import { ActivityData } from "../types/activites-data.type";
+import { ActivityResponse } from "../types/activites-data.type";
 import api from "@/lib/api";
 import { load } from "@tauri-apps/plugin-store";
 
@@ -14,7 +14,7 @@ export type TimerStatus =
   | "uploading"
   | "error";
 
-export function useHomeTimerController(mutate: KeyedMutator<ActivityData[]>) {
+export function useHomeTimerController(mutate: KeyedMutator<ActivityResponse>) {
   const { capture, compareImage } = useCapture();
 
   const [status, setStatus] = useState<TimerStatus>("idle");

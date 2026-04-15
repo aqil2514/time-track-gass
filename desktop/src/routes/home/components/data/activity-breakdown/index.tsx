@@ -9,7 +9,7 @@ export function ActivityBreakdown() {
   if (isLoading) return <p className="text-slate-400">Loading...</p>;
 
   // 🔹 Error or no data
-  if (error || !data || data.length === 0)
+  if (error || !data)
     return (
       <div>
         <h3 className="text-white font-semibold tracking-tight">
@@ -20,7 +20,7 @@ export function ActivityBreakdown() {
     );
 
   // 🔹 Total activity count
-  const items = data.flatMap((d) => d.items);
+  const items = data.activities.flatMap((d) => d.items);
   const total = items.length;
 
 

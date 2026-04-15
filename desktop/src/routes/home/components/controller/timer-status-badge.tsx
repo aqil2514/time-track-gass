@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { useHomeContext } from "../../store/home.provider";
 import { Pause, Clock, Camera, Upload, AlertCircle } from "lucide-react";
 
@@ -39,9 +40,9 @@ export function TimerStatusBadge() {
   const current = statusConfig[status];
 
   return (
-    <span className={`${baseStyle} ${current.className}`}>
+    <Badge className={`${baseStyle} ${current.className}`}>
       {current.icon}
       {current.label}
-    </span>
+    </Badge>
   );
 }

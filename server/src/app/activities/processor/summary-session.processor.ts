@@ -11,6 +11,8 @@ export class SummarySessionProcessor extends WorkerHost {
     super();
   }
   async process(job: Job) {
+    if (process.env.NODE_ENV === 'development') return;
+    
     const { data } = job;
     const userId = data.userId;
 

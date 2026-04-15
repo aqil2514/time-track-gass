@@ -17,4 +17,6 @@ export enum RPCFunctionName {
   GET_SCREEN_REPORT_YESTERDAY = 'get_screen_report_yesterday',
   GET_USER_ALLOWED_CATEGORIES = 'get_user_allowed_categories',
   GET_WEEKLY_USER_ACTIVITY_BY_DATE = 'get_weekly_user_activity_by_date',
+  GET_USER_SCREEN_REPORT_BY_DATE = 'get_user_screen_report_by_date',
+  GET_USER_SCREEN_REPORT_WEEKLY = 'get_user_screen_report_weekly',
 }

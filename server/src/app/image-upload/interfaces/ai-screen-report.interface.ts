@@ -1,3 +1,5 @@
+import { ActivityData } from 'src/app/activities/interface/activities_data.interface';
+
 export interface AIScreenReportDb {
   id: string;
   created_at: string;
@@ -38,4 +40,27 @@ export type AIScreenReportDbInsert = Omit<
 export interface TotalWeeklyActivity {
   user_id: string;
   total_activity: number;
+}
+
+export interface DailySummaryResponse {
+  user_id: string;
+  report_date: string;
+  total_count: number;
+  total_work_time_minutes: number;
+}
+
+export interface WeeklySummaryResponse {
+  user_id: string;
+  week_start: string;
+  week_end: string;
+  total_work_time_minutes: number;
+}
+
+export interface UserSummaryTimeResponse {
+  dailySummaryTime: DailySummaryResponse;
+  weeklySummaryTime: WeeklySummaryResponse;
+}
+
+export interface ActivityResponse extends UserSummaryTimeResponse {
+  activities: ActivityData[];
 }

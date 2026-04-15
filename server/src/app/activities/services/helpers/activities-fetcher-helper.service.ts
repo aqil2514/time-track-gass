@@ -1,11 +1,19 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { TableName } from 'src/services/supabase/supabase.interface';
+import {
+  RPCFunctionName,
+  TableName,
+} from 'src/services/supabase/supabase.interface';
 import { SessionSummaryDb } from '../../interface/session_summary.interface';
 import { ActivityData } from '../../interface/activities_data.interface';
-import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
+import {
+  AIScreenReportDb,
+  DailySummaryResponse,
+  UserSummaryTimeResponse,
+  WeeklySummaryResponse,
+} from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { DailySummaryDb } from '../../interface/daily_summary.interface';
-import { endOfDay, startOfDay } from 'date-fns';
+import { endOfDay, format, parseISO, startOfDay } from 'date-fns';
 import { DailySummaryPerCategory } from '../../interface/daily_summary_per_category.interface';
 
 @Injectable()
@@ -117,5 +125,70 @@ export class ActivitiesFetcherHelper {
     });
 
     return data;
+  }
+
+  // Summary time
+
+  async getDailySummaryTime(
+    userId: string,
+    date: string,
+  ): Promise<DailySummaryResponse> {
+    const formattedDate = format(parseISO(date), 'yyyy-MM-dd');
+
+    const { data, error } = await this.supabase.rpc(
+      RPCFunctionName.GET_USER_SCREEN_REPORT_BY_DATE,
+      {
+        p_user_id: userId,
+        p_date: formattedDate,
+      },
+    );
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    return data?.[0] || { total_work_time_minutes: 0 };
+  }
+
+  async getWeeklySummaryTime(
+    userId: string,
+    date: string,
+  ): Promise<WeeklySummaryResponse> {
+    const formattedDate = format(parseISO(date), 'yyyy-MM-dd');
+
+    const { data, error } = await this.supabase.rpc(
+      RPCFunctionName.GET_USER_SCREEN_REPORT_WEEKLY,
+      {
+        p_user_id: userId,
+        p_date: formattedDate,
+      },
+    );
+
+    if (error) {
+      console.error('Error fetching weekly summary:', error);
+      throw error;
+    }
+
+    return (
+      data?.[0] || {
+        user_id: userId,
+        total_work_time_minutes: 0,
+        week_start: null,
+        week_end: null,
+      }
+    );
+  }
+
+  async getSummaryTime(
+    userId: string,
+    date: string,
+  ): Promise<UserSummaryTimeResponse> {
+    const [dailySummaryTime, weeklySummaryTime] = await Promise.all([
+      this.getDailySummaryTime(userId, date),
+      this.getWeeklySummaryTime(userId, date),
+    ]);
+
+    return { dailySummaryTime, weeklySummaryTime };
   }
 }
