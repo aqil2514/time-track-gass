@@ -1,11 +1,11 @@
 import { createActionColumn } from "@/components/molecules/action-column";
-import { ActivityAdjusmentListDb } from "@/features/attendance/interfaces/activity-adjusment-list.interface";
+import { ActivityAdjustmentListDb } from "@/features/attendance/interfaces/activity-adjustment-list.interface";
 import { useQueryParams } from "@/hooks/use-query-params";
 import { formatToTime } from "@/utils/format-to-time";
 import { ColumnDef } from "@tanstack/react-table";
 import { Pencil, Trash } from "lucide-react";
 
-const columns: ColumnDef<ActivityAdjusmentListDb>[] = [
+const columns: ColumnDef<ActivityAdjustmentListDb>[] = [
   {
     accessorKey: "name",
     header: "Nama List",

@@ -6,6 +6,7 @@ import {
 import { SummaryController } from "./controller";
 import { useAttendanceLogsColumns } from "./table/columns";
 import { DataTable } from "@/components/containers/data-table";
+import { AddAdjustmentDialog } from "./dialogs/add-adjustment";
 
 export function AttendanceSummary() {
   return (
@@ -25,6 +26,8 @@ const InnerTemplate = () => {
         <SummaryController />
         <DataTable enableSorting={true} data={data ?? []} columns={columns} />
       </ContentContainer>
+
+      <AddAdjustmentDialog />
     </>
   );
 };

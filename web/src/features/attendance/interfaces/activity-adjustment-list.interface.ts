@@ -1,4 +1,4 @@
-export interface ActivityAdjusmentListDb {
+export interface ActivityAdjustmentListDb {
   id: number;
   name: string;
   added_minutes: number;

@@ -6,8 +6,9 @@ import React from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { cookies } from "next/headers";
 import { DashboardSidebar } from "@/components/layouts/dashboard-sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export default async function ProtectedLayout({
   children,
@@ -26,10 +27,9 @@ export default async function ProtectedLayout({
         <DashboardSidebar />
         <div className="w-full">
           <DashboardHeader />
-          {children}
+          <TooltipProvider>{children}</TooltipProvider>
         </div>
       </AuthProvider>
-
     </SidebarProvider>
   );
 }
