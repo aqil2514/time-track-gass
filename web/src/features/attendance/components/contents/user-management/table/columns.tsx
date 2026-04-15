@@ -33,7 +33,7 @@ const columns: ColumnDef<ProfileWorkConfigsPopulateProfile>[] = [
     header: "Minimal Jam Kerja Bulanan",
     cell: ({ row }) =>
       row.original.min_hours_weekly
-        ? formatToTime(row.original.min_hours_weekly, "hours")
+        ? formatToTime(row.original.min_hours_monthly, "hours")
         : "-",
   },
   {
