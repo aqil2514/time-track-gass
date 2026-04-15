@@ -15,9 +15,12 @@ import {
 import { DailySummaryDb } from '../../interface/daily_summary.interface';
 import { endOfDay, format, parseISO, startOfDay } from 'date-fns';
 import { DailySummaryPerCategory } from '../../interface/daily_summary_per_category.interface';
+import { formatInTimeZone } from 'date-fns-tz';
 
 @Injectable()
 export class ActivitiesFetcherHelper {
+  private readonly APP_TIMEZONE = 'Asia/Jakarta';
+
   constructor(
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
@@ -133,7 +136,11 @@ export class ActivitiesFetcherHelper {
     userId: string,
     date: string,
   ): Promise<DailySummaryResponse> {
-    const formattedDate = format(parseISO(date), 'yyyy-MM-dd');
+    const formattedDate = formatInTimeZone(
+      parseISO(date),
+      this.APP_TIMEZONE,
+      'yyyy-MM-dd',
+    );
 
     const { data, error } = await this.supabase.rpc(
       RPCFunctionName.GET_USER_SCREEN_REPORT_BY_DATE,
@@ -155,7 +162,11 @@ export class ActivitiesFetcherHelper {
     userId: string,
     date: string,
   ): Promise<WeeklySummaryResponse> {
-    const formattedDate = format(parseISO(date), 'yyyy-MM-dd');
+    const formattedDate = formatInTimeZone(
+      parseISO(date),
+      this.APP_TIMEZONE,
+      'yyyy-MM-dd',
+    );
 
     const { data, error } = await this.supabase.rpc(
       RPCFunctionName.GET_USER_SCREEN_REPORT_WEEKLY,
