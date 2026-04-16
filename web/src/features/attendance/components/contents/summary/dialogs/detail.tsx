@@ -82,7 +82,7 @@ export function DetailDialog() {
                 Riwayat Jam Kerja
               </h4>
               <div className="h-70 w-full">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" aspect={2}>
                   <BarChart
                     data={data.workHourHistory}
                     margin={{ top: 0, right: 0, left: -20, bottom: 0 }}

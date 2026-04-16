@@ -8,6 +8,7 @@ import { useAttendanceLogsColumns } from "./table/columns";
 import { DataTable } from "@/components/containers/data-table";
 import { AddAdjustmentDialog } from "./dialogs/add-adjustment";
 import { DetailDialog } from "./dialogs/detail";
+import { AdjustmentContentDialog } from "./dialogs/adjusment-content";
 
 export function AttendanceSummary() {
   return (
@@ -30,6 +31,7 @@ const InnerTemplate = () => {
 
       <AddAdjustmentDialog />
       <DetailDialog />
+      <AdjustmentContentDialog />
     </>
   );
 };

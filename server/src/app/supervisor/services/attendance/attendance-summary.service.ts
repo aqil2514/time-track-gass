@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { AttendanceSummaryHelper } from './helpers/attendance-summary-helper.service';
 import { AttendanceLogsQueryDto } from '../../dto/attendance/attendance-logs-query.dto';
 import { AttendanceSummaryMapper } from './helpers/attedance-summary-mapper.service';
+import { AttendanceLogsRpc } from '../../interfaces/attendances/attendances-logs.interface';
 
 @Injectable()
 export class AttendanceSummaryService {
@@ -48,13 +49,28 @@ export class AttendanceSummaryService {
         query.end,
         userId,
       ),
-      this.helper.getUserProfile(userId)
+      this.helper.getUserProfile(userId),
     ]);
+
+    let todayData: AttendanceLogsRpc[] = [];
+    if (query.isIncludeToday) {
+      todayData = await this.helper.getAttendanceSummaryToday();
+    }
+
+    const todayHistory = todayData
+      .filter((item) => item.user_id === userId)
+      .map((item) => ({
+        id: Date.now(),
+        work_date: item.date,
+        duration_minutes: item.total_work_time,
+      }));
+
+    const mergedHistory = [...workHourHistory, ...todayHistory];
 
     return {
       listNotes: userAttendanceList,
-      workHourHistory,
-      profile
+      workHourHistory: mergedHistory,
+      profile,
     };
   }
 }
