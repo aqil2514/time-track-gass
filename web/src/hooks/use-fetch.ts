@@ -10,7 +10,7 @@ interface UseFetchOptions {
 }
 
 export function useFetch<T>(key: string | null, options?: UseFetchOptions) {
-  const { data, error, isLoading, mutate } = useSWR<T>(key, fetcher, {
+  const { data, error, isLoading, mutate, isValidating } = useSWR<T>(key, fetcher, {
     revalidateOnFocus: false,
     keepPreviousData: true,
     ...options,
@@ -21,5 +21,6 @@ export function useFetch<T>(key: string | null, options?: UseFetchOptions) {
     error,
     isLoading,
     mutate,
+    isValidating
   };
 }
