@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AttendanceLogsQueryDto } from 'src/app/supervisor/dto/attendance/attendance-logs-query.dto';
+import { ActivityAdjusmentsDb } from 'src/app/supervisor/interfaces/attendances/activity-adjusments.interface';
 import {
   AttendanceLogsDbPopulatedProfile,
   AttendanceLogsRpc,
@@ -21,6 +22,7 @@ export class AttendanceSummaryMapper {
         exist.totalWorkTime += Number(data.duration_minutes);
       } else {
         summaryMap.set(data.profile.id, {
+          id: data.profile.id,
           totalWorkTime: Number(data.duration_minutes),
           division: data.profile.division,
           fullName: data.profile.full_name,
@@ -44,10 +46,24 @@ export class AttendanceSummaryMapper {
           (db) => db.profile.id === data.user_id,
         )?.profile;
         summaryMap.set(data.user_id, {
+          id: data.user_id,
           totalWorkTime: Number(data.total_work_time),
           division: profile?.division || '-',
           fullName: profile?.full_name || 'Unknown User',
         } as AttendanceSummary);
+      }
+    }
+  }
+
+  private mapFromAdjustment(
+    summaryMap: Map<string, AttendanceSummary>,
+    adjustmentData: ActivityAdjusmentsDb[],
+  ) {
+    for (const adj of adjustmentData) {
+      const existing = summaryMap.get(adj.profile_id);
+
+      if (existing) {
+        existing.totalWorkTime += Number(adj.affected_minutes);
       }
     }
   }
@@ -146,6 +162,7 @@ export class AttendanceSummaryMapper {
     query: AttendanceLogsQueryDto,
     dbData: AttendanceLogsDbPopulatedProfile[],
     userConfig: ProfileWorkConfigsDb[],
+    adjustmentData: ActivityAdjusmentsDb[],
     todayData?: AttendanceLogsRpc[],
   ) {
     const summaryMap = new Map<string, AttendanceSummary>();
@@ -154,6 +171,7 @@ export class AttendanceSummaryMapper {
     if (todayData) {
       this.mapFromToday(summaryMap, dbData, todayData);
     }
+    this.mapFromAdjustment(summaryMap, adjustmentData);
     this.mapUpdateLabel(summaryMap, query);
     this.mapUpdateStatus(summaryMap, userConfig, query);
     this.mapUpdatePenalty(summaryMap, userConfig, query);

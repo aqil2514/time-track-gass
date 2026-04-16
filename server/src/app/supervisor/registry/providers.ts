@@ -6,7 +6,6 @@ import { AttendanceListnoteService } from '../services/attendance/attendance-lis
 import { AttendanceProfileConfigService } from '../services/attendance/attendance-profile-config.service';
 import { AttendanceSummaryService } from '../services/attendance/attendance-summary.service';
 import { AdjustmentHelper } from '../services/attendance/helpers/adjusment-helper.service';
-import { AdjustmentMapper } from '../services/attendance/helpers/adjustment-mapper.service';
 import { AttendanceSummaryMapper } from '../services/attendance/helpers/attedance-summary-mapper.service';
 import { AttendanceSummaryHelper } from '../services/attendance/helpers/attendance-summary-helper.service';
 import { SupervisorActivityFetcher } from '../services/helpers/supervisor-activity-fetcher.service';
@@ -46,7 +45,6 @@ export const ATTENDANCE_SERVICES = [
 
   AttendanceAdjustmentService,
   AdjustmentHelper,
-  AdjustmentMapper,
 ];
 
 export const PROFILE_LISTENER = [ProfileListenerEvent, ProfileListenerHelper];

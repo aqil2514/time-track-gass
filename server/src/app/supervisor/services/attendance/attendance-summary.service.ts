@@ -11,9 +11,10 @@ export class AttendanceSummaryService {
   ) {}
 
   async getAttendanceSummary(query: AttendanceLogsQueryDto) {
-    const [dbData, userConfg] = await Promise.all([
+    const [dbData, userConfig, adjustmentData] = await Promise.all([
       this.helper.getAttendanceSummaryByDateRange(query.start, query.end),
       this.helper.getUserConfigData(),
+      this.helper.getAttendanceAdjustmentByDateRange(query.start, query.end),
     ]);
 
     let todayData = undefined;
@@ -24,10 +25,36 @@ export class AttendanceSummaryService {
     const mappedData = await this.mapper.mapToSummaryData(
       query,
       dbData,
-      userConfg,
+      userConfig,
+      adjustmentData,
       todayData,
     );
 
     return mappedData;
+  }
+
+  async getAttendanceSummaryDetail(
+    query: AttendanceLogsQueryDto,
+    userId: string,
+  ) {
+    const [userAttendanceList, workHourHistory, profile] = await Promise.all([
+      this.helper.getAttendanceAdjustmentByUserId(
+        query.start,
+        query.end,
+        userId,
+      ),
+      this.helper.getAttendanceSummaryByDateRangeAndUserId(
+        query.start,
+        query.end,
+        userId,
+      ),
+      this.helper.getUserProfile(userId)
+    ]);
+
+    return {
+      listNotes: userAttendanceList,
+      workHourHistory,
+      profile
+    };
   }
 }

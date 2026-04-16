@@ -6,8 +6,6 @@ import {
   startOfMonth,
   endOfMonth,
   parseISO,
-  setMonth,
-  setYear,
   format,
   startOfDay,
   isWithinInterval,

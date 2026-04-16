@@ -1,3 +1,5 @@
+import { Profile } from "@/@types/auth";
+
 export interface AttendanceLogsQuery {
   mode: string;
 
@@ -10,11 +12,35 @@ export interface AttendanceLogsQuery {
 }
 
 export interface AttendanceSummary {
-  id:string;
+  id: string;
   fullName: string;
   division: string;
   period: string;
   totalWorkTime: number;
-  status: 'Complete' | 'Incomplete';
+  status: "Complete" | "Incomplete" | "Process";
   penalty: string;
+}
+
+// Fetcher
+export interface UserAttendanceList {
+  id: number;
+  date: string;
+  affected_minutes: number;
+  adjustment: {
+    id: number;
+    name: string;
+    notes: string;
+  };
+}
+
+export interface WorkHourHistory {
+  id: number;
+  work_date: string;
+  duration_minutes: number;
+}
+
+export interface UserAttendanceDetail {
+  listNotes: UserAttendanceList[];
+  workHourHistory: WorkHourHistory[];
+  profile: Profile;
 }
