@@ -7,6 +7,10 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { AdjustmentField } from "./adjustment-field";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ProfileImpactField } from "./profile-impact-field";
+import { Form } from "@/components/ui/form";
+import { AttendanceDateField } from "./attendance-date-field";
 
 interface Props {
   defaultValues?: AttendanceLogsAdjustmentType;
@@ -24,18 +28,27 @@ export function AdjustmentAttendanceForm({
   const isSubmitting = form.formState.isSubmitting;
 
   return (
-    <form
-      onSubmit={form.handleSubmit(submitHandler, () =>
-        alert(
-          "Data yang diminta belum lengkap. Pastikan Konfigurasi Kategori juga diisi",
-        ),
-      )}
-      className="space-y-4"
-    >
-      <AdjustmentField form={form} />
-      <Button variant={"accent"} disabled={isSubmitting}>
-        {isSubmitting ? "Menyimpan..." : "Simpan"}
-      </Button>
-    </form>
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(submitHandler, () =>
+          alert(
+            "Data yang diminta belum lengkap. Pastikan Konfigurasi Kategori juga diisi",
+          ),
+        )}
+        className="space-y-4"
+      >
+        <ScrollArea className="h-96 px-4">
+          <div className="space-y-4">
+
+          <AttendanceDateField form={form} />
+          <ProfileImpactField form={form} />
+          <AdjustmentField form={form} />
+          </div>
+        </ScrollArea>
+        <Button variant={"accent"} disabled={isSubmitting}>
+          {isSubmitting ? "Menyimpan..." : "Simpan"}
+        </Button>
+      </form>
+    </Form>
   );
 }

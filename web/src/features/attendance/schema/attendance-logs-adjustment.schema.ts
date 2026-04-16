@@ -1,16 +1,15 @@
 import z from "zod";
 
 const adjumentSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   adjusment_name: z.string().optional(),
-  adjusment_description: z.string().optional(),
   added_minutes: z.number(),
 });
 
 export const attendanceLogsAdjustmentSchema = z.object({
   adjustment: z.array(adjumentSchema),
-  profile_id: z.array(z.string()),
-  date: z.string(),
+  profile_id: z.array(z.string()).min(1, "Pilih minimal satu karyawan"),
+  date: z.string().min(1, "Tanggal harus diisi"),
 });
 
 export type AttendanceLogsAdjustmentType = z.infer<

@@ -72,7 +72,7 @@ export function FormFieldSelect<
                     className
                   )}
                 >
-                  <SelectValue placeholder={placeholder} />
+                  <SelectValue placeholder={placeholder} className="text-white" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-900 border-slate-700 text-white">
                   {options.map((option) => (

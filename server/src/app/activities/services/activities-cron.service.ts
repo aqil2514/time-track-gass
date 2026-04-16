@@ -164,6 +164,6 @@ export class ActivitiesCronService {
       throw errAddData;
     }
 
-    console.log(`Berhasil memindahkan ${payload.length} data kerja.`);
+    this.logger.log(`Berhasil memindahkan ${payload.length} data kerja.`);
   }
 }
