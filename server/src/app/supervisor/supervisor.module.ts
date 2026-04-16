@@ -1,77 +1,26 @@
 import { Module } from '@nestjs/common';
-import { SupervisorController } from './controllers/supervisor.controller';
-import { SupervisorService } from './services/supervisor.service';
-import { SupervisorActivityFetcher } from './services/helpers/supervisor-activity-fetcher.service';
 import { ActivitiesModule } from '../activities/activities.module';
-import { SupervisorUserController } from './controllers/supervisor-user.controller';
-import { SupervisorUserService } from './services/supervisor-user.service';
-import { SupervisorTrackerController } from './controllers/supervisor-tracker.controller';
-import { SupervisorTrackerService } from './services/supervisor-tracker.service';
-import { SupervisorActivityMapper } from './services/helpers/supervisor-activity-mapper.service';
-import { SupervisorMatrixService } from './services/helpers/supervisor-matrix.service';
-import { SupervisorDivisionsController } from './controllers/supervisor-divisions.controller';
-import { SupervisorDivisionsService } from './services/supervisor-division.service';
-import { SupervisorDivisionHelperService } from './services/helpers/supervisor-division-helper.service';
-import { SupervisorUserHelper } from './services/helpers/supervisor-user-helper.service';
-import { SupervisorActivityController } from './controllers/supervisor-activity.controller';
-import { SupervisorACtivityService } from './services/supervisor-activity.service';
-import { SupervisorAttendanceListNoteController } from './controllers/attendance/attendance-listnote.controller';
-import { AttendanceListnoteService } from './services/attendance/attendance-listnote.service';
-import { AttendanceProfileConfigController } from './controllers/attendance/attendance-profile-config.controller';
-import { AttendanceProfileConfigService } from './services/attendance/attendance-profile-config.service';
-import { ProfileListenerEvent } from './listeners/profile.listener';
-import { ProfileListenerHelper } from './listeners/helpers/profile.listener-helper';
-import { AttendanceSummaryController } from './controllers/attendance/attendance-summary.controller';
-import { AttendanceSummaryService } from './services/attendance/attendance-summary.service';
-import { AttendanceLogsProcessor } from './processors/attendance-logs.processor';
-import { AttendanceSummaryHelper } from './services/attendance/helpers/attendance-summary-helper.service';
-import { AttendanceSummaryMapper } from './services/attendance/helpers/attedance-summary-mapper.service';
+import {
+  ATTENDANCE_CONTROLLER,
+  SUPERVISOR_CONTROLLER,
+} from './registry/controller';
+import {
+  ATTENDANCE_SERVICES,
+  MIX_SUPERVISOR_HELPER,
+  MIX_SUPERVISOR_SERVICES,
+  PROFILE_LISTENER,
+} from './registry/providers';
 
 @Module({
   imports: [ActivitiesModule],
-  controllers: [
-    SupervisorController,
-    SupervisorUserController,
-    SupervisorTrackerController,
-    SupervisorDivisionsController,
-    SupervisorActivityController,
-
-    // Attendance
-    SupervisorAttendanceListNoteController,
-    AttendanceSummaryController,
-    AttendanceProfileConfigController,
-  ],
+  controllers: [...SUPERVISOR_CONTROLLER, ...ATTENDANCE_CONTROLLER],
   providers: [
-    // Services
-    SupervisorService,
-    SupervisorUserService,
-    SupervisorTrackerService,
-    SupervisorDivisionsService,
-    SupervisorACtivityService,
+    ...MIX_SUPERVISOR_SERVICES,
+    ...MIX_SUPERVISOR_HELPER,
 
-    // Helper
-    SupervisorUserHelper,
-    SupervisorMatrixService,
-    SupervisorActivityFetcher,
-    SupervisorActivityMapper,
-    SupervisorDivisionHelperService,
+    ...ATTENDANCE_SERVICES,
 
-    // Attendance
-    AttendanceListnoteService,
-    AttendanceProfileConfigService,
-    AttendanceSummaryService,
-    AttendanceSummaryHelper,
-    AttendanceSummaryMapper,
-
-    // Listeners
-    ProfileListenerEvent,
-
-    // Listener Helpers
-    ProfileListenerHelper,
-
-    // Processor
-    AttendanceLogsProcessor,
-
+    ...PROFILE_LISTENER,
   ],
 })
 export class SupervisorModule {}

@@ -13,7 +13,14 @@ export function useQueryParams(options?: Options) {
   const searchParams = useSearchParams();
 
   const basePath = options?.baseUrl ?? pathname;
-  const navigate = options?.replace ? router.replace : router.push;
+
+  const navigate = (url: string) => {
+    if (options?.replace) {
+      router.replace(url, { scroll: false });
+    } else {
+      router.push(url, { scroll: false });
+    }
+  };
 
   const get = (name: string) => searchParams.get(name);
   const getAll = (name: string) => searchParams.getAll(name);
@@ -60,9 +67,8 @@ export function useQueryParams(options?: Options) {
 
   const resetToContent = (content: string) => {
     const params = new URLSearchParams();
-
     params.set("content", content);
-    router.replace(`?${params.toString()}`);
+    router.replace(`?${params.toString()}`, { scroll: false });
   };
 
   return {
@@ -71,6 +77,6 @@ export function useQueryParams(options?: Options) {
     set,
     remove,
     update,
-    resetToContent
+    resetToContent,
   };
 }
