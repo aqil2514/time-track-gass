@@ -89,9 +89,16 @@ export function AdjustmentField({ form }: Props) {
               </span>
             </div>
           ) : (
-            <p className="text-xs text-slate-500 italic uppercase tracking-wider">
-              Belum ada penyesuaian yang ditambahkan
-            </p>
+            <>
+              <p className="text-xs text-slate-500 italic uppercase tracking-wider">
+                Belum ada penyesuaian yang ditambahkan
+              </p>
+              {form.formState.errors.adjustment && (
+                <p className="text-xs text-red-400 mt-2">
+                  {form.formState.errors.adjustment.message}
+                </p>
+              )}
+            </>
           )}
         </div>
       ) : (

@@ -1,9 +1,12 @@
 import { ProfileListenerHelper } from '../listeners/helpers/profile.listener-helper';
 import { ProfileListenerEvent } from '../listeners/profile.listener';
 import { AttendanceLogsProcessor } from '../processors/attendance-logs.processor';
+import { AttendanceAdjustmentService } from '../services/attendance/attendance-adjustment.service';
 import { AttendanceListnoteService } from '../services/attendance/attendance-listnote.service';
 import { AttendanceProfileConfigService } from '../services/attendance/attendance-profile-config.service';
 import { AttendanceSummaryService } from '../services/attendance/attendance-summary.service';
+import { AdjustmentHelper } from '../services/attendance/helpers/adjusment-helper.service';
+import { AdjustmentMapper } from '../services/attendance/helpers/adjustment-mapper.service';
 import { AttendanceSummaryMapper } from '../services/attendance/helpers/attedance-summary-mapper.service';
 import { AttendanceSummaryHelper } from '../services/attendance/helpers/attendance-summary-helper.service';
 import { SupervisorActivityFetcher } from '../services/helpers/supervisor-activity-fetcher.service';
@@ -40,6 +43,10 @@ export const ATTENDANCE_SERVICES = [
   AttendanceSummaryHelper,
   AttendanceSummaryMapper,
   AttendanceLogsProcessor,
+
+  AttendanceAdjustmentService,
+  AdjustmentHelper,
+  AdjustmentMapper,
 ];
 
 export const PROFILE_LISTENER = [ProfileListenerEvent, ProfileListenerHelper];

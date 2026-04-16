@@ -5,3 +5,8 @@ export interface ActivityAdjusmentListDb {
   notes: string;
   created_at: string;
 }
+
+export interface ActivityAdjusmentListDbInsert extends Omit<
+  ActivityAdjusmentListDb,
+  'id' | 'created_at'
+> {}

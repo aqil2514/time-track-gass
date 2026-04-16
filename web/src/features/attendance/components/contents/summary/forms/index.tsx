@@ -32,7 +32,7 @@ export function AdjustmentAttendanceForm({
       <form
         onSubmit={form.handleSubmit(submitHandler, () =>
           alert(
-            "Data yang diminta belum lengkap. Pastikan Konfigurasi Kategori juga diisi",
+            "Data yang diminta belum lengkap",
           ),
         )}
         className="space-y-4"

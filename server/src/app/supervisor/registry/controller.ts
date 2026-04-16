@@ -1,3 +1,4 @@
+import { AttendanceAdjustmentController } from '../controllers/attendance/attendance-adjustment.controller';
 import { SupervisorAttendanceListNoteController } from '../controllers/attendance/attendance-listnote.controller';
 import { AttendanceProfileConfigController } from '../controllers/attendance/attendance-profile-config.controller';
 import { AttendanceSummaryController } from '../controllers/attendance/attendance-summary.controller';
@@ -19,4 +20,5 @@ export const ATTENDANCE_CONTROLLER = [
   SupervisorAttendanceListNoteController,
   AttendanceSummaryController,
   AttendanceProfileConfigController,
+  AttendanceAdjustmentController,
 ];
