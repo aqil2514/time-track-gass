@@ -1,17 +1,35 @@
 import { formatToTime } from "@/utils/format-to-time";
 import { useAdjustmentContent } from "@/features/attendance/provider/adjustment-content.provider";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
+import axios from "axios";
+import { useState } from "react";
+import { useSummaryAttendance } from "@/features/attendance/provider/summary.provider";
 
 export function SideRightDelete() {
-  const { state, data } = useAdjustmentContent();
+  const { state, data, mutate, dispatch } = useAdjustmentContent();
+  const { mutate: mutateParent } = useSummaryAttendance();
+  const [isDeleting, setIsDeleting] = useState(false);
   const selected = data?.adjustmentContent?.find(
     (item) => String(item.id) === state.adjustmentId,
   );
 
-  const handleDelete = () => {
-    alert(`Menghapus penyesuaian: ${selected?.adjustment.name}`);
-    // TODO: Implement actual delete action
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await axios.delete(`/api/attendance/adjustment/${selected?.id}`);
+      alert("Penyesuaian berhasil dihapus.");
+      await mutate();
+      await mutateParent();
+      dispatch({
+        type: "SET_ACTION",
+        payload: { action: "standby", adjustmentId: null },
+      });
+    } catch (error) {
+      console.error("Error deleting adjustment:", error);
+      alert("Gagal menghapus penyesuaian. Silakan coba lagi.");
+      setIsDeleting(false);
+    }
   };
 
   if (!selected) {
@@ -79,7 +97,8 @@ export function SideRightDelete() {
         <div className="rounded-2xl border border-red-700/60 bg-red-950/60 p-4">
           <p className="text-sm font-medium text-red-200">Peringatan</p>
           <p className="mt-3 text-sm leading-6 text-red-400">
-            Tindakan ini tidak dapat dibatalkan. Penyesuaian ini akan dihapus secara permanen.
+            Tindakan ini tidak dapat dibatalkan. Penyesuaian ini akan dihapus
+            secara permanen.
           </p>
         </div>
 
@@ -87,10 +106,20 @@ export function SideRightDelete() {
           <Button
             variant="destructive"
             onClick={handleDelete}
+            disabled={isDeleting}
             className="flex items-center gap-2"
           >
-            <Trash2 className="h-4 w-4" />
-            Hapus Penyesuaian
+            {isDeleting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Menghapus...
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4" />
+                Hapus Penyesuaian
+              </>
+            )}
           </Button>
         </div>
       </div>

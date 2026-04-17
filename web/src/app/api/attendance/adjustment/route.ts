@@ -30,8 +30,6 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
 
-  console.log("OK")
-  
   try {
     const { data } = await apiServer.get("/supervisor/attendance/adjustment", {
       params: Object.fromEntries(searchParams),

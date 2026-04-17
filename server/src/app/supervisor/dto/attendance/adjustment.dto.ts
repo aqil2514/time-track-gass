@@ -1,13 +1,13 @@
-import { 
-  IsArray, 
-  IsNotEmpty, 
-  IsNumber, 
-  IsString, 
-  Min, 
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  Min,
   ValidateNested,
   ArrayMinSize,
   Matches,
-  ValidateIf
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -16,7 +16,7 @@ export class AdjustmentItemDto {
   @IsNotEmpty()
   id: string;
 
-  @ValidateIf((o) => o.id === "-1")
+  @ValidateIf((o) => o.id === '-1')
   @IsString({ message: 'Nama Penyesuaian wajib diisi jika membuat data baru' })
   @IsNotEmpty({ message: 'Nama Penyesuaian tidak boleh kosong' })
   adjusment_name?: string;
@@ -40,8 +40,17 @@ export class CreateAttendanceAdjustmentDto {
 
   @IsString()
   @IsNotEmpty({ message: 'Tanggal harus diisi' })
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, { 
-    message: 'Format tanggal harus YYYY-MM-DD' 
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+    message: 'Format tanggal harus YYYY-MM-DD',
+  })
+  date: string;
+}
+
+export class UpdateAttendanceAdjustmentDto extends AdjustmentItemDto {
+  @IsString()
+  @IsNotEmpty({ message: 'Tanggal harus diisi' })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+    message: 'Format tanggal harus YYYY-MM-DD',
   })
   date: string;
 }

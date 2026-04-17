@@ -1,6 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js/dist/index.cjs';
-import { CreateAttendanceAdjustmentDto } from 'src/app/supervisor/dto/attendance/adjustment.dto';
+import {
+  CreateAttendanceAdjustmentDto,
+  UpdateAttendanceAdjustmentDto,
+} from 'src/app/supervisor/dto/attendance/adjustment.dto';
 import { ActivityAdjusmentsDbInsert } from 'src/app/supervisor/interfaces/attendances/activity-adjusments.interface';
 import { TableName } from 'src/services/supabase/supabase.interface';
 import { ActivityAdjusmentListDbInsert } from 'src/app/supervisor/interfaces/attendances/activity-adjusment-list.interface';
@@ -52,6 +55,16 @@ export class AdjustmentHelper {
     );
   }
 
+  mapEditToListNoteDb(
+    payload: UpdateAttendanceAdjustmentDto,
+  ): ActivityAdjusmentListDbInsert {
+    return {
+      added_minutes: payload.added_minutes,
+      name: payload.adjusment_name,
+      notes: `Ditambahkan secara otomatis melalui Ringkasan Absen pada ${payload.date}`,
+    };
+  }
+
   async createNewListnote(
     payload: ActivityAdjusmentListDbInsert[],
   ): Promise<{ id: number; name: string }[]> {
@@ -69,6 +82,26 @@ export class AdjustmentHelper {
     }
 
     return data;
+  }
+
+  async createNewListnoteSingle(
+    payload: ActivityAdjusmentListDbInsert,
+  ): Promise<number> {
+    const { error, data } = await this.supabase
+      .from(TableName.ActivityAdjusmentList)
+      .upsert(payload, {
+        onConflict: 'name',
+        ignoreDuplicates: false,
+      })
+      .select('id')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error Upsert Listnote:', error);
+      throw error;
+    }
+
+    return data.id;
   }
 
   mapNewListNoteToAdjustmentDb(
@@ -110,5 +143,33 @@ export class AdjustmentHelper {
     if (error) throw error;
 
     return data;
+  }
+
+  async deleteAdjustmentById(adjustmentId: string) {
+    const { error } = await this.supabase
+      .from(TableName.ActivityAdjusments)
+      .delete()
+      .eq('id', adjustmentId);
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  async updateListById(oldId: string, payload: UpdateAttendanceAdjustmentDto) {
+    const { error } = await this.supabase
+      .from(TableName.ActivityAdjusments)
+      .update({
+        adjusment_id: Number(payload.id),
+        date: payload.date,
+        affected_minutes: payload.added_minutes,
+      })
+      .eq('id', oldId);
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
   }
 }

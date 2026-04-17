@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CreateAttendanceAdjustmentDto } from '../../dto/attendance/adjustment.dto';
+import {
+  CreateAttendanceAdjustmentDto,
+  UpdateAttendanceAdjustmentDto,
+} from '../../dto/attendance/adjustment.dto';
 import { AdjustmentHelper } from './helpers/adjusment-helper.service';
 
 @Injectable()
@@ -28,7 +31,30 @@ export class AttendanceAdjustmentService {
     const [adjustmentContent] = await Promise.all([
       this.helper.getAttendanceAdjustmentByDateRange(from, end),
     ]);
-    
+
     return { adjustmentContent };
+  }
+
+  async deleteAdjustmentById(adjustmentId: string) {
+    return await this.helper.deleteAdjustmentById(adjustmentId);
+  }
+
+  async updateAttendanceAdjustment(
+    oldId: string,
+    payload: UpdateAttendanceAdjustmentDto,
+  ) {
+    const isNewList = payload.id === '-1';
+    if (isNewList) {
+      const mappedListnote = this.helper.mapEditToListNoteDb(payload);
+      const newListNoteId =
+        await this.helper.createNewListnoteSingle(mappedListnote);
+      const newPayload: UpdateAttendanceAdjustmentDto = {
+        ...payload,
+        id: String(newListNoteId),
+      };
+
+      return await this.helper.updateListById(oldId, newPayload);
+    }
+    return await this.helper.updateListById(oldId, payload);
   }
 }

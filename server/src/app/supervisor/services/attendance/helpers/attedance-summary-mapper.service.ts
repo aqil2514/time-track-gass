@@ -97,19 +97,23 @@ export class AttendanceSummaryMapper {
         return;
       }
 
-      const targetInHours =
-        query.mode === 'weekly'
-          ? config.min_hours_weekly
-          : config.min_hours_monthly;
+      let targetInHours = 0;
+      if (query.mode === 'weekly') {
+        targetInHours = config.min_hours_weekly ?? 0;
+      } else if (query.mode === 'monthly') {
+        targetInHours = config.min_hours_monthly ?? 0;
+      }
 
       const targetInMinutes = targetInHours * 60;
-
       const isSafe = item.totalWorkTime >= targetInMinutes;
-      item.status = query.isIncludeToday
-        ? 'Process'
-        : isSafe
-          ? 'Complete'
-          : 'Incomplete';
+
+      if (isSafe) {
+        item.status = 'Complete';
+      } else if (query.isIncludeToday) {
+        item.status = 'Process';
+      } else {
+        item.status = 'Incomplete';
+      }
     });
   }
 
