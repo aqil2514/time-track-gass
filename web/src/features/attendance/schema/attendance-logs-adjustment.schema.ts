@@ -1,6 +1,6 @@
 import z from "zod";
 
-const adjumentSchema = z
+export const adjustmentSchema = z
   .object({
     id: z.string(),
     adjusment_name: z.string().optional(),
@@ -16,7 +16,7 @@ const adjumentSchema = z
   });
 
 export const attendanceLogsAdjustmentSchema = z.object({
-  adjustment: z.array(adjumentSchema).min(1, "Pilih minimal 1 penyesuaian"),
+  adjustment: z.array(adjustmentSchema).min(1, "Pilih minimal 1 penyesuaian"),
   profile_id: z.array(z.string()).min(1, "Pilih minimal satu karyawan"),
   date: z.string().min(1, "Tanggal harus diisi"),
 });

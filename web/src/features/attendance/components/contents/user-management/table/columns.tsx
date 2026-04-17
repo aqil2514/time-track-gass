@@ -62,9 +62,9 @@ const columns: ColumnDef<ProfileWorkConfigsPopulateProfile>[] = [
 
 export function useUserManagementColumns() {
   const { update } = useQueryParams();
-  const userManagementColumn = createActionColumn(
+  return createActionColumn({
     columns,
-    (row) => [
+    getMenuItems: (row) => [
       {
         label: "Edit",
         icon: Pencil,
@@ -75,8 +75,6 @@ export function useUserManagementColumns() {
           }),
       },
     ],
-    (row) => row.profile.username,
-  );
-
-  return userManagementColumn;
+    dropdownLabel: (row) => row.profile.username,
+  });
 }

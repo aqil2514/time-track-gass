@@ -4,8 +4,6 @@ import { useQueryParams } from "@/hooks/use-query-params";
 import { formatToTime } from "@/utils/format-to-time";
 import { ColumnDef } from "@tanstack/react-table";
 import {
-  Pencil,
-  Trash,
   Clock,
   CheckCircle2,
   AlertCircle,
@@ -114,9 +112,9 @@ const columns: ColumnDef<AttendanceSummary>[] = [
 
 export function useAttendanceLogsColumns() {
   const { update } = useQueryParams();
-  const attendanceLogsColumn = createActionColumn(
+  return createActionColumn({
     columns,
-    (row) => [
+    getMenuItems: (row) => [
       {
         label: "Detail",
         icon: Eye,
@@ -146,8 +144,6 @@ export function useAttendanceLogsColumns() {
       //     }),
       // },
     ],
-    (row) => row.fullName,
-  );
-
-  return attendanceLogsColumn;
+    dropdownLabel: (row) => row.fullName,
+  });
 }

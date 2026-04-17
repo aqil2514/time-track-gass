@@ -6,21 +6,22 @@ import {
 } from "@/components/ui/form";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { AttendanceLogsAdjustmentType } from "@/features/attendance/schema/attendance-logs-adjustment.schema";
 import { CalendarDays } from "lucide-react";
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, FieldValues, Path } from "react-hook-form";
 
-interface Props {
-  form: UseFormReturn<AttendanceLogsAdjustmentType>;
+interface Props<T extends FieldValues> {
+  form: UseFormReturn<T>;
 }
 
-export function AttendanceDateField({ form }: Props) {
+export function AttendanceDateField<T extends FieldValues & { date: string }>({
+  form,
+}: Props<T>) {
   return (
     <div className="border border-slate-700 p-5 rounded-2xl bg-slate-900/40">
       <FieldGroup>
         <FormField
           control={form.control}
-          name="date"
+          name={"date" as Path<T>}
           render={({ field }) => (
             <FormItem>
               <Field>

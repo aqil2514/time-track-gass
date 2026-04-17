@@ -10,7 +10,6 @@ export class AdjustmentHelper {
   constructor(
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
-
   ) {}
 
   mapToAdjustmentDb(raw: CreateAttendanceAdjustmentDto) {
@@ -97,5 +96,19 @@ export class AdjustmentHelper {
         };
       }),
     );
+  }
+
+  async getAttendanceAdjustmentByDateRange(startDate: string, endDate: string) {
+    const { error, data } = await this.supabase
+      .from(TableName.ActivityAdjusments)
+      .select(
+        'id, date, affected_minutes, profile:profile_id(id, full_name, username, division), adjustment:adjusment_id(id, name, notes)',
+      )
+      .gte('date', startDate)
+      .lte('date', endDate);
+
+    if (error) throw error;
+
+    return data;
   }
 }

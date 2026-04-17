@@ -23,4 +23,12 @@ export class AttendanceAdjustmentService {
 
     await this.helper.createNewAdjustment(mappedData);
   }
+
+  async getAdjustmentContentByDateRange(from: string, end: string) {
+    const [adjustmentContent] = await Promise.all([
+      this.helper.getAttendanceAdjustmentByDateRange(from, end),
+    ]);
+    
+    return { adjustmentContent };
+  }
 }

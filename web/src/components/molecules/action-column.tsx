@@ -1,6 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { LucideIcon, MoreHorizontal } from "lucide-react";
 import React from "react";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,14 +22,21 @@ interface MenuItems {
 interface ActionCellProps {
   dropdownLabel: string;
   menuItems: MenuItems[];
+  dropdownClassName?: string;
+  actionAlignment?: "left" | "right";
 }
 
 const ActionCell: React.FC<ActionCellProps> = ({
   dropdownLabel,
   menuItems,
+  dropdownClassName = "w-40",
+  actionAlignment = "right",
 }) => {
+  const wrapperClass = actionAlignment === "left" ? "text-left" : "text-right";
+  const dropdownAlign = actionAlignment === "left" ? "start" : "end";
+
   return (
-    <div className="text-right">
+    <div className={wrapperClass}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -39,8 +47,10 @@ const ActionCell: React.FC<ActionCellProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          align="end"
-          className="w-40 bg-slate-900 border-slate-800 text-slate-200"
+          align={dropdownAlign}
+          className={cn(
+            `${dropdownClassName} bg-slate-900 border-slate-800 text-slate-200`,
+          )}
         >
           <DropdownMenuLabel>{dropdownLabel}</DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-slate-800" />
@@ -63,26 +73,50 @@ const ActionCell: React.FC<ActionCellProps> = ({
   );
 };
 
-export function createActionColumn<TData>(
-  columns: ColumnDef<TData>[],
-  getMenuItems: (row: TData) => MenuItems[],
-  dropdownLabel: ((row: TData) => string) | string = "Aksi",
-): ColumnDef<TData>[] {
-  return [
-    ...columns,
-    {
-      id: "action",
-      header: () => <div className="text-right">Aksi</div>,
-      cell: ({ row }) => (
-        <ActionCell
-          dropdownLabel={
-            typeof dropdownLabel === "function"
-              ? dropdownLabel(row.original)
-              : dropdownLabel
-          }
-          menuItems={getMenuItems(row.original)}
-        />
-      ),
-    },
-  ];
+interface CreateActionColumnConfig<TData> {
+  columns: ColumnDef<TData>[];
+  getMenuItems: (row: TData) => MenuItems[];
+  dropdownLabel?: ((row: TData) => string) | string;
+  dropdownWidth?: string;
+  actionAlignment?: "left" | "right";
+  position?: "start" | "end";
 }
+
+export function createActionColumn<TData>(
+  config: CreateActionColumnConfig<TData>,
+): ColumnDef<TData>[] {
+  const {
+    columns,
+    getMenuItems,
+    dropdownLabel = "Aksi",
+    dropdownWidth = "w-40",
+    actionAlignment = "right",
+    position = "end",
+  } = config;
+
+  const actionColumn: ColumnDef<TData> = {
+    id: "action",
+    header: () => (
+      <div className={actionAlignment === "left" ? "text-left" : "text-right"}>
+        Aksi
+      </div>
+    ),
+    cell: ({ row }) => (
+      <ActionCell
+        dropdownLabel={
+          typeof dropdownLabel === "function"
+            ? dropdownLabel(row.original)
+            : dropdownLabel
+        }
+        menuItems={getMenuItems(row.original)}
+        dropdownClassName={dropdownWidth}
+        actionAlignment={actionAlignment}
+      />
+    ),
+  };
+
+  return position === "start"
+    ? [actionColumn, ...columns]
+    : [...columns, actionColumn];
+}
+

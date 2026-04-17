@@ -23,27 +23,28 @@ const columns: ColumnDef<ActivityAdjustmentListDb>[] = [
 
 export function useListNoteColumns() {
   const { update } = useQueryParams();
-  const listNoteColumn = createActionColumn(columns, (row) => [
-    {
-      label: "Edit",
-      icon: Pencil,
-      onClick: () =>
-        update({
-          listId: String(row.id),
-          action: "edit",
-        }),
-    },
-    {
-      label: "Hapus",
-      icon: Trash,
-      className: "text-red-400 focus:text-red-400",
-      onClick: () =>
-        update({
-          listId: String(row.id),
-          action: "delete",
-        }),
-    },
-  ]);
-
-  return listNoteColumn;
+  return createActionColumn({
+    columns,
+    getMenuItems: (row) => [
+      {
+        label: "Edit",
+        icon: Pencil,
+        onClick: () =>
+          update({
+            listId: String(row.id),
+            action: "edit",
+          }),
+      },
+      {
+        label: "Hapus",
+        icon: Trash,
+        className: "text-red-400 focus:text-red-400",
+        onClick: () =>
+          update({
+            listId: String(row.id),
+            action: "delete",
+          }),
+      },
+    ],
+  });
 }
