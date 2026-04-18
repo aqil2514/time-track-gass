@@ -1,9 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ZAIService } from '../../../services/ai-z/ai-z.service';
-import { ZImageAnalyzeData } from '../../../services/ai-z/interface/ai-z.interface';
 import { AIScreenReportDbInsert } from '../interfaces/ai-screen-report.interface';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { ImageScannerHelper } from './helpers/image-scanner-helper.service';
+import { AnalyzerService } from 'src/services/analyzer/services/analyzer.service';
+import { AnalyzerProvider } from 'src/services/analyzer/interfaces/analyzer.interface';
+import {
+  UserMessages,
+  ZhipuModel,
+} from 'src/services/analyzer/interfaces/zhipu-ai.interface';
+import { AnalyzerAgentHelperService } from './helpers/analyzer-agent-helper.service';
 
 @Injectable()
 export class ImageScannerService {
@@ -13,42 +19,40 @@ export class ImageScannerService {
 
     private readonly zAi: ZAIService,
 
-    @Inject('AWS_S3_CLIENT')
-    private readonly s3Client: S3Client,
+    private readonly helper: ImageScannerHelper,
+
+    private readonly analyzerAgent: AnalyzerAgentHelperService,
   ) {}
 
-  private async createNewData(data: ZImageAnalyzeData) {
-    const { error } = await this.supabase.from('ai_screen_report').insert(data);
+  // OLD
+  // async analyzeActivity(imageDataUrl: string, userId: string) {
+  //   const s3Key = await this.helper.uploadToS3(imageDataUrl, userId);
 
-    if (error) {
-      console.error(error);
-      throw error;
-    }
-  }
+  //   const { data } = await this.zAi.getAiImageAnalyze(imageDataUrl, userId);
+  //   const mappedData: AIScreenReportDbInsert = {
+  //     ...data,
+  //     user_id: userId,
+  //     s3_key: s3Key,
+  //   };
+  //   await this.helper.createNewData(mappedData);
+  // }
 
   async analyzeActivity(imageDataUrl: string, userId: string) {
-    const mimeType = imageDataUrl.split(',')[0].match(/:(.*?);/)[1];
-    const buffer = Buffer.from(imageDataUrl.split(',')[1], 'base64');
-    const extension = mimeType.split('/')[1];
+    const s3Key = await this.helper.uploadToS3(imageDataUrl, userId);
 
-    const s3Key = `Activity-${userId}-${Date.now()}.${extension}`;
+    const { data } = await this.analyzerAgent.analyzerAgentMapper(
+      'zhipu-ai',
+      imageDataUrl,
+      userId,
+    );
 
-    const command = new PutObjectCommand({
-      Bucket: 'tracker',
-      Key: s3Key,
-      Body: buffer,
-      ContentType: mimeType,
-    });
-
-    await this.s3Client.send(command);
-
-    const { data } = await this.zAi.getAiImageAnalyze(imageDataUrl, userId);
     const mappedData: AIScreenReportDbInsert = {
       ...data,
       user_id: userId,
       s3_key: s3Key,
     };
-    await this.createNewData(mappedData);
+
+    await this.helper.createNewData(mappedData);
   }
 
   async getActivities() {

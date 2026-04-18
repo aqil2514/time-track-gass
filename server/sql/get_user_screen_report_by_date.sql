@@ -12,14 +12,14 @@ BEGIN
   RETURN QUERY
   SELECT
     asr.user_id,
-    DATE(asr.created_at) AS report_date,
+    DATE(asr.created_at AT TIME ZONE 'Asia/Jakarta') AS report_date,
     COUNT(*) AS total_count,
     SUM(asr."interval") AS total_work_time_minutes
   FROM ai_screen_report asr
   WHERE 
     asr.user_id = p_user_id
-    AND DATE(asr.created_at) = p_date
+    AND DATE(asr.created_at AT TIME ZONE 'Asia/Jakarta') = p_date
     AND asr.category <> 'unclassified'
-  GROUP BY asr.user_id, DATE(asr.created_at);
+  GROUP BY asr.user_id, DATE(asr.created_at AT TIME ZONE 'Asia/Jakarta');
 END;
 $$ LANGUAGE plpgsql;

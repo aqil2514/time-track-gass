@@ -12,9 +12,7 @@ DECLARE
   v_start_of_week DATE;
   v_end_of_week DATE;
 BEGIN
-  -- Mencari Senin di minggu tersebut
   v_start_of_week := date_trunc('week', p_date)::DATE;
-  -- Mencari Minggu di minggu tersebut
   v_end_of_week := v_start_of_week + 6;
 
   RETURN QUERY
@@ -26,7 +24,7 @@ BEGIN
   FROM ai_screen_report asr
   WHERE 
     asr.user_id = p_user_id
-    AND DATE(asr.created_at) BETWEEN v_start_of_week AND v_end_of_week
+    AND DATE(asr.created_at AT TIME ZONE 'Asia/Jakarta') BETWEEN v_start_of_week AND v_end_of_week
     AND asr.category <> 'unclassified'
   GROUP BY asr.user_id;
 END;

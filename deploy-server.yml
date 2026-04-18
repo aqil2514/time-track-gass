@@ -29,6 +29,7 @@ jobs:
       - name: Build
         run: npm run build
 
+
       - name: Upload dist to VPS
         uses: appleboy/scp-action@v0.1.7
         with:

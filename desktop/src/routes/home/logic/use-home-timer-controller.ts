@@ -15,7 +15,7 @@ export type TimerStatus =
   | "error";
 
 export function useHomeTimerController(mutate: KeyedMutator<ActivityData[]>) {
-  const { capture, compareImage } = useCapture();
+  const { capture } = useCapture();
 
   const [status, setStatus] = useState<TimerStatus>("idle");
   const [countdown, setCountdown] = useState(TIME_TO_SCREENSHOT);
@@ -66,11 +66,11 @@ export function useHomeTimerController(mutate: KeyedMutator<ActivityData[]>) {
       setStatus("capturing");
 
       const dataUrl = await capture();
-      const isSameImage = await compareImage(dataUrl);
-      if (isSameImage) {
-        setStatus("countdown")
-        return;
-      }
+      // const isSameImage = await compareImage(dataUrl);
+      // if (isSameImage) {
+      //   setStatus("countdown")
+      //   return;
+      // }
 
       if (!dataUrl) throw new Error("Capture failed");
 

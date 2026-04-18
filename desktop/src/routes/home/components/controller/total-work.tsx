@@ -4,7 +4,7 @@ import { formatToTime } from "@/utils/format-to-time";
 import { CalendarDays, Clock, RefreshCw } from "lucide-react";
 import { useHomeContext } from "../../store/home.provider";
 import { buildUrl } from "@/utils/build-url";
-import { startOfDay } from "date-fns";
+import { format } from "date-fns";
 import { useMemo } from "react";
 import { UserSummaryTimeResponse } from "../../types/activites-data.type";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,7 +18,8 @@ export function TimelineTotalWork() {
     () =>
       fetcher.date
         ? buildUrl(
-            `activities/total-work?date=${startOfDay(fetcher.date).toISOString()}`,
+            // `activities/total-work?date=${startOfDay(fetcher.date).toISOString()}`,
+            `activities/total-work?date=${format(fetcher.date, "yyyy-MM-dd")}`,
           )
         : null,
     [fetcher.date],

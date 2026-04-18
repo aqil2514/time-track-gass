@@ -3,6 +3,7 @@ import { ImageScannerService } from '../services/image-scanner.service';
 import { JwtAuthGuard } from 'src/guards/jwt.guard';
 import { ImageUploadDto } from '../dto/image-upload.dto';
 import { UserThrottlerGuard } from 'src/guards/throttler.guard';
+import { UserId } from 'src/decorators/user-id.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('image-upload')
@@ -11,10 +12,7 @@ export class ImageUploadController {
 
   @UseGuards(UserThrottlerGuard)
   @Post('')
-  async uploadFile(@Body() body: ImageUploadDto, @Req() req: any) {
-    const user = req.user;
-    const userId = user.user.id;
-
+  async uploadFile(@Body() body: ImageUploadDto, @UserId() userId: string) {
     return await this.scannerService.analyzeActivity(body.image, userId);
   }
 
