@@ -4,12 +4,28 @@ import {
   UpdateAttendanceAdjustmentDto,
 } from '../../dto/attendance/adjustment.dto';
 import { AdjustmentHelper } from './helpers/adjusment-helper.service';
+import 'multer';
 
 @Injectable()
 export class AttendanceAdjustmentService {
   constructor(private readonly helper: AdjustmentHelper) {}
 
-  async createNewAdjusment(payload: CreateAttendanceAdjustmentDto) {
+  async createNewAdjusment(
+    payload: CreateAttendanceAdjustmentDto,
+    files: Array<Express.Multer.File>,
+  ) {
+    const imageUrls: Record<string, string> = {};
+
+    for (const file of files) {
+      const s3Key = await this.helper.uploadToS3(file);
+      imageUrls[file.fieldname] = s3Key;
+    }
+
+    payload.adjustment = payload.adjustment.map((adj, index) => ({
+      ...adj,
+      image: imageUrls[`adjustment[${index}][image]`] ?? null,
+    }));
+
     const newListNote = payload.adjustment.filter((adj) => adj.id === '-1');
 
     if (newListNote.length === 0) {
@@ -56,5 +72,13 @@ export class AttendanceAdjustmentService {
       return await this.helper.updateListById(oldId, newPayload);
     }
     return await this.helper.updateListById(oldId, payload);
+  }
+
+  async getAttendanceById(attendanceId: string) {
+    const rawData = await this.helper.getAttendanceById(attendanceId);
+    const image_url = await this.helper.getAdjustmentImage(rawData.s3_key);
+    const mappedData = { ...rawData, s3_key: image_url };
+
+    return mappedData;
   }
 }

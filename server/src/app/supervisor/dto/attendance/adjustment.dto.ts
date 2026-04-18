@@ -8,8 +8,9 @@ import {
   ArrayMinSize,
   Matches,
   ValidateIf,
+  IsOptional,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class AdjustmentItemDto {
   @IsString()
@@ -21,9 +22,13 @@ export class AdjustmentItemDto {
   @IsNotEmpty({ message: 'Nama Penyesuaian tidak boleh kosong' })
   adjusment_name?: string;
 
+  @Transform(({ value }) => Number(value))
   @IsNumber()
   @Min(0, { message: 'Menit tidak boleh negatif' })
   added_minutes: number;
+
+  @IsOptional()
+  image?: any;
 }
 
 export class CreateAttendanceAdjustmentDto {

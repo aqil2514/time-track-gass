@@ -4,12 +4,12 @@ import { isAxiosError } from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const formData = await req.formData();
 
   try {
-    const { data } = await apiServer.post(
+    const { data } = await apiServer.postForm(
       `/supervisor/attendance/adjustment`,
-      body,
+      formData,
     );
 
     return NextResponse.json(data);

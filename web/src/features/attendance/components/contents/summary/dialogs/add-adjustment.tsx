@@ -12,7 +12,7 @@ export function AddAdjustmentDialog() {
 
   const handleAdd = async (values: AttendanceLogsAdjustmentType) => {
     try {
-      await axios.post("/api/attendance/adjustment", values);
+      await axios.postForm("/api/attendance/adjustment", values);
       await mutate();
       alert("Data penyesuaian berhasil ditambah");
       update({ action: null });

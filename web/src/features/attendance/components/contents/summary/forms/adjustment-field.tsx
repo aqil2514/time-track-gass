@@ -12,6 +12,7 @@ import { Plus, Trash2, RefreshCw, AlertCircle, Loader2 } from "lucide-react";
 import React, { useEffect, useMemo } from "react";
 import { useFieldArray, UseFormReturn, useWatch } from "react-hook-form";
 import { cn } from "@/lib/utils";
+import { FormFieldImage } from "@/components/forms/form-field-image";
 
 interface Props {
   form: UseFormReturn<AttendanceLogsAdjustmentType>;
@@ -65,7 +66,12 @@ export function AdjustmentField({ form }: Props) {
           type="button"
           disabled={isLoading || !!error}
           onClick={() =>
-            append({ added_minutes: 0, id: "-1", adjusment_name: "" })
+            append({
+              added_minutes: 0,
+              id: "-1",
+              adjusment_name: "",
+              image: null,
+            })
           }
         >
           <Plus className="w-4 h-4" />
@@ -185,6 +191,12 @@ const IDSelect: React.FC<{
         label="Durasi (Menit)"
         name={`adjustment.${index}.added_minutes`}
         className="bg-slate-900/50"
+      />
+
+      <FormFieldImage
+        form={form}
+        label="Bukti Penyesuaian"
+        name={`adjustment.${index}.image`}
       />
     </div>
   );

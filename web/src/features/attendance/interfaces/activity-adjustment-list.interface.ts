@@ -26,3 +26,18 @@ export interface AdjustmentContent {
 export interface AdjustmentContentResponse {
   adjustmentContent: AdjustmentContent[];
 }
+
+export interface AdjustmentContentDetail {
+  s3_key: string;
+  date: string;
+  affected_minutes: number;
+  profile: {
+    division: string;
+    username: string;
+    full_name: string;
+  };
+  adjustment: {
+    name: string;
+    notes: string;
+  };
+}
