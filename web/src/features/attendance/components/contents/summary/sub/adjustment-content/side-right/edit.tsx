@@ -19,6 +19,7 @@ export function SideRightEdit() {
       added_minutes: selected.affected_minutes,
       date: selected.date,
       id: String(selected.adjustment.id),
+      image: null,
       adjusment_name: selected.adjustment.name || undefined,
     };
   }, [selected]);
