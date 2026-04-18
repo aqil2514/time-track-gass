@@ -40,7 +40,7 @@ export class ImageScannerService {
   async analyzeActivity(imageDataUrl: string, userId: string) {
     const s3Key = await this.helper.uploadToS3(imageDataUrl, userId);
 
-    const { data } = await this.analyzerAgent.analyzerAgentMapper(
+    const { data, cost, token } = await this.analyzerAgent.analyzerAgentMapper(
       'zhipu-ai',
       imageDataUrl,
       userId,
