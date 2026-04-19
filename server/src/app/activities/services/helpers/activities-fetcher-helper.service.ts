@@ -19,10 +19,13 @@ import { formatInTimeZone } from 'date-fns-tz';
 
 @Injectable()
 export class ActivitiesFetcherHelper {
+  // TODO : Nanti hapus ini kalo desktop udah update
+  private readonly APP_TIMEZONE = 'Asia/Jakarta';
+
   constructor(
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
-  ) {}
+  ) { }
 
   async getSessionActivityByUserId(
     userId: string,
@@ -134,11 +137,16 @@ export class ActivitiesFetcherHelper {
     userId: string,
     date: string,
   ): Promise<DailySummaryResponse> {
+    const formattedDate = formatInTimeZone(
+      parseISO(date),
+      this.APP_TIMEZONE,
+      'yyyy-MM-dd',
+    );
     const { data, error } = await this.supabase.rpc(
       RPCFunctionName.GET_USER_SCREEN_REPORT_BY_DATE,
       {
         p_user_id: userId,
-        p_date: date,
+        p_date: formattedDate,
       },
     );
 
@@ -154,11 +162,17 @@ export class ActivitiesFetcherHelper {
     userId: string,
     date: string,
   ): Promise<WeeklySummaryResponse> {
+    const formattedDate = formatInTimeZone(
+      parseISO(date),
+      this.APP_TIMEZONE,
+      'yyyy-MM-dd',
+    );
+
     const { data, error } = await this.supabase.rpc(
       RPCFunctionName.GET_USER_SCREEN_REPORT_WEEKLY,
       {
         p_user_id: userId,
-        p_date: date,
+        p_date: formattedDate,
       },
     );
 
