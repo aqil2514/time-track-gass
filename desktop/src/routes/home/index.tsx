@@ -3,6 +3,7 @@ import { Loading } from "@/components/layout/loading";
 import { Navigate } from "react-router";
 import { HomeTemplate } from "./components/home.template";
 import { HomeProvider } from "./store/home.provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function HomePage() {
   const { loading, user } = useAuth();
@@ -13,7 +14,9 @@ export default function HomePage() {
 
   return (
     <HomeProvider>
-      <HomeTemplate />
+      <TooltipProvider>
+        <HomeTemplate />
+      </TooltipProvider>
     </HomeProvider>
   );
 

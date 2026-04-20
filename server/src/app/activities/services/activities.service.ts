@@ -22,10 +22,10 @@ export class ActivitiesService {
   }
 
   async getTotalWork(userId: string, date: string) {
-    const { dailySummaryTime, weeklySummaryTime } =
+    const { dailySummaryTime, weeklySummaryTime, activityAdjustment } =
       await this.helper.getSummaryTime(userId, date);
 
-    return { dailySummaryTime, weeklySummaryTime };
+    return { dailySummaryTime, weeklySummaryTime, activityAdjustment };
   }
 
   async getDailyActivity(userId: string, date: string) {

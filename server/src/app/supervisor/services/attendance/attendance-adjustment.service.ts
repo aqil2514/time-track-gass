@@ -79,12 +79,7 @@ export class AttendanceAdjustmentService {
       oldS3Key = oldData.s3_key;
     }
 
-    console.log(image);
-    console.log(payload);
-    console.log(isDeleteImage);
-
     if (isDeleteImage) {
-      console.log('Gambar dihapus');
       const oldData = await this.helper.getAttendanceById(oldId);
       oldS3Key = oldData.s3_key;
       payload.image = null;

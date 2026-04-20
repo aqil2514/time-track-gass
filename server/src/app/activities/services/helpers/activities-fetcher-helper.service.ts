@@ -13,9 +13,16 @@ import {
   WeeklySummaryResponse,
 } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { DailySummaryDb } from '../../interface/daily_summary.interface';
-import { endOfDay, format, parseISO, startOfDay } from 'date-fns';
+import {
+  endOfDay,
+  endOfWeek,
+  format,
+  parseISO,
+  startOfDay,
+  startOfWeek,
+} from 'date-fns';
 import { DailySummaryPerCategory } from '../../interface/daily_summary_per_category.interface';
-import { formatInTimeZone } from 'date-fns-tz';
+import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 
 @Injectable()
 export class ActivitiesFetcherHelper {
@@ -25,7 +32,7 @@ export class ActivitiesFetcherHelper {
   constructor(
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
-  ) { }
+  ) {}
 
   async getSessionActivityByUserId(
     userId: string,
@@ -191,15 +198,41 @@ export class ActivitiesFetcherHelper {
     );
   }
 
+  async getActivityAdjustment(userId: string, date: string) {
+    const zonedDate = toZonedTime(parseISO(date), this.APP_TIMEZONE);
+
+    const monday = startOfWeek(zonedDate, { weekStartsOn: 1 });
+    const sunday = endOfWeek(zonedDate, { weekStartsOn: 1 });
+
+    const startDate = format(monday, 'yyyy-MM-dd');
+    const endDate = format(sunday, 'yyyy-MM-dd');
+
+    const { data, error } = await this.supabase
+      .from(TableName.ActivityAdjusments)
+      .select('affected_minutes, date, adjustment:adjusment_id(name)')
+      .eq('profile_id', userId)
+      .gte('date', startDate)
+      .lte('date', endDate);
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    return data;
+  }
+
   async getSummaryTime(
     userId: string,
     date: string,
   ): Promise<UserSummaryTimeResponse> {
-    const [dailySummaryTime, weeklySummaryTime] = await Promise.all([
-      this.getDailySummaryTime(userId, date),
-      this.getWeeklySummaryTime(userId, date),
-    ]);
+    const [dailySummaryTime, weeklySummaryTime, activityAdjustment] =
+      await Promise.all([
+        this.getDailySummaryTime(userId, date),
+        this.getWeeklySummaryTime(userId, date),
+        this.getActivityAdjustment(userId, date),
+      ]);
 
-    return { dailySummaryTime, weeklySummaryTime };
+    return { dailySummaryTime, weeklySummaryTime, activityAdjustment };
   }
 }

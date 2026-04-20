@@ -1,15 +1,15 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import {
   BodyMessages,
   ZhipuAiRequestBody,
   ZhipuAiResponse,
-  ZhipuModel,
 } from '../../interfaces/zhipu-ai.interface';
 
 @Injectable()
 export class ZhipuAiService {
+  private readonly logger = new Logger(ZhipuAiService.name);
   private readonly endpoint: string =
     'https://open.bigmodel.cn/api/coding/paas/v4/chat/completions';
   private readonly apiKey: string = `Bearer ${process.env.Z_AI_API_KEY}`;
@@ -41,7 +41,7 @@ export class ZhipuAiService {
 
       return data as ZhipuAiResponse;
     } catch (error) {
-      console.error(error);
+      this.logger.error('Terjadi kesalahan saat analisis AI', error);
       throw error;
     }
   }

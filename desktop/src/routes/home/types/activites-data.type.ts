@@ -1,7 +1,7 @@
 import { AIScreenReportDb } from "./ai-record.type";
 import { SessionSummaryDb } from "./session-summary.type";
 
-export interface ActivityData extends Omit<SessionSummaryDb, 'raw_ids'> {
+export interface ActivityData extends Omit<SessionSummaryDb, "raw_ids"> {
   items: AIScreenReportDb[];
 }
 
@@ -19,9 +19,18 @@ export interface WeeklySummaryResponse {
   total_work_time_minutes: number;
 }
 
+export interface ActivityAdjustment {
+  adjustment: {
+    name: string;
+  };
+  affected_minutes: number;
+  date: string;
+}
+
 export interface UserSummaryTimeResponse {
   dailySummaryTime: DailySummaryResponse;
   weeklySummaryTime: WeeklySummaryResponse;
+  activityAdjustment: ActivityAdjustment[]
 }
 
 export interface ActivityResponse extends UserSummaryTimeResponse {

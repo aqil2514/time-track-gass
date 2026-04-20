@@ -59,6 +59,7 @@ export interface WeeklySummaryResponse {
 export interface UserSummaryTimeResponse {
   dailySummaryTime: DailySummaryResponse;
   weeklySummaryTime: WeeklySummaryResponse;
+  activityAdjustment: any
 }
 
 export interface ActivityResponse extends UserSummaryTimeResponse {
