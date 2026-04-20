@@ -5,12 +5,7 @@ import { useFetch } from "@/hooks/use-fetch";
 import { AdjustmentContentDetail } from "@/features/attendance/interfaces/activity-adjustment-list.interface";
 import React, { SetStateAction, useState } from "react";
 import { ZoomIn } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ZoomDialog } from "@/components/molecules/zoom-dialog";
 
 const NoAdjustmentID = () => {
   return (
@@ -41,28 +36,6 @@ const ErrorComp = () => {
     <div className="rounded-2xl border border-slate-700/50 bg-slate-900/40 p-6 shadow-sm shadow-slate-950/20">
       <p className="text-sm text-slate-400">Gagal memuat detail.</p>
     </div>
-  );
-};
-
-const ZoomDialog: React.FC<{
-  isZoomed: boolean;
-  setIsZoomed: React.Dispatch<SetStateAction<boolean>>;
-  s3_key: string;
-}> = ({ isZoomed, s3_key, setIsZoomed }) => {
-  return (
-    <Dialog open={isZoomed} onOpenChange={setIsZoomed}>
-      <DialogContent className="sm:max-w-7xl border-slate-700 bg-slate-900/20 p-2">
-        <DialogTitle className="sr-only">Bukti Foto</DialogTitle>
-        <DialogDescription className="sr-only">
-          Foto bukti penyesuaian kehadiran
-        </DialogDescription>
-        <img
-          src={s3_key}
-          alt="Bukti penyesuaian"
-          className="w-full rounded-xl object-contain max-h-[80vh]"
-        />
-      </DialogContent>
-    </Dialog>
   );
 };
 
@@ -155,7 +128,9 @@ const ImageAdjustment: React.FC<{
   );
 };
 
-const Note: React.FC<{ selected: AdjustmentContentDetail }> = ({selected}) => {
+const Note: React.FC<{ selected: AdjustmentContentDetail }> = ({
+  selected,
+}) => {
   return (
     <div className="rounded-2xl border border-slate-700/60 bg-slate-950/60 p-4">
       <p className="text-sm font-medium text-slate-200">Catatan</p>
@@ -188,9 +163,9 @@ export function SideRightDetail() {
       {/* Dialog Lightbox */}
       {selected.s3_key && (
         <ZoomDialog
-          isZoomed={isZoomed}
-          setIsZoomed={setIsZoomed}
-          s3_key={selected.s3_key}
+          isOpen={isZoomed}
+          onClose={setIsZoomed}
+          imageSrc={selected.s3_key}
         />
       )}
 
