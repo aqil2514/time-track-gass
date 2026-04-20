@@ -4,6 +4,8 @@ import { ImageScannerService } from './services/image-scanner.service';
 import { ImageScannerHelper } from './services/helpers/image-scanner-helper.service';
 import { AnalyzerAgentHelperService } from './services/helpers/analyzer-agent-helper.service';
 import { BuildPromptHelperService } from './services/helpers/build-prompt-helper.service';
+import { ZhipuAnalyzeMapper } from './services/ai-mapper/zhipu-analyze.mapper';
+import { GeminiAnalyzeMapper } from './services/ai-mapper/gemini-analyze.mapper';
 
 @Module({
   controllers: [ImageUploadController],
@@ -12,6 +14,9 @@ import { BuildPromptHelperService } from './services/helpers/build-prompt-helper
     ImageScannerHelper,
     AnalyzerAgentHelperService,
     BuildPromptHelperService,
+
+    ZhipuAnalyzeMapper,
+    GeminiAnalyzeMapper
   ],
 })
 export class ImageUploadModule {}

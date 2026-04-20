@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { AIScreenReportDbInsert } from '../interfaces/ai-screen-report.interface';
 import { ImageScannerHelper } from './helpers/image-scanner-helper.service';
 import { AnalyzerAgentHelperService } from './helpers/analyzer-agent-helper.service';
 
@@ -18,14 +17,14 @@ export class ImageScannerService {
   async analyzeActivity(imageDataUrl: string, userId: string) {
     const s3Key = await this.helper.uploadToS3(imageDataUrl, userId);
 
-    const { data, cost, token } = await this.analyzerAgent.analyzerAgentMapper(
-      'zhipu-ai',
+    const { data } = await this.analyzerAgent.analyzerAgentMapper(
+      'gemini-ai',
       imageDataUrl,
       userId,
     );
 
-    const mappedData: AIScreenReportDbInsert = {
-      ...data,
+    const mappedData = {
+      ...(data as any),
       user_id: userId,
       s3_key: s3Key,
     };

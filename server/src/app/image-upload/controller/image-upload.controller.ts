@@ -10,6 +10,7 @@ import { UserId } from 'src/decorators/user-id.decorator';
 export class ImageUploadController {
   constructor(private readonly scannerService: ImageScannerService) {}
 
+  // TODO: NANTI INI MASUK KE BULLMQ AJAH, TERUS DIBUAT AGAR 4 MENIT AJAH BATASNYA. MENGHINDARI PUTUS KONEKSI
   @UseGuards(UserThrottlerGuard)
   @Post('')
   async uploadFile(@Body() body: ImageUploadDto, @UserId() userId: string) {
