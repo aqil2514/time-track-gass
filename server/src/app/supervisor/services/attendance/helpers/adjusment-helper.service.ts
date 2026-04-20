@@ -10,6 +10,7 @@ import { ActivityAdjusmentListDbInsert } from 'src/app/supervisor/interfaces/att
 import {
   GetObjectCommand,
   PutObjectCommand,
+  DeleteObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
@@ -22,7 +23,7 @@ export class AdjustmentHelper {
     private readonly supabase: SupabaseClient,
     @Inject('AWS_S3_CLIENT')
     private readonly s3Client: S3Client,
-  ) {}
+  ) { }
 
   async uploadToS3(image: Express.Multer.File) {
     const buffer = image.buffer;
@@ -202,6 +203,20 @@ export class AdjustmentHelper {
     }
   }
 
+  async deleteAdjustmentImage(s3_key: string) {
+    const command = new DeleteObjectCommand({
+      Bucket: "tracker",
+      Key: s3_key
+    })
+
+    try {
+      const response = await this.s3Client.send(command);
+      console.info("File berhasil dihapus:", response);
+    } catch (err) {
+      console.error("Gagal menghapus file:", err);
+    }
+  }
+
   async updateListById(oldId: string, payload: UpdateAttendanceAdjustmentDto) {
     const { error } = await this.supabase
       .from(TableName.ActivityAdjusments)
@@ -219,8 +234,8 @@ export class AdjustmentHelper {
   }
 
   async getAdjustmentImage(s3_key: string) {
-    if(!s3_key) return null;
-    
+    if (!s3_key) return null;
+
     const getCommand = new GetObjectCommand({
       Bucket: 'tracker',
       Key: s3_key,

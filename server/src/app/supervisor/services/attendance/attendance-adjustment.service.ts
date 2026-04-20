@@ -8,7 +8,7 @@ import 'multer';
 
 @Injectable()
 export class AttendanceAdjustmentService {
-  constructor(private readonly helper: AdjustmentHelper) {}
+  constructor(private readonly helper: AdjustmentHelper) { }
 
   async createNewAdjusment(
     payload: CreateAttendanceAdjustmentDto,
@@ -52,7 +52,11 @@ export class AttendanceAdjustmentService {
   }
 
   async deleteAdjustmentById(adjustmentId: string) {
-    return await this.helper.deleteAdjustmentById(adjustmentId);
+    const { s3_key } = await this.helper.getAttendanceById(adjustmentId);
+    await Promise.all([
+      this.helper.deleteAdjustmentById(adjustmentId),
+      this.helper.deleteAdjustmentImage(s3_key)
+    ]);
   }
 
   async updateAttendanceAdjustment(
