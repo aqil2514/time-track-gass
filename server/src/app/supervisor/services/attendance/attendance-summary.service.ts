@@ -9,9 +9,10 @@ export class AttendanceSummaryService {
   constructor(
     private readonly helper: AttendanceSummaryHelper,
     private readonly mapper: AttendanceSummaryMapper,
-  ) {}
+  ) { }
 
   async getAttendanceSummary(query: AttendanceLogsQueryDto) {
+    console.log(query);
     const [dbData, userConfig, adjustmentData] = await Promise.all([
       this.helper.getAttendanceSummaryByDateRange(query.start, query.end),
       this.helper.getUserConfigData(),

@@ -38,7 +38,6 @@ export class AttendanceSummaryMapper {
     todayData: AttendanceLogsRpc[],
   ) {
     for (const data of todayData) {
-      console.log(data)
       const existing = summaryMap.get(data.user_id);
       if (existing) {
         existing.totalWorkTime += Number(data.total_work_time);

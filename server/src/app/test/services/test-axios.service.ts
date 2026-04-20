@@ -23,7 +23,6 @@ export class TestAxiosService {
       },
     ));
 
-    console.log(result.data);
     return result.data
   }
 }

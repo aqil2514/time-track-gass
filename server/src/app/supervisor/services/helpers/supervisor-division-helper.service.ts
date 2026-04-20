@@ -44,7 +44,7 @@ export class SupervisorDivisionHelperService {
       .eq('id', oldId);
 
     if (error) {
-      console.log(error);
+      console.error(error);
       throw error;
     }
   }

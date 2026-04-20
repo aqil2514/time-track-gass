@@ -145,7 +145,7 @@ export class ActivitiesCronService {
     }
 
     if (!dbData || dbData.length === 0) {
-      console.log('Tidak ada data kerja untuk kemarin.');
+      console.warn('Tidak ada data kerja untuk kemarin.');
       return;
     }
 
