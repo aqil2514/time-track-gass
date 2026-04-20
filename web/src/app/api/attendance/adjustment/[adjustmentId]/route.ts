@@ -55,10 +55,10 @@ export async function PATCH(
   { params }: { params: Promise<{ adjustmentId: string }> },
 ) {
   try {
+    const formData = await req.formData();
     const { adjustmentId } = await params;
-    const body = await req.json();
 
-    await apiServer.patch(`/supervisor/attendance/adjustment/${adjustmentId}`, body);
+    await apiServer.patchForm(`/supervisor/attendance/adjustment/${adjustmentId}`, formData);
 
     return NextResponse.json({ message: "OK" });
   } catch (error) {

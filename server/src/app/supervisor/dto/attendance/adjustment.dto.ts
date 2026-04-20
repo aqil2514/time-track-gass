@@ -58,4 +58,8 @@ export class UpdateAttendanceAdjustmentDto extends AdjustmentItemDto {
     message: 'Format tanggal harus YYYY-MM-DD',
   })
   date: string;
+
+  @IsString()
+  @IsOptional()
+  exist_image?: string;
 }

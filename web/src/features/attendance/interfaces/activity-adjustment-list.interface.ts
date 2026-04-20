@@ -37,6 +37,7 @@ export interface AdjustmentContentDetail {
     full_name: string;
   };
   adjustment: {
+    id: number;
     name: string;
     notes: string;
   };

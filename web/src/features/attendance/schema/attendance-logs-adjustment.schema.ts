@@ -5,6 +5,7 @@ export const adjustmentSchema = z
     id: z.string(),
     adjusment_name: z.string().optional(),
     image: z.instanceof(File).nullable(),
+    exist_image: z.string().optional(),
     added_minutes: z.number(),
   })
   .superRefine((value, ctx) => {

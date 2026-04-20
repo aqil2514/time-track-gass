@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -21,7 +22,7 @@ import {
 } from '../../dto/attendance/adjustment.dto';
 import { AttendanceAdjustmentService } from '../../services/attendance/attendance-adjustment.service';
 import { AttendanceLogsQueryDto } from '../../dto/attendance/attendance-logs-query.dto';
-import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import 'multer';
 
 @UseGuards(JwtAuthSupervisorGuard, RoleGuard)
@@ -53,15 +54,17 @@ export class AttendanceAdjustmentController {
   }
 
   @Patch(':adjustmentId')
+  @UseInterceptors(FileInterceptor('image'))
   async editAdjustment(
     @Param('adjustmentId') adjustmentId: string,
     @Body() body: UpdateAttendanceAdjustmentDto,
+    @UploadedFile() image: Express.Multer.File,
   ) {
-    return await this.service.updateAttendanceAdjustment(adjustmentId, body);
+    return await this.service.updateAttendanceAdjustment(adjustmentId, body, image);
   }
 
-  @Get(":adjustmentId")
-  async getAdjustmentContentById(@Param('adjustmentId') adjustmentId: string){
-    return await this.service.getAttendanceById(adjustmentId)
+  @Get(':adjustmentId')
+  async getAdjustmentContentById(@Param('adjustmentId') adjustmentId: string) {
+    return await this.service.getAttendanceById(adjustmentId);
   }
 }

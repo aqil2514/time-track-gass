@@ -12,11 +12,13 @@ import { Button } from "@/components/ui/button";
 interface Props {
   defaultValues: EditAdjustmentType;
   submitHandler: (data: EditAdjustmentType) => void | Promise<void>;
+  onExistingImageRemove: () => void;
 }
 
 export function AdjustmentAttendanceForm({
   submitHandler,
   defaultValues,
+  onExistingImageRemove,
 }: Props) {
   const form = useForm<EditAdjustmentType>({
     defaultValues,
@@ -28,13 +30,21 @@ export function AdjustmentAttendanceForm({
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(submitHandler, () =>
-          alert("Data yang diminta belum lengkap"),
-        )}
+        onSubmit={form.handleSubmit(submitHandler, (error) => {
+          alert("Ada data yang tidak lengkap");
+          console.error(error);
+        })}
         className="space-y-4"
       >
         <AttendanceDateField form={form} />
-        <EditAdjustmentField form={form} />
+        <EditAdjustmentField
+          form={form}
+          existingImageUrl={defaultValues.exist_image}
+          onExistingImageRemove={() => {
+            onExistingImageRemove();
+            form.setValue("exist_image", undefined);
+          }}
+        />
 
         <Button variant={"accent"} disabled={isSubmitting}>
           {isSubmitting ? "Menyimpan..." : "Simpan"}

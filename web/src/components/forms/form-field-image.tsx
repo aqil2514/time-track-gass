@@ -12,6 +12,7 @@ import {
   useEffect,
   ChangeEvent,
   useMemo,
+  useState,
 } from "react";
 import {
   Controller,
@@ -35,7 +36,13 @@ export function FormFieldImage<
   className,
   textVariant = "default",
   maxSizeInMB = 5,
-}: BasicFormFieldProps<T, TTransformedValues> & { maxSizeInMB?: number }) {
+  existingImageUrl,
+  onExistingImageRemove,
+}: BasicFormFieldProps<T, TTransformedValues> & {
+  maxSizeInMB?: number;
+  existingImageUrl?: string;
+  onExistingImageRemove?: () => void;
+}) {
   const isSubmitting = form.formState.isSubmitting;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,24 +50,26 @@ export function FormFieldImage<
     control: form.control,
     name: name as Path<T>,
   });
+  const [isExistingRemoved, setIsExistingRemoved] = useState(false);
 
   const previewUrl = useMemo(() => {
     const isObject = fileValue !== null && typeof fileValue === "object";
 
     if (isObject) {
       const potentialFile = fileValue as object;
-
       if (potentialFile instanceof Blob || potentialFile instanceof File) {
         return URL.createObjectURL(potentialFile);
       }
     }
 
+    if (existingImageUrl && !isExistingRemoved) return existingImageUrl;
+
     return null;
-  }, [fileValue]);
+  }, [fileValue, existingImageUrl, isExistingRemoved]);
 
   useEffect(() => {
     return () => {
-      if (previewUrl) {
+      if (previewUrl && previewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(previewUrl);
       }
     };
@@ -146,6 +155,8 @@ export function FormFieldImage<
                         onClick={(e) => {
                           e.stopPropagation();
                           onChange(null);
+                          setIsExistingRemoved(true);
+                          onExistingImageRemove?.();
                         }}
                         className="absolute -top-3 -right-3 bg-rose-600 hover:bg-rose-500 p-1.5 rounded-full shadow-lg transition-colors text-white"
                       >

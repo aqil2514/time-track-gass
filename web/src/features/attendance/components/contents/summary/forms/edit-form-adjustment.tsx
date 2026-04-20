@@ -1,3 +1,4 @@
+import { FormFieldImage } from "@/components/forms/form-field-image";
 import { FormFieldNumber } from "@/components/forms/form-field-number";
 import {
   FormFieldSelect,
@@ -12,9 +13,11 @@ import { UseFormReturn, useWatch } from "react-hook-form";
 
 interface Props {
   form: UseFormReturn<EditAdjustmentType>;
+  existingImageUrl?: string;
+  onExistingImageRemove?: () => void;
 }
 
-export function EditAdjustmentField({ form }: Props) {
+export function EditAdjustmentField({ form, existingImageUrl, onExistingImageRemove }: Props) {
   const {
     data = [],
     error,
@@ -43,20 +46,22 @@ export function EditAdjustmentField({ form }: Props) {
 
   const isCreateNewId = String(selectedId) === "-1";
 
-    useEffect(() => {
-      const selected = data.find((d) => String(d.id) === String(selectedId));
-  
-      if (selected) {
-        form.setValue(`added_minutes`, selected.added_minutes);
-        form.setValue(`adjusment_name`, "");
-      } else if (isCreateNewId) {
-      }
-    }, [selectedId, data, isCreateNewId, form]);
+  useEffect(() => {
+    const selected = data.find((d) => String(d.id) === String(selectedId));
+
+    if (selected) {
+      form.setValue(`added_minutes`, selected.added_minutes);
+      form.setValue(`adjusment_name`, "");
+    } else if (isCreateNewId) {
+    }
+  }, [selectedId, data, isCreateNewId, form]);
 
   return (
     <div className="space-y-4 border border-slate-700 p-4 rounded-2xl bg-slate-800/30 relative group">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-slate-400">Pilih template atau isi custom jika tidak ada di daftar.</p>
+        <p className="text-sm text-slate-400">
+          Pilih template atau isi custom jika tidak ada di daftar.
+        </p>
         <button
           type="button"
           disabled={isLoading}
@@ -77,7 +82,9 @@ export function EditAdjustmentField({ form }: Props) {
       />
 
       {error && (
-        <p className="text-xs text-red-400">Gagal memuat template penyesuaian. Silakan klik refresh.</p>
+        <p className="text-xs text-red-400">
+          Gagal memuat template penyesuaian. Silakan klik refresh.
+        </p>
       )}
 
       {isCreateNewId && (
@@ -95,6 +102,14 @@ export function EditAdjustmentField({ form }: Props) {
         label="Durasi (Menit)"
         name={`added_minutes`}
         className="bg-slate-900/50"
+      />
+
+      <FormFieldImage
+        form={form}
+        name="image"
+        label="Bukti Penyesuaian"
+        existingImageUrl={existingImageUrl}
+        onExistingImageRemove={onExistingImageRemove}
       />
     </div>
   );

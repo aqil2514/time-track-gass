@@ -8,7 +8,7 @@ import 'multer';
 
 @Injectable()
 export class AttendanceAdjustmentService {
-  constructor(private readonly helper: AdjustmentHelper) { }
+  constructor(private readonly helper: AdjustmentHelper) {}
 
   async createNewAdjusment(
     payload: CreateAttendanceAdjustmentDto,
@@ -55,15 +55,41 @@ export class AttendanceAdjustmentService {
     const { s3_key } = await this.helper.getAttendanceById(adjustmentId);
     await Promise.all([
       this.helper.deleteAdjustmentById(adjustmentId),
-      this.helper.deleteAdjustmentImage(s3_key)
+      this.helper.deleteAdjustmentImage(s3_key),
     ]);
   }
 
   async updateAttendanceAdjustment(
     oldId: string,
     payload: UpdateAttendanceAdjustmentDto,
+    image: Express.Multer.File,
   ) {
     const isNewList = payload.id === '-1';
+    const isChangeImage = !!image;
+    const isDeleteImage = !image && !payload.exist_image;
+
+    let oldS3Key = '';
+
+    if (isChangeImage) {
+      const [oldData, newS3Key] = await Promise.all([
+        this.helper.getAttendanceById(oldId),
+        this.helper.uploadToS3(image),
+      ]);
+      payload.image = newS3Key;
+      oldS3Key = oldData.s3_key;
+    }
+
+    console.log(image);
+    console.log(payload);
+    console.log(isDeleteImage);
+
+    if (isDeleteImage) {
+      console.log('Gambar dihapus');
+      const oldData = await this.helper.getAttendanceById(oldId);
+      oldS3Key = oldData.s3_key;
+      payload.image = null;
+    }
+
     if (isNewList) {
       const mappedListnote = this.helper.mapEditToListNoteDb(payload);
       const newListNoteId =
@@ -72,10 +98,14 @@ export class AttendanceAdjustmentService {
         ...payload,
         id: String(newListNoteId),
       };
-
-      return await this.helper.updateListById(oldId, newPayload);
+      await this.helper.updateListById(oldId, newPayload);
+    } else {
+      await this.helper.updateListById(oldId, payload);
     }
-    return await this.helper.updateListById(oldId, payload);
+
+    if (oldS3Key) {
+      await this.helper.deleteAdjustmentImage(oldS3Key);
+    }
   }
 
   async getAttendanceById(attendanceId: string) {

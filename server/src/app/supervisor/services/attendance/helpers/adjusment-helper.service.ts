@@ -23,7 +23,7 @@ export class AdjustmentHelper {
     private readonly supabase: SupabaseClient,
     @Inject('AWS_S3_CLIENT')
     private readonly s3Client: S3Client,
-  ) { }
+  ) {}
 
   async uploadToS3(image: Express.Multer.File) {
     const buffer = image.buffer;
@@ -178,7 +178,7 @@ export class AdjustmentHelper {
     const { data, error } = await this.supabase
       .from(TableName.ActivityAdjusments)
       .select(
-        's3_key, date, affected_minutes, profile:profile_id(full_name, username, division), adjustment:adjusment_id(name, notes)',
+        's3_key, date, affected_minutes, profile:profile_id(full_name, username, division), adjustment:adjusment_id(id, name, notes)',
       )
       .eq('id', attendanceId)
       .maybeSingle();
@@ -205,15 +205,15 @@ export class AdjustmentHelper {
 
   async deleteAdjustmentImage(s3_key: string) {
     const command = new DeleteObjectCommand({
-      Bucket: "tracker",
-      Key: s3_key
-    })
+      Bucket: 'tracker',
+      Key: s3_key,
+    });
 
     try {
       const response = await this.s3Client.send(command);
-      console.info("File berhasil dihapus:", response);
+      console.info('File berhasil dihapus:', response);
     } catch (err) {
-      console.error("Gagal menghapus file:", err);
+      console.error('Gagal menghapus file:', err);
     }
   }
 
@@ -224,6 +224,7 @@ export class AdjustmentHelper {
         adjusment_id: Number(payload.id),
         date: payload.date,
         affected_minutes: payload.added_minutes,
+        s3_key: payload.image,
       })
       .eq('id', oldId);
 

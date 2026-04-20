@@ -1,16 +1,23 @@
 import { useAdjustmentContent } from "@/features/attendance/provider/adjustment-content.provider";
 import { EditAdjustmentType } from "@/features/attendance/schema/edit-adjustment.schema";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AdjustmentAttendanceForm } from "../../../forms/edit-form";
 import axios from "axios";
 import { useSummaryAttendance } from "@/features/attendance/provider/summary.provider";
+import { useFetch } from "@/hooks/use-fetch";
+import { AdjustmentContentDetail } from "@/features/attendance/interfaces/activity-adjustment-list.interface";
 
 export function SideRightEdit() {
-  const { state, data, mutate, dispatch } = useAdjustmentContent();
+  const { state, mutate, dispatch } = useAdjustmentContent();
   const { mutate: parentMutate } = useSummaryAttendance();
-  const selected = data?.adjustmentContent?.find(
-    (item) => String(item.id) === state.adjustmentId,
+  const { data } = useFetch<AdjustmentContentDetail>(
+    state.adjustmentId
+      ? `/api/attendance/adjustment/${state.adjustmentId}`
+      : null,
   );
+  const [isImageRemoved, setIsImageRemoved] = useState(false);
+
+  const selected = data;
 
   const formValues = useMemo<EditAdjustmentType | undefined>(() => {
     if (!selected) return undefined;
@@ -21,12 +28,19 @@ export function SideRightEdit() {
       id: String(selected.adjustment.id),
       image: null,
       adjusment_name: selected.adjustment.name || undefined,
+      exist_image: selected.s3_key,
     };
   }, [selected]);
 
   const handleSubmit = async (values: EditAdjustmentType) => {
     try {
-      await axios.patch(`/api/attendance/adjustment/${selected?.id}`, values);
+      if (isImageRemoved) {
+        values.exist_image = undefined;
+      }
+      await axios.patchForm(
+        `/api/attendance/adjustment/${state.adjustmentId}`,
+        values,
+      );
       await mutate();
       await parentMutate();
       alert("Penyesuaian berhasil diperbarui.");
@@ -56,6 +70,7 @@ export function SideRightEdit() {
       <AdjustmentAttendanceForm
         defaultValues={formValues}
         submitHandler={handleSubmit}
+        onExistingImageRemove={() => setIsImageRemoved(true)}
       />
     </div>
   );
