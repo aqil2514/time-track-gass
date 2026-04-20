@@ -2,8 +2,9 @@ import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { SummarySessionProcessorHelper } from './helpers/summary-session.helper';
 import { Logger } from '@nestjs/common';
+import { QUERY_NAME } from 'src/constants/queue.constant';
 
-@Processor('summary-session')
+@Processor(QUERY_NAME.SUMMARY_SESSION)
 export class SummarySessionProcessor extends WorkerHost {
   private readonly logger = new Logger(SummarySessionProcessor.name);
 

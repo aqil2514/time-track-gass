@@ -13,18 +13,19 @@ import { HttpModule } from '@nestjs/axios';
 import { ActivitiesCronMessageHelper } from './services/helpers/activities-cron-message.service';
 import { SummarySessionProcessor } from './processor/summary-session.processor';
 import { SummarySessionProcessorHelper } from './processor/helpers/summary-session.helper';
+import { QUERY_NAME } from 'src/constants/queue.constant';
 
 @Global()
 @Module({
   imports: [
     BullModule.registerQueue({
-      name: 'daily-summary-queue',
+      name: QUERY_NAME.DAILY_SUMMARY,
     }),
     BullModule.registerQueue({
-      name: 'daily-category-summary-queue',
+      name:  QUERY_NAME.DAILY_CATEGORY,
     }),
     BullModule.registerQueue({
-      name: 'summary-session',
+      name: QUERY_NAME.SUMMARY_SESSION,
     }),
 
     HttpModule,

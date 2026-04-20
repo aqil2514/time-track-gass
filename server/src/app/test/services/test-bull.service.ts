@@ -3,6 +3,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { SupabaseService } from 'src/services/supabase/supabase.service';
 import { TableName } from 'src/services/supabase/supabase.interface';
+import { QUERY_NAME } from 'src/constants/queue.constant';
 
 @Injectable()
 export class TestBullService {
@@ -10,7 +11,7 @@ export class TestBullService {
     @InjectQueue('test-queue')
     private queue: Queue,
 
-    @InjectQueue('summary-session')
+    @InjectQueue(QUERY_NAME.SUMMARY_SESSION)
     private summaryQueue: Queue,
 
     @InjectQueue('attendance-logs')

@@ -3,8 +3,9 @@ import { Job } from 'bullmq';
 import { ActivitiesDailySummaryCronHelper } from '../services/helpers/activites-cron-daily-summary-helper.service';
 import { ActivitiesFetcherHelper } from '../services/helpers/activities-fetcher-helper.service';
 import { Logger } from '@nestjs/common';
+import { QUERY_NAME } from 'src/constants/queue.constant';
 
-@Processor('daily-summary-queue')
+@Processor(QUERY_NAME.DAILY_SUMMARY)
 export class DailySummaryProcessor extends WorkerHost {
   private readonly logger = new Logger(DailySummaryProcessor.name);
 

@@ -14,18 +14,19 @@ import {
   AttendanceLogsDbInsert,
   AttendanceLogsRpc,
 } from 'src/app/supervisor/interfaces/attendances/attendances-logs.interface';
+import { QUERY_NAME } from 'src/constants/queue.constant';
 
 @Injectable()
 export class ActivitiesCronService {
   private logger = new Logger(ActivitiesCronService.name);
   constructor(
-    @InjectQueue('daily-summary-queue')
+    @InjectQueue(QUERY_NAME.DAILY_SUMMARY)
     private readonly dailySummaryQueue: Queue,
 
-    @InjectQueue('daily-category-summary-queue')
+    @InjectQueue(QUERY_NAME.DAILY_CATEGORY)
     private readonly dailySummaryCategoryQueue: Queue,
 
-    @InjectQueue('summary-session')
+    @InjectQueue(QUERY_NAME.SUMMARY_SESSION)
     private summaryQueue: Queue,
 
     @Inject('SUPABASE_CLIENT')

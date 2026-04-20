@@ -4,6 +4,7 @@ import { BullBoardModule } from '@bull-board/nestjs';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import basicAuth from 'express-basic-auth';
+import { QUERY_NAME } from 'src/constants/queue.constant';
 
 export const BULL_QUEUE_REGISTRY = [
   BullModule.forRootAsync({
@@ -45,19 +46,15 @@ export const BULL_QUEUE_REGISTRY = [
     adapter: BullMQAdapter,
   }),
   BullBoardModule.forFeature({
-    name: 'daily-summary-queue',
+    name: QUERY_NAME.DAILY_SUMMARY,
     adapter: BullMQAdapter,
   }),
   BullBoardModule.forFeature({
-    name: 'daily-category-summary-queue',
+    name: QUERY_NAME.DAILY_CATEGORY,
     adapter: BullMQAdapter,
   }),
   BullBoardModule.forFeature({
-    name: 'summary-session',
-    adapter: BullMQAdapter,
-  }),
-  BullBoardModule.forFeature({
-    name: 'attendance-logs',
+    name: QUERY_NAME.SUMMARY_SESSION,
     adapter: BullMQAdapter,
   }),
 ];

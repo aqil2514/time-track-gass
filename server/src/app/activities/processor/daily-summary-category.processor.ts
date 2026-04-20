@@ -2,10 +2,9 @@ import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { ActivitiesDailySummaryPerCategoryCronHelper } from '../services/helpers/activities-cron-daily-summary-per-category.service';
-import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
-import { DailySummaryPerCategory } from '../interface/daily_summary_per_category.interface';
+import { QUERY_NAME } from 'src/constants/queue.constant';
 
-@Processor('daily-category-summary-queue')
+@Processor(QUERY_NAME.DAILY_CATEGORY)
 export class DailySummaryCategoryProcessor extends WorkerHost {
   private readonly logger = new Logger(DailySummaryCategoryProcessor.name);
 
