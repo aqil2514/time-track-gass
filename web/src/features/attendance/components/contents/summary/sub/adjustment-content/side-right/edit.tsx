@@ -28,7 +28,7 @@ export function SideRightEdit() {
       id: String(selected.adjustment.id),
       image: null,
       adjusment_name: selected.adjustment.name || undefined,
-      exist_image: selected.s3_key,
+      exist_image: selected.s3_key || undefined,
     };
   }, [selected]);
 
