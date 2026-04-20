@@ -10,6 +10,9 @@ import {
   startOfDay,
   isWithinInterval,
 } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
+
+const TIMEZONE = 'Asia/Jakarta';
 
 export class AttendanceLogsQueryDto {
   @IsEnum(['weekly', 'monthly'])
@@ -29,7 +32,7 @@ export class AttendanceLogsQueryDto {
   @Transform(({ obj }) => {
     if (obj.mode === 'weekly' && obj.date) {
       // parseISO dan startOfDay memastikan kita mulai dari jam 00:00:00
-      const current = startOfDay(parseISO(obj.date));
+      const current = startOfDay(toZonedTime(parseISO(obj.date), TIMEZONE));
       const result = startOfWeek(current, { weekStartsOn: 1 });
       return format(result, 'yyyy-MM-dd');
     }
@@ -48,7 +51,7 @@ export class AttendanceLogsQueryDto {
   @IsOptional()
   @Transform(({ obj }) => {
     if (obj.mode === 'weekly' && obj.date) {
-      const current = startOfDay(parseISO(obj.date));
+      const current = startOfDay(toZonedTime(parseISO(obj.date), TIMEZONE));
       const result = endOfWeek(current, { weekStartsOn: 1 });
       return format(result, 'yyyy-MM-dd');
     }
@@ -66,12 +69,12 @@ export class AttendanceLogsQueryDto {
   @Expose()
   @IsOptional()
   @Transform(({ obj }) => {
-    const today = startOfDay(new Date());
+    const today = startOfDay(toZonedTime(new Date(), TIMEZONE));
     let startDate: Date;
     let endDate: Date;
 
     if (obj.mode === 'weekly' && obj.date) {
-      const current = startOfDay(parseISO(obj.date));
+      const current = startOfDay(toZonedTime(parseISO(obj.date), TIMEZONE));
       startDate = startOfWeek(current, { weekStartsOn: 1 });
       endDate = endOfWeek(current, { weekStartsOn: 1 });
     } else if (obj.mode === 'monthly' && obj.month && obj.year) {
