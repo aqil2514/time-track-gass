@@ -11,7 +11,7 @@ export interface AttendanceLogsDb {
 export interface AttendanceLogsDbInsert extends Omit<
   AttendanceLogsDb,
   'id' | 'created_at'
-> {}
+> { }
 
 export interface AttendanceLogsDbPopulatedProfile extends Omit<
   AttendanceLogsDb,
@@ -25,6 +25,9 @@ export interface AttendanceLogsRpc {
   date: string;
   count: number;
   total_work_time: number;
+  full_name: string;
+  username: string;
+  division: string
 }
 
 export interface AttendanceSummary {

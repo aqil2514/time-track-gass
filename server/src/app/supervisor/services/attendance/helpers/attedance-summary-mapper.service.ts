@@ -10,7 +10,7 @@ import { ProfileWorkConfigsDb } from 'src/app/supervisor/interfaces/attendances/
 
 @Injectable()
 export class AttendanceSummaryMapper {
-  constructor() {}
+  constructor() { }
 
   private mapFromDb(
     summaryMap: Map<string, AttendanceSummary>,
@@ -38,6 +38,7 @@ export class AttendanceSummaryMapper {
     todayData: AttendanceLogsRpc[],
   ) {
     for (const data of todayData) {
+      console.log(data)
       const existing = summaryMap.get(data.user_id);
       if (existing) {
         existing.totalWorkTime += Number(data.total_work_time);
@@ -48,8 +49,8 @@ export class AttendanceSummaryMapper {
         summaryMap.set(data.user_id, {
           id: data.user_id,
           totalWorkTime: Number(data.total_work_time),
-          division: profile?.division || '-',
-          fullName: profile?.full_name || 'Unknown User',
+          division: profile?.division || data.division,
+          fullName: profile?.full_name || data.full_name,
         } as AttendanceSummary);
       }
     }
