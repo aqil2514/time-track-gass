@@ -3,7 +3,7 @@ import { MatrixResponse } from "@/features/matrix/types/matrix.types";
 import { useQueryParams } from "@/hooks/use-query-params";
 import { Eye, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { MatrixDataUserActivity } from "./acivity";
+import { MatrixDataUserActivity } from "./activity";
 
 interface Props {
   data: MatrixResponse[];

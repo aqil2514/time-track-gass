@@ -4,6 +4,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { MatrixResponse } from "@/features/matrix/types/matrix.types";
+import { MatrixBox } from "./matrix-box";
 
 interface Props {
   user: MatrixResponse;
@@ -18,19 +19,7 @@ export function MatrixDataUserActivity({ user }: Props) {
         return (
           <Tooltip key={idx}>
             <TooltipTrigger asChild>
-              <div
-                className="w-full h-9 rounded-md transition-all duration-300 border border-white/2 cursor-help"
-                style={{
-                  backgroundColor:
-                    intensity === 0
-                      ? "#060b18"
-                      : `rgba(168, 85, 247, ${intensity / 12})`,
-                  boxShadow:
-                    intensity > 8
-                      ? `0 0 ${intensity * 1.2}px rgba(168, 85, 247, ${intensity / 20})`
-                      : "none",
-                }}
-              />
+              <MatrixBox config={{ intensity }} />
             </TooltipTrigger>
             <TooltipContent
               side="top"
