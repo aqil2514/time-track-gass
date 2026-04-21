@@ -6,6 +6,9 @@ import { AuthController } from './auth.controller';
 import { AuthMapperService } from './services/auth-mapper.service';
 import { AuthService } from './services/auth.service';
 import { AuthFetcherService } from './services/auth-fetcher.service';
+import { AuthSettingController } from './controller/auth-setting.controller';
+import { AuthSettingTrackerService } from './services/settings/auth-setting-tracker.service';
+import { AuthSettingService } from './services/settings/auth-setting.service';
 
 @Global()
 @Module({
@@ -19,8 +22,16 @@ import { AuthFetcherService } from './services/auth-fetcher.service';
       }),
     }),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, AuthMapperService, AuthFetcherService],
+  controllers: [AuthController, AuthSettingController],
+  providers: [
+    AuthService,
+    AuthMapperService,
+    AuthFetcherService,
+
+    // Setting
+    AuthSettingService,
+    AuthSettingTrackerService,
+  ],
   exports: [JwtModule],
 })
 export class AuthModule {}

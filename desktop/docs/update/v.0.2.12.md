@@ -1,0 +1,2 @@
+- Fitur untuk kirim error ke server
+- User lama tidak bisa akses fitur switch mode, user baru bisa

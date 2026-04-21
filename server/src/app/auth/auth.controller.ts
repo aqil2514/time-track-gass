@@ -54,7 +54,6 @@ export class AuthController {
 
   @Post('/register')
   async register(@Body() body: RegisterDto) {
-    
     return await this.service.createNewProfile(body);
   }
 
@@ -68,6 +67,7 @@ export class AuthController {
         role: user.role,
         username: user.username,
         email: user.email,
+        settings: user.settings,
       },
       {
         expiresIn: '30d',
@@ -84,10 +84,11 @@ export class AuthController {
   ) {
     const user = await this.service.login(body, true);
     const token = await this.jwt.signAsync({
+      email: user.email,
       id: user.id,
       role: user.role,
       username: user.username,
-      email: user.email,
+      settings: user.settings,
     });
 
     res.cookie('access_token', token, this.supervisorCookiesOption);

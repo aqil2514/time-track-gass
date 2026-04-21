@@ -33,7 +33,7 @@ export class AuthMapperService {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(raw.password, salt);
 
-    const division = await this.getDivisionNameByDivisionId(raw.division)
+    const division = await this.getDivisionNameByDivisionId(raw.division);
 
     return {
       email: raw.email,
@@ -44,6 +44,12 @@ export class AuthMapperService {
       division_id: Number(raw.division),
       division,
       updated_at: new Date().toISOString(),
+      settings: {
+        tracker: {
+          allowedMode: ['auto', 'manual'],
+          mode: 'manual',
+        },
+      },
     };
   }
 }
