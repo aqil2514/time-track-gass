@@ -10,6 +10,7 @@ export enum TableName {
   SessionSummary = 'session_summary',
   DailySummary = 'daily_summary',
   DailySummaryPerCategory = 'daily_summary_per_categories',
+  AppLogs = 'app_logs',
 }
 
 export enum RPCFunctionName {

@@ -7,6 +7,7 @@ import LoginPage from "./routes/login";
 import RegisterPage from "./routes/register";
 import { check } from "@tauri-apps/plugin-updater";
 import { ask } from "@tauri-apps/plugin-dialog";
+import { writeLogToDb } from "./utils/write-log-to-db";
 
 const router = createBrowserRouter([
   {
@@ -38,10 +39,21 @@ async function checkUpdate() {
       if (yes) {
         await update.downloadAndInstall();
       }
-  }
-    
+    }
   } catch (error) {
-    console.error(error)
+    console.error(error);
+    if (error instanceof Error) {
+      await writeLogToDb({
+        context: "checkUpdate",
+        level: "ERROR",
+        message: error.message,
+        metadata: {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        },
+      });
+    }
   }
 }
 

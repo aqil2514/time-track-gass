@@ -6,6 +6,7 @@ import { KeyedMutator } from "swr";
 import { ActivityData } from "../types/activites-data.type";
 import api from "@/lib/api";
 import { load } from "@tauri-apps/plugin-store";
+import { writeLogToDb } from "@/utils/write-log-to-db";
 
 export type TimerStatus =
   | "idle"
@@ -66,20 +67,19 @@ export function useHomeTimerController(mutate: KeyedMutator<ActivityData[]>) {
       setStatus("capturing");
 
       const dataUrl = await capture();
-      // const isSameImage = await compareImage(dataUrl);
-      // if (isSameImage) {
-      //   setStatus("countdown")
-      //   return;
-      // }
 
-      if (!dataUrl) throw new Error("Capture failed");
+      if (!dataUrl)
+        throw new Error("Capture failed: No data received from system");
 
       setStatus("uploading");
 
       const store = await load("auth.json");
       const token = await store.get<string>("accessToken");
 
-      await api.post(
+      if (!token)
+        throw new Error("Upload failed: Access token not found in auth.json");
+
+      const res = await api.post(
         buildUrl("image-upload"),
         { image: dataUrl },
         {
@@ -89,17 +89,43 @@ export function useHomeTimerController(mutate: KeyedMutator<ActivityData[]>) {
         },
       );
 
+      if (res.status === 429) {
+        await writeLogToDb({
+          context: "captureHandler:Throttled",
+          level: "WARN",
+          message: "Rate limit reached (429)",
+          metadata: { status: res.status, data: res.data },
+        });
+        setStatus("error");
+        return;
+      }
+
       await mutate();
     } catch (error) {
       console.error(error);
       setStatus("error");
+
+      await writeLogToDb({
+        context: "captureHandler",
+        level: "ERROR",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Terjadi kesalahan pada siklus capture",
+        metadata: {
+          error,
+          stack: error instanceof Error ? error.stack : undefined,
+          lastStatus: status,
+        },
+      });
+
       return;
     } finally {
       isCapturingRef.current = false;
     }
 
     setStatus("countdown");
-  }, [capture, mutate]);
+  }, [capture, mutate, status]); // Tambahkan status ke dependency jika digunakan di metadata
 
   // ==============================
   // MAIN LOOP (ANTI DRIFT)

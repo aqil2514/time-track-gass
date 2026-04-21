@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"; // Import shadcn tooltip
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ActivityAdjustment } from "@/routes/home/types/activites-data.type";
 import { formatToTime } from "@/utils/format-to-time";
