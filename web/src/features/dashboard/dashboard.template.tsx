@@ -4,8 +4,8 @@ import { DashboardUserFilter } from "./components/filter/user-filter";
 import { DashboardDateFilter } from "./components/filter/date.filter";
 import { DashboardDataContent } from "./components/data";
 import { DashboardProvider } from "./provider/dashboard.provider";
-import { SessionSummaryTriggerPopover } from "./components/triggers/session-summary.trigger";
 import { TitleAndSub } from "@/components/atoms/title-and-sub";
+import { SessionSummaryTrigger } from "./components/triggers/session-summary.trigger";
 
 export function DashboardTemplate() {
   return (
@@ -18,7 +18,7 @@ export function DashboardTemplate() {
             <DashboardDateFilter />
           </div>
           <div className="flex flex-col md:flex-row gap-4">
-            <SessionSummaryTriggerPopover />
+            <SessionSummaryTrigger />
           </div>
         </div>
         <DashboardDataContent />

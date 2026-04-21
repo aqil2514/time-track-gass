@@ -15,15 +15,26 @@ export class SummarySessionProcessor extends WorkerHost {
     const { data } = job;
     const userId = data.userId;
 
+    this.logger.log('Mengambil hasil ringkasan terakhir...');
     const latestSummary = await this.helper.getLatestSummary(userId);
 
+    this.logger.log('Mengambil data terbaru...');
     const newestData = await this.helper.getNewestData(latestSummary, userId);
-    if (!newestData || newestData.length === 0) return;
+    if (!newestData || newestData.length === 0) {
+      this.logger.log(
+        'Data terbaru tidak ditemukan. Ringkasan telah dilakukan',
+      );
+      return;
+    }
 
+    this.logger.log('Mengelompokkan jadi per jam');
     const groupedData = this.helper.groupByHour(newestData);
 
     const finalData = [];
 
+    this.logger.log(
+      'Melakukan analisis oleh AI dan menambahkannya ke database...',
+    );
     for (const [hourKey, items] of Object.entries(groupedData)) {
       const mapped = await this.helper.mapToSessionSummaryDbInsert(
         userId,
@@ -42,17 +53,17 @@ export class SummarySessionProcessor extends WorkerHost {
   onCompleted(job: Job) {
     const result = job.returnvalue;
     this.logger.log(
-      `✅ User ${job.data.userId} - summary completed (${result?.length ?? 0} jam diproses)`,
+      `✅ User ${job.data.userId} - Ringkasan selesai (${result?.length ?? 0} jam diproses)`,
     );
   }
 
   @OnWorkerEvent('failed')
   onFailed(job: Job, error: Error) {
-    this.logger.error(`❌ User ${job.data.userId} - failed: ${error.message}`);
+    this.logger.error(`❌ User ${job.data.userId} - gagal: ${error.message}`);
   }
 
   @OnWorkerEvent('active')
   onActive(job: Job) {
-    this.logger.log(`⏳ User ${job.data.userId} - processing...`);
+    this.logger.log(`⏳ User ${job.data.userId} - sedang diproses...`);
   }
 }

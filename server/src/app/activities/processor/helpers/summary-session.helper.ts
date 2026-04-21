@@ -1,20 +1,92 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js/dist/index.cjs';
 import { TableName } from 'src/services/supabase/supabase.interface';
-import {
-  SessionSummaryDb,
-  SessionSummaryDbInsert,
-} from '../../interface/session_summary.interface';
+import { SessionSummaryDbInsert } from '../../interface/session_summary.interface';
 import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { ZAIService } from 'src/services/ai-z/ai-z.service';
+import { AnalyzerService } from 'src/services/analyzer/services/analyzer.service';
+import {
+  GenerateContentParameters,
+  GenerateContentResponse,
+} from '@google/genai';
 
 @Injectable()
 export class SummarySessionProcessorHelper {
+  private readonly sessionSummarySchema = {
+    type: 'object',
+    properties: {
+      title: { type: 'string' },
+      description: { type: 'string' },
+    },
+    required: ['title', 'description'],
+  };
+
   constructor(
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
     private readonly aiService: ZAIService,
+
+    private readonly analyzer: AnalyzerService,
   ) {}
+
+  private async chatCompletion(prompt: string): Promise<{
+    rawText: string;
+    cleanJson: string;
+  }> {
+    const contents: GenerateContentParameters['contents'] = [
+      {
+        role: 'user',
+        parts: [{ text: prompt }],
+      },
+    ];
+
+    const response = (await this.analyzer.callAnalyzerProvider({
+      provider: 'gemini-ai',
+      model: 'gemini-2.5-flash-lite',
+      contents,
+      config: {
+        responseMimeType: 'application/json',
+        responseJsonSchema: this.sessionSummarySchema,
+      },
+    })) as GenerateContentResponse;
+
+    const rawText = response.text;
+    return {
+      rawText,
+      cleanJson: rawText,
+    };
+  }
+
+  private async getAiSessionSummaryTitleAndDescription(
+    summaries: string[],
+  ): Promise<{ title: string; description: string }> {
+    const prompt = `
+You are generating a short session title and a brief session description.
+
+Below are activity summaries from one time session:
+
+${summaries.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+
+Generate:
+1. ONE concise session title (maximum 8 words)
+2. A brief professional description summarizing the session (1-2 sentences)
+
+Requirements:
+- Both must be professional and natural
+- Written in English
+- Title max 8 words
+- Return ONLY valid JSON, no markdown, no explanation
+
+Expected format:
+{
+  "title": "Your short title here",
+  "description": "Brief description summarizing the session"
+}
+  `;
+
+    const { cleanJson } = await this.chatCompletion(prompt);
+    return JSON.parse(cleanJson);
+  }
 
   async getLatestSummary(userId: string): Promise<string | null> {
     const { data, error } = await this.supabase
@@ -117,7 +189,6 @@ export class SummarySessionProcessorHelper {
       });
     }
 
-    // Batch AI call tetap sama
     const finalResult: SessionSummaryDbInsert[] = [];
     const BATCH_SIZE = 2;
     const DELAY_MS = 2000;
@@ -129,9 +200,13 @@ export class SummarySessionProcessorHelper {
         batch.map(async (r) => {
           const { summaries, ...rest } = r;
           const { title, description } =
-            await this.aiService.getAiSessionSummaryTitleAndDescription(
+            await this.getAiSessionSummaryTitleAndDescription(
               summaries,
             );
+          // const { title, description } =
+          //   await this.aiService.getAiSessionSummaryTitleAndDescription(
+          //     summaries,
+          //   );
           return { ...rest, title, description };
         }),
       );

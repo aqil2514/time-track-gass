@@ -10,9 +10,7 @@ import {
   TableName,
 } from 'src/services/supabase/supabase.interface';
 import {
-  AttendanceLogsDb,
   AttendanceLogsDbInsert,
-  AttendanceLogsRpc,
 } from 'src/app/supervisor/interfaces/attendances/attendances-logs.interface';
 import { QUERY_NAME } from 'src/constants/queue.constant';
 
@@ -51,7 +49,6 @@ export class ActivitiesCronService {
         {
           attempts: 3,
           backoff: { type: 'exponential', delay: 5000 },
-          jobId: `summary-${user}-${new Date().getFullYear()}-${new Date().getMonth()}-${new Date().getDate()}-${new Date().getHours()}`,
           removeOnComplete: 100,
           removeOnFail: 50,
         },

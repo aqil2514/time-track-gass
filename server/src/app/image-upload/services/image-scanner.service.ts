@@ -27,7 +27,7 @@ export class ImageScannerService {
       ...(data as any),
       user_id: userId,
       s3_key: s3Key,
-    };
+    };  
 
     await this.helper.createNewData(mappedData);
   }

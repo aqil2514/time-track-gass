@@ -1,3 +1,4 @@
+import { SummarySessionProcessor } from 'src/app/activities/processor/summary-session.processor';
 import { ProfileListenerHelper } from '../listeners/helpers/profile.listener-helper';
 import { ProfileListenerEvent } from '../listeners/profile.listener';
 import { AttendanceLogsProcessor } from '../processors/attendance-logs.processor';
@@ -18,6 +19,7 @@ import { SupervisorDivisionsService } from '../services/supervisor-division.serv
 import { SupervisorTrackerService } from '../services/supervisor-tracker.service';
 import { SupervisorUserService } from '../services/supervisor-user.service';
 import { SupervisorService } from '../services/supervisor.service';
+import { SummarySessionProcessorHelper } from 'src/app/activities/processor/helpers/summary-session.helper';
 
 export const MIX_SUPERVISOR_SERVICES = [
   SupervisorService,
@@ -46,5 +48,10 @@ export const ATTENDANCE_SERVICES = [
   AttendanceAdjustmentService,
   AdjustmentHelper,
 ];
+
+export const BULL_MQ_SUMMARY_SESSION=[
+  SummarySessionProcessor,
+  SummarySessionProcessorHelper,
+]
 
 export const PROFILE_LISTENER = [ProfileListenerEvent, ProfileListenerHelper];
