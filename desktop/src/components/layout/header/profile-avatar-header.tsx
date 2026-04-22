@@ -8,9 +8,10 @@ export function ProfileAvatarHeader() {
   const { user } = useAuth();
   const { data: setting } = useUserSetting();
   const isAuto = useMemo(() => {
-    if (!user) return false;
-    return user?.settings.tracker.mode === "auto";
-  }, [user]);
+    if (!setting) return false;
+    return setting?.tracker.mode === "auto";
+  }, [setting]);
+
   return (
     <DropdownMenuLabel className="font-normal p-2">
       <div className="flex flex-col space-y-2">

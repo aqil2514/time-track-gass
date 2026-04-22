@@ -11,9 +11,53 @@ import {
 import { HourSlot } from "./hour-slot";
 import { UploadImageForm } from "./form";
 import { useState } from "react";
+import { UploadImageInput } from "@/routes/home/schema/upload-image.schema";
+import { load } from "@tauri-apps/plugin-store";
+import api from "@/lib/api";
+import { buildUrl } from "@/utils/build-url";
+import { platform } from "@tauri-apps/plugin-os";
+
+export interface ErrorDataMap {
+  filename: string;
+  reason: string;
+}
 
 export function UploadImage() {
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [errorData, setErrorData] = useState<ErrorDataMap[]>([]);
+
+  const handleUpload = async (values: UploadImageInput) => {
+    setErrorData([]);
+    const store = await load("auth.json");
+    const token = await store.get<string>("accessToken");
+    const os = platform();
+
+    if (!token) {
+      throw new Error("Access token not found");
+    }
+
+    const valuesWithOs = {
+      ...values,
+      os,
+    };
+
+    try {
+      const res = await api.postForm(
+        buildUrl("image-upload/manual"),
+        valuesWithOs,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (res.status === 422) setErrorData(res.data.invalidImages);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -39,11 +83,10 @@ export function UploadImage() {
             setSelectedSlot={setSelectedSlot}
           />
           <UploadImageForm
-            onSubmit={(values) => {
-              alert("Data akan diproses")
-              console.log(values);
-            }}
+            onSubmit={handleUpload}
             selectedSlot={selectedSlot}
+            errorData={errorData}
+            setErrorData={setErrorData}
           />
         </div>
       </DialogContent>

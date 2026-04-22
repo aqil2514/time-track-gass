@@ -6,17 +6,29 @@ import { AnalyzerAgentHelperService } from './services/helpers/analyzer-agent-he
 import { BuildPromptHelperService } from './services/helpers/build-prompt-helper.service';
 import { ZhipuAnalyzeMapper } from './services/ai-mapper/zhipu-analyze.mapper';
 import { GeminiAnalyzeMapper } from './services/ai-mapper/gemini-analyze.mapper';
+import { ImageValidationService } from './services/image-validation.service';
+import { BullModule } from '@nestjs/bullmq';
+import { QUERY_NAME } from 'src/constants/queue.constant';
+import { ManualAnalyzeProcessor } from './processor/manual-analyze.processor';
 
 @Module({
+  imports: [
+    BullModule.registerQueue({
+      name: QUERY_NAME.MANUAL_ANALYZE,
+    }),
+  ],
   controllers: [ImageUploadController],
   providers: [
     ImageScannerService,
     ImageScannerHelper,
+    ImageValidationService,
     AnalyzerAgentHelperService,
     BuildPromptHelperService,
 
+    ManualAnalyzeProcessor,
+
     ZhipuAnalyzeMapper,
-    GeminiAnalyzeMapper
+    GeminiAnalyzeMapper,
   ],
 })
 export class ImageUploadModule {}

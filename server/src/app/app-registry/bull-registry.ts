@@ -57,4 +57,8 @@ export const BULL_QUEUE_REGISTRY = [
     name: QUERY_NAME.SUMMARY_SESSION,
     adapter: BullMQAdapter,
   }),
+  BullBoardModule.forFeature({
+    name: QUERY_NAME.MANUAL_ANALYZE,
+    adapter: BullMQAdapter,
+  }),
 ];
