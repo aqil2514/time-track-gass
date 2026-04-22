@@ -6,6 +6,7 @@ import { ImageWithDate } from './image-validation.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { QUERY_NAME } from 'src/constants/queue.constant';
 import { Queue } from 'bullmq';
+import { TableName } from 'src/services/supabase/supabase.interface';
 
 @Injectable()
 export class ImageScannerService {
@@ -72,5 +73,29 @@ export class ImageScannerService {
     }
 
     return data;
+  }
+
+  async isExistActivities(slotId: number, userId:string) {
+    const startOfHour = new Date();
+    startOfHour.setHours(slotId, 0, 0, 0);
+
+    const endOfHour = new Date();
+    endOfHour.setHours(slotId, 59, 59, 999);
+
+    const { data, error } = await this.supabase
+      .from(TableName.AIScreenReport)
+      .select('id')
+      .gte('created_at', startOfHour.toISOString())
+      .lte('created_at', endOfHour.toISOString())
+      .eq("user_id", userId)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    return !!data;
   }
 }

@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Post,
+  Query,
   UnprocessableEntityException,
   UploadedFiles,
   UseGuards,
@@ -25,7 +26,6 @@ export class ImageUploadController {
     private readonly validationService: ImageValidationService,
   ) {}
 
-  // TODO: NANTI INI MASUK KE BULLMQ AJAH, TERUS DIBUAT AGAR 4 MENIT AJAH BATASNYA. MENGHINDARI PUTUS KONEKSI
   @UseGuards(UserThrottlerGuard)
   @Post('')
   async uploadFile(@Body() body: ImageUploadDto, @UserId() userId: string) {
@@ -52,9 +52,19 @@ export class ImageUploadController {
     //   });
     // }
 
-    await this.scannerService.analyzeActivityManual(validImages, userId)
+    await this.scannerService.analyzeActivityManual(validImages, userId);
 
     return { success: true };
+  }
+
+  @Get('manual')
+  async getIsExistFile(
+    @Query('slotId') slotId: number,
+    @UserId() userId: string,
+  ) {
+    const result = await this.scannerService.isExistActivities(slotId, userId);
+
+    return { isHaveData: result };
   }
 
   @Get('')

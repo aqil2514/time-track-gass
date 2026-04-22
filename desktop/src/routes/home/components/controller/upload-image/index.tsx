@@ -9,13 +9,18 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { HourSlot } from "./hour-slot";
-import { UploadImageForm } from "./form";
-import { useState } from "react";
+import { UploadImageForm, UploadImageFormProps } from "./form";
+import React, { useMemo, useState } from "react";
 import { UploadImageInput } from "@/routes/home/schema/upload-image.schema";
 import { load } from "@tauri-apps/plugin-store";
 import api from "@/lib/api";
 import { buildUrl } from "@/utils/build-url";
 import { platform } from "@tauri-apps/plugin-os";
+import { useFetch } from "@/hooks/use-fetch";
+import { RightSideHaveData } from "./right-have-data";
+import { RightNoSlotId } from "./right-no-slot-id";
+import { RightLoadingState } from "./right-loading-state";
+import { RightErrorState } from "./right-error-state";
 
 export interface ErrorDataMap {
   filename: string;
@@ -25,6 +30,19 @@ export interface ErrorDataMap {
 export function UploadImage() {
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [errorData, setErrorData] = useState<ErrorDataMap[]>([]);
+
+  const url = useMemo(
+    () =>
+      selectedSlot
+        ? buildUrl(`image-upload/manual?slotId=${selectedSlot}`)
+        : null,
+    [selectedSlot],
+  );
+  const { data, isLoading, isValidating, error, mutate } = useFetch<{
+    isHaveData: boolean;
+  }>(url);
+
+  const isHaveData = useMemo(() => (data ? data.isHaveData : false), [data]);
 
   const handleUpload = async (values: UploadImageInput) => {
     setErrorData([]);
@@ -52,12 +70,14 @@ export function UploadImage() {
         },
       );
 
-      if (res.status === 422) setErrorData(res.data.invalidImages);
+      if (res.status === 422) return setErrorData(res.data.invalidImages);
+      await mutate();
     } catch (error) {
       console.error(error);
       throw error;
     }
   };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -82,14 +102,46 @@ export function UploadImage() {
             selectedSlot={selectedSlot}
             setSelectedSlot={setSelectedSlot}
           />
-          <UploadImageForm
-            onSubmit={handleUpload}
+          <FlexSideContent
+            isHaveData={isHaveData}
             selectedSlot={selectedSlot}
             errorData={errorData}
+            onSubmit={handleUpload}
             setErrorData={setErrorData}
+            error={error}
+            isLoading={isLoading}
+            isValidating={isValidating}
           />
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+
+const FlexSideContent: React.FC<
+  {
+    selectedSlot: number | null;
+    isHaveData: boolean;
+    isLoading: boolean;
+    isValidating: boolean;
+    error: any;
+  } & UploadImageFormProps
+> = ({
+  selectedSlot,
+  isHaveData,
+  error,
+  isLoading,
+  isValidating,
+  ...formProps
+}) => {
+  if (isLoading || isValidating) return <RightLoadingState />;
+  if (error)
+    return <RightErrorState />;
+  if (selectedSlot !== null) {
+    if (isHaveData) return <RightSideHaveData slotId={selectedSlot} />;
+
+    return <UploadImageForm selectedSlot={selectedSlot} {...formProps} />;
+  }
+
+  return <RightNoSlotId />;
+};
