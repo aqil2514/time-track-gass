@@ -1,6 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UploadImageManualDto } from '../dto/image-upload-manual.dto';
-import { createWorker } from 'tesseract.js';
 import sharp from 'sharp';
 import { format } from 'date-fns/format';
 import { parse } from 'date-fns/parse';
@@ -45,8 +44,6 @@ If date or time not found, use null for that field.`,
         },
       ],
     })) as GenerateContentResponse;
-
-    console.log(result)
 
     try {
       const text = result.text;

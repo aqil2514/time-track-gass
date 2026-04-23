@@ -10,6 +10,7 @@ import { ImageValidationService } from './services/image-validation.service';
 import { BullModule } from '@nestjs/bullmq';
 import { FLOW_NAME, QUERY_NAME } from 'src/constants/queue.constant';
 import { ManualAnalyzeProcessor } from './processor/manual-analyze.processor';
+import { ManualStatusProcessor } from './processor/manual-status.processor';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ManualAnalyzeProcessor } from './processor/manual-analyze.processor';
     BuildPromptHelperService,
 
     ManualAnalyzeProcessor,
+    ManualStatusProcessor,
 
     ZhipuAnalyzeMapper,
     GeminiAnalyzeMapper,

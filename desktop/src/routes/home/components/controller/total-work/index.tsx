@@ -1,8 +1,6 @@
-import { RefreshCw } from "lucide-react";
-import { MutateButton } from "@/components/atoms/mutate-button";
 import { WeeklyBadge } from "./weekly-badge";
 import { TodayBadge } from "./today-badge";
-import { useTotalWork } from "./logic";
+import { useHomeContext } from "@/routes/home/store/home.provider";
 
 const ErrorComp = () => {
   return (
@@ -16,28 +14,30 @@ const ErrorComp = () => {
 
 export function TimelineTotalWork() {
   const {
-    dailyMinutes,
-    error,
-    isLoading,
-    isValidating,
-    mutate,
-    weeklyMinutes,
-    activityAdjustment
-  } = useTotalWork();
+    fetcher: { data, isLoading, error },
+  } = useHomeContext();
+
+  const dailyMinutes =
+    data?.totalWork?.dailySummaryTime?.total_work_time_minutes || 0;
+  const weeklyMinutes =
+    data?.totalWork?.weeklySummaryTime?.total_work_time_minutes || 0;
+  const activityAdjustment = data?.totalWork?.activityAdjustment ?? [];
 
   if (error) return <ErrorComp />;
 
   return (
     <div className="flex items-center gap-3 justify-end py-4 relative">
-      {isValidating && (
-        <RefreshCw className="w-3 h-3 animate-spin text-indigo-500 absolute -top-1 right-0" />
-      )}
+      <WeeklyBadge
+        isLoading={isLoading}
+        weeklyMinutes={weeklyMinutes}
+        activityAdjustment={activityAdjustment}
+      />
 
-      <WeeklyBadge isLoading={isLoading} weeklyMinutes={weeklyMinutes} activityAdjustment={activityAdjustment} />
-
-      <TodayBadge isLoading={isLoading} dailyMinutes={dailyMinutes} activityAdjustment={activityAdjustment} />
-
-      <MutateButton mutate={mutate} />
+      <TodayBadge
+        isLoading={isLoading}
+        dailyMinutes={dailyMinutes}
+        activityAdjustment={activityAdjustment}
+      />
     </div>
   );
 }

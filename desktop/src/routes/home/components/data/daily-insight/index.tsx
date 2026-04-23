@@ -1,22 +1,16 @@
 import { LoadingSpinner } from "@/components/atoms/loading-spinner";
-import { useFetch } from "@/hooks/use-fetch";
 import { useHomeContext } from "@/routes/home/store/home.provider";
 import { DailySummaryDb } from "@/routes/home/types/daily-summary.type";
-import { buildUrl } from "@/utils/build-url";
-import { isToday, startOfDay } from "date-fns";
+import { isToday } from "date-fns";
 import React from "react";
 import { BsStars } from "react-icons/bs";
 
 export function AIDailyInsight() {
-  const { fetcher } = useHomeContext();
-  const url = fetcher.date
-    ? buildUrl(
-        `activities/daily?date=${startOfDay(fetcher.date).toISOString()}`,
-      )
-    : buildUrl("activities/daily");
-  const { data, isLoading } = useFetch<DailySummaryDb>(url, {
-    keepPreviousData: false,
-  });
+  const {
+    fetcher: { data, isLoading },
+  } = useHomeContext();
+
+  const dailySummary = data?.dailyActivity;
 
   return (
     <div className="space-y-4">
@@ -29,7 +23,7 @@ export function AIDailyInsight() {
       </div>
 
       {/* Card */}
-      {isLoading ? <LoadingSpinner /> : <DataRender data={data} />}
+      {isLoading ? <LoadingSpinner /> : <DataRender data={dailySummary} />}
     </div>
   );
 }

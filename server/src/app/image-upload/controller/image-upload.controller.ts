@@ -17,7 +17,6 @@ import { UserId } from 'src/decorators/user-id.decorator';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { UploadImageManualDto } from '../dto/image-upload-manual.dto';
 import { ImageValidationService } from '../services/image-validation.service';
-import { fromZonedTime } from 'node_modules/date-fns-tz/dist/cjs';
 
 @UseGuards(JwtAuthGuard)
 @Controller('image-upload')
@@ -58,7 +57,7 @@ export class ImageUploadController {
       validImages,
       userId,
       body.slotId,
-      date
+      date,
     );
 
     return { success: true };
@@ -80,7 +79,7 @@ export class ImageUploadController {
     const isHaveInBullMq = await this.scannerService.isHaveInBullMq(
       slotId,
       userId,
-      date
+      date,
     );
     if (isHaveInBullMq) return { status: 'progress' };
 

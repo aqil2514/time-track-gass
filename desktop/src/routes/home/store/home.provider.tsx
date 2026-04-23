@@ -8,7 +8,7 @@ import {
   useHomeTimerController,
 } from "../logic/use-home-timer-controller";
 import { useHomeExcelController } from "../logic/use-home-excel-controller";
-import { ActivityData } from "../types/activites-data.type";
+import { HomeData } from "../types/activites-data.type";
 import { startOfDay } from "date-fns";
 
 interface HomeContextType {
@@ -16,10 +16,10 @@ interface HomeContextType {
     date: Date | undefined;
     setDate: React.Dispatch<React.SetStateAction<Date | undefined>>;
 
-    data: ActivityData[] | undefined;
+    data: HomeData | undefined;
     error: any;
     isLoading: boolean;
-    mutate: KeyedMutator<ActivityData[]>;
+    mutate: KeyedMutator<HomeData>;
   };
 
   controllerTime: {
@@ -42,9 +42,11 @@ export function HomeProvider({ children }: { children: React.ReactNode }) {
   const [date, setDate] = useState<Date | undefined>(new Date());
 
   const url = date
-    ? buildUrl(`activities/user?date=${startOfDay(date).toISOString()}`)
-    : buildUrl(`activities/user`);
-  const fetcher = useFetch<ActivityData[]>(url);
+    ? buildUrl(`activities/v2?date=${startOfDay(date).toISOString()}`)
+    : buildUrl(`activities/v2`);
+  const fetcher = useFetch<HomeData>(url);
+
+  console.log(fetcher);
 
   const timerController = useHomeTimerController(fetcher.mutate);
   const excelController = useHomeExcelController();

@@ -1,5 +1,5 @@
 import { Global, Module } from '@nestjs/common';
-import { ActivitiesController } from './activities.controller';
+import { ActivitiesController } from './controllers/activities.controller';
 import { ActivitiesService } from './services/activities.service';
 import { ActivitiesCronService } from './services/activities-cron.service';
 import { ActivitiesSessionSummaryCronHelper } from './services/helpers/activites-cron-session-summary-helper.service';
@@ -14,6 +14,7 @@ import { ActivitiesCronMessageHelper } from './services/helpers/activities-cron-
 import { SummarySessionProcessor } from './processor/summary-session.processor';
 import { SummarySessionProcessorHelper } from './processor/helpers/summary-session.helper';
 import { QUERY_NAME } from 'src/constants/queue.constant';
+import { ActivitiesV2Controller } from './controllers/activities-v2.controller';
 
 @Global()
 @Module({
@@ -22,7 +23,7 @@ import { QUERY_NAME } from 'src/constants/queue.constant';
       name: QUERY_NAME.DAILY_SUMMARY,
     }),
     BullModule.registerQueue({
-      name:  QUERY_NAME.DAILY_CATEGORY,
+      name: QUERY_NAME.DAILY_CATEGORY,
     }),
     BullModule.registerQueue({
       name: QUERY_NAME.SUMMARY_SESSION,
@@ -30,7 +31,7 @@ import { QUERY_NAME } from 'src/constants/queue.constant';
 
     HttpModule,
   ],
-  controllers: [ActivitiesController],
+  controllers: [ActivitiesController, ActivitiesV2Controller],
   providers: [
     ActivitiesService,
     ActivitiesCronService,

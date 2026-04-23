@@ -1,2 +1,6 @@
 - Fitur untuk kirim error ke server
 - User lama tidak bisa akses fitur switch mode, user baru bisa
+- Fitur upload gambar
+- Perkuat validasi gambar
+- Fitur history mulai sesi dan akhiri sesi
+- Update endpoint v2 agar jadi 1x api call

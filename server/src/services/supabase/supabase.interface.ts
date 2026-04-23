@@ -1,4 +1,5 @@
 export enum TableName {
+  AppLogs = 'app_logs',
   ActivityAdjusmentList = 'activity_adjustment_lists',
   ActivityAdjusments = 'activity_adjustments',
   AIScreenReport = 'ai_screen_report',
@@ -10,7 +11,7 @@ export enum TableName {
   SessionSummary = 'session_summary',
   DailySummary = 'daily_summary',
   DailySummaryPerCategory = 'daily_summary_per_categories',
-  AppLogs = 'app_logs',
+  WorkSessions = 'work_sessions',
 }
 
 export enum RPCFunctionName {

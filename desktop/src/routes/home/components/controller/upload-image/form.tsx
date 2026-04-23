@@ -43,7 +43,7 @@ export function UploadImageForm({
 
   return (
     <form
-      onSubmit={form.handleSubmit(onSubmit)}
+      onSubmit={form.handleSubmit(onSubmit, (error) => console.error(error))}
       className="flex flex-col h-full min-h-0 space-y-4"
     >
       <FormHeaderInfo form={form} />
