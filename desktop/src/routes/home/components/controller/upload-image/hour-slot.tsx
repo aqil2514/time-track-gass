@@ -1,5 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useHomeContext } from "@/routes/home/store/home.provider";
+import { isBefore, isToday, startOfDay } from "date-fns";
 import { Clock } from "lucide-react";
 import React, { useMemo } from "react";
 
@@ -9,25 +11,33 @@ interface Props {
 }
 
 export function HourSlot({ selectedSlot, setSelectedSlot }: Props) {
-  // Ambil jam saat ini (0-23)
-  const currentHour = new Date().getHours();
+  const {
+    fetcher: { date },
+  } = useHomeContext();
+  const now = new Date();
+  const currentHour = now.getHours();
+
+  const selectedDate = date || new Date();
 
   const slots = useMemo(() => {
+    const today = startOfDay(new Date());
+    const viewingDate = startOfDay(selectedDate);
+
+    const isSelectedPast = isBefore(viewingDate, today);
+    const isSelectedToday = isToday(viewingDate);
+
     return Array.from({ length: 24 }, (_, i) => {
       const start = i;
-      const end = i + 1;
 
-      // Format 2 digit (01, 02, dst)
-      const format = (h: number) => h.toString().padStart(2, "0");
+      const isOpen = isSelectedPast || (isSelectedToday && start < currentHour);
 
       return {
         id: i,
-        label: `${format(start)} s/d ${format(end)}`,
-        // Terbuka jika jam sudah lewat dari jam mulai slot tersebut
-        isOpen: start < currentHour,
+        label: `${i.toString().padStart(2, "0")} s/d ${(i + 1).toString().padStart(2, "0")}`,
+        isOpen,
       };
     });
-  }, [currentHour]);
+  }, [currentHour, selectedDate]);
 
   return (
     <div className="flex flex-col h-125 border-r border-slate-800 pr-4">

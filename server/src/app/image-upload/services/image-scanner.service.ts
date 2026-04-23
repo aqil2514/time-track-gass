@@ -3,10 +3,12 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { ImageScannerHelper } from './helpers/image-scanner-helper.service';
 import { AnalyzerAgentHelperService } from './helpers/analyzer-agent-helper.service';
 import { ImageWithDate } from './image-validation.service';
-import { InjectQueue } from '@nestjs/bullmq';
-import { QUERY_NAME } from 'src/constants/queue.constant';
-import { Queue } from 'bullmq';
+import { InjectFlowProducer, InjectQueue } from '@nestjs/bullmq';
+import { FLOW_NAME, QUERY_NAME } from 'src/constants/queue.constant';
+import { FlowChildJob, FlowProducer, Queue } from 'bullmq';
 import { TableName } from 'src/services/supabase/supabase.interface';
+import { format, toZonedTime } from 'node_modules/date-fns-tz/dist/cjs';
+import { TIMEZONE } from 'src/constants/timezone';
 
 @Injectable()
 export class ImageScannerService {
@@ -16,6 +18,12 @@ export class ImageScannerService {
 
     @InjectQueue(QUERY_NAME.MANUAL_ANALYZE)
     private readonly manualAnalyzeQueue: Queue,
+
+    @InjectQueue(QUERY_NAME.MANUAL_SLOT_STATUS)
+    private readonly manualSlotStatusQueue: Queue,
+
+    @InjectFlowProducer(FLOW_NAME.MANUAL_ANALYZE_FLOW)
+    private readonly manualAnalyzeFlow: FlowProducer,
 
     private readonly helper: ImageScannerHelper,
 
@@ -40,26 +48,26 @@ export class ImageScannerService {
     await this.helper.createNewData(mappedData);
   }
 
-  async analyzeActivityManual(files: ImageWithDate[], userId: string) {
-    for (const file of files) {
-      const s3Key = await this.helper.uploadToS3Manual(file, userId);
+  // async analyzeActivityManual(files: ImageWithDate[], userId: string) {
+  //   for (const file of files) {
+  //     const s3Key = await this.helper.uploadToS3Manual(file, userId);
 
-      await this.manualAnalyzeQueue.add(
-        'manual-upload-queue',
-        {
-          userId,
-          s3Key,
-          detectedDate: file.date,
-        },
-        {
-          attempts: 3,
-          backoff: { type: 'exponential', delay: 5000 },
-          removeOnComplete: 100,
-          removeOnFail: 50,
-        },
-      );
-    }
-  }
+  //     await this.manualAnalyzeQueue.add(
+  //       'manual-upload-queue',
+  //       {
+  //         userId,
+  //         s3Key,
+  //         detectedDate: file.date,
+  //       },
+  //       {
+  //         attempts: 3,
+  //         backoff: { type: 'exponential', delay: 5000 },
+  //         removeOnComplete: 100,
+  //         removeOnFail: 50,
+  //       },
+  //     );
+  //   }
+  // }
 
   async getActivities() {
     const { data, error } = await this.supabase
@@ -75,11 +83,64 @@ export class ImageScannerService {
     return data;
   }
 
-  async isExistActivities(slotId: number, userId:string) {
-    const startOfHour = new Date();
+  async analyzeActivityManual(
+    files: ImageWithDate[],
+    userId: string,
+    slotId: number,
+    date: string,
+  ) {
+    const localDate = toZonedTime(new Date(date), TIMEZONE);
+    const formattedDate = format(localDate, 'dd-MM-yyyy');
+
+    const childrenJobs = await Promise.all(
+      files.map(async (file) => {
+        const s3Key = await this.helper.uploadToS3Manual(file, userId);
+
+        const flowJob: FlowChildJob = {
+          name: 'analyze-manual-upload',
+          queueName: QUERY_NAME.MANUAL_ANALYZE,
+          data: {
+            userId,
+            s3Key,
+            detectedDate: file.date,
+          },
+          opts: {
+            jobId: `file-${slotId}-${userId}-${file.file.originalname}-${Date.now()}`,
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 5000 },
+            removeOnComplete: 100,
+            removeOnFail: 50,
+          },
+        };
+
+        return flowJob;
+      }),
+    );
+
+    await this.manualAnalyzeFlow.add({
+      name: 'aggregate-manual-analyze',
+      queueName: QUERY_NAME.MANUAL_SLOT_STATUS,
+      data: {
+        slotId,
+        userId,
+      },
+      opts: {
+        jobId: `manual-analyze-${userId}-${slotId}-${formattedDate}`,
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: 100,
+        removeOnFail: 50,
+      },
+      children: childrenJobs,
+    });
+  }
+
+  async isHaveInDb(slotId: number, userId: string, date: string) {
+    const localTime = toZonedTime(new Date(date), TIMEZONE);
+    const startOfHour = new Date(localTime);
     startOfHour.setHours(slotId, 0, 0, 0);
 
-    const endOfHour = new Date();
+    const endOfHour = new Date(localTime);
     endOfHour.setHours(slotId, 59, 59, 999);
 
     const { data, error } = await this.supabase
@@ -87,7 +148,7 @@ export class ImageScannerService {
       .select('id')
       .gte('created_at', startOfHour.toISOString())
       .lte('created_at', endOfHour.toISOString())
-      .eq("user_id", userId)
+      .eq('user_id', userId)
       .limit(1)
       .maybeSingle();
 
@@ -97,5 +158,17 @@ export class ImageScannerService {
     }
 
     return !!data;
+  }
+
+  async isHaveInBullMq(slotId: number, userId: string, date: string) {
+    const localDate = toZonedTime(new Date(date), TIMEZONE);
+    const formattedDate = format(localDate, 'dd-MM-yyyy');
+
+    const flows = await this.manualAnalyzeFlow.getFlow({
+      id: `manual-analyze-${userId}-${slotId}-${formattedDate}`,
+      queueName: QUERY_NAME.MANUAL_SLOT_STATUS,
+    });
+
+    return !!flows;
   }
 }

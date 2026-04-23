@@ -1,3 +1,6 @@
+import { useHomeContext } from "@/routes/home/store/home.provider";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
 import { CheckCircle2, Lock, ShieldCheck, Zap } from "lucide-react";
 
 interface Props {
@@ -5,11 +8,18 @@ interface Props {
 }
 
 export function RightSideHaveData({ slotId }: Props) {
-  // Menghitung jam berikutnya untuk rentang waktu
+  const {
+    fetcher: { date },
+  } = useHomeContext();
+
   const nextHour = (slotId + 1) % 24;
-  
-  const formatTime = (hour: number) => 
+
+  const formatTime = (hour: number) =>
     hour < 10 ? `0${hour}:00` : `${hour}:00`;
+
+  const formattedDate = date
+    ? format(date, "dd MMMM yyyy", { locale: id })
+    : "-";
 
   return (
     <div className="flex flex-col h-full items-center justify-center space-y-6 p-8 animate-in fade-in zoom-in duration-500">
@@ -18,7 +28,6 @@ export function RightSideHaveData({ slotId }: Props) {
         <div className="absolute inset-0 bg-green-500/20 blur-3xl rounded-full" />
         <div className="relative bg-slate-950 border border-green-500/50 p-6 rounded-3xl shadow-[0_0_30px_rgba(34,197,94,0.15)]">
           <CheckCircle2 className="h-14 w-14 text-green-500" />
-          {/* Badge Terkunci */}
           <div className="absolute -top-2 -right-2 bg-slate-900 border border-slate-800 p-1.5 rounded-lg shadow-xl">
             <Lock className="h-3.5 w-3.5 text-slate-500" />
           </div>
@@ -30,6 +39,14 @@ export function RightSideHaveData({ slotId }: Props) {
         <h2 className="text-2xl font-black text-white tracking-tight">
           Laporan Diterima
         </h2>
+
+        {/* Tambahan Baris Tanggal */}
+        <div className="bg-slate-900/30 py-1 px-3 rounded-full border border-slate-800/50 w-fit mx-auto mb-1">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            {formattedDate}
+          </span>
+        </div>
+
         <p className="text-slate-400 text-[13px] max-w-70 mx-auto leading-relaxed">
           Terima kasih telah mengirimkan bukti kerja untuk periode:
           <span className="block mt-2 text-lg font-bold text-purple-400 font-mono">
@@ -40,10 +57,13 @@ export function RightSideHaveData({ slotId }: Props) {
 
       {/* Status Tags */}
       <div className="flex flex-col gap-2 w-full max-w-70">
+        {/* ... (bagian status tetap sama) */}
         <div className="flex items-center justify-between bg-slate-900/50 border border-slate-800 p-3 rounded-xl">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-green-500" />
-            <span className="text-[11px] font-medium text-slate-300 uppercase">Status</span>
+            <span className="text-[11px] font-medium text-slate-300 uppercase">
+              Status
+            </span>
           </div>
           <span className="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-md">
             VERIFIED
@@ -53,7 +73,9 @@ export function RightSideHaveData({ slotId }: Props) {
         <div className="flex items-center justify-between bg-slate-900/50 border border-slate-800 p-3 rounded-xl">
           <div className="flex items-center gap-2">
             <Zap className="h-4 w-4 text-amber-500" />
-            <span className="text-[11px] font-medium text-slate-300 uppercase">Aktivitas</span>
+            <span className="text-[11px] font-medium text-slate-300 uppercase">
+              Aktivitas
+            </span>
           </div>
           <span className="text-[10px] font-bold text-slate-400 uppercase">
             TERKUNCI

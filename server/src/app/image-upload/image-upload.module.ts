@@ -8,13 +8,21 @@ import { ZhipuAnalyzeMapper } from './services/ai-mapper/zhipu-analyze.mapper';
 import { GeminiAnalyzeMapper } from './services/ai-mapper/gemini-analyze.mapper';
 import { ImageValidationService } from './services/image-validation.service';
 import { BullModule } from '@nestjs/bullmq';
-import { QUERY_NAME } from 'src/constants/queue.constant';
+import { FLOW_NAME, QUERY_NAME } from 'src/constants/queue.constant';
 import { ManualAnalyzeProcessor } from './processor/manual-analyze.processor';
 
 @Module({
   imports: [
-    BullModule.registerQueue({
-      name: QUERY_NAME.MANUAL_ANALYZE,
+    BullModule.registerQueue(
+      {
+        name: QUERY_NAME.MANUAL_ANALYZE,
+      },
+      {
+        name: QUERY_NAME.MANUAL_SLOT_STATUS,
+      },
+    ),
+    BullModule.registerFlowProducer({
+      name: FLOW_NAME.MANUAL_ANALYZE_FLOW,
     }),
   ],
   controllers: [ImageUploadController],

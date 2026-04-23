@@ -17,6 +17,7 @@ import { UserId } from 'src/decorators/user-id.decorator';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { UploadImageManualDto } from '../dto/image-upload-manual.dto';
 import { ImageValidationService } from '../services/image-validation.service';
+import { fromZonedTime } from 'node_modules/date-fns-tz/dist/cjs';
 
 @UseGuards(JwtAuthGuard)
 @Controller('image-upload')
@@ -37,22 +38,28 @@ export class ImageUploadController {
   async uploadFileManual(
     @UploadedFiles() images: Array<Express.Multer.File>,
     @Body() body: UploadImageManualDto,
+    @Query('date') date: string,
     @UserId() userId: string,
   ) {
     const { invalidImages, validImages } =
-      await this.validationService.validateImage(images, body, userId);
+      await this.validationService.validateImage(images, body, date);
 
-    // if (invalidImages.length !== 0) {
-    //   throw new UnprocessableEntityException({
-    //     message: 'Beberapa gambar tidak valid',
-    //     invalidImages: invalidImages.map((img) => ({
-    //       filename: img.file.originalname,
-    //       reason: img.invalidResult,
-    //     })),
-    //   });
-    // }
+    if (invalidImages.length !== 0) {
+      throw new UnprocessableEntityException({
+        message: 'Beberapa gambar tidak valid',
+        invalidImages: invalidImages.map((img) => ({
+          filename: img.file.originalname,
+          reason: img.invalidResult,
+        })),
+      });
+    }
 
-    await this.scannerService.analyzeActivityManual(validImages, userId);
+    await this.scannerService.analyzeActivityManual(
+      validImages,
+      userId,
+      body.slotId,
+      date
+    );
 
     return { success: true };
   }
@@ -60,11 +67,24 @@ export class ImageUploadController {
   @Get('manual')
   async getIsExistFile(
     @Query('slotId') slotId: number,
+    @Query('date') date: string,
     @UserId() userId: string,
   ) {
-    const result = await this.scannerService.isExistActivities(slotId, userId);
+    const isHaveInDb = await this.scannerService.isHaveInDb(
+      slotId,
+      userId,
+      date,
+    );
+    if (isHaveInDb) return { status: 'verified' };
 
-    return { isHaveData: result };
+    const isHaveInBullMq = await this.scannerService.isHaveInBullMq(
+      slotId,
+      userId,
+      date
+    );
+    if (isHaveInBullMq) return { status: 'progress' };
+
+    return { status: 'not-found' };
   }
 
   @Get('')

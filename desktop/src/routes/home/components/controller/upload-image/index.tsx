@@ -21,28 +21,47 @@ import { RightSideHaveData } from "./right-have-data";
 import { RightNoSlotId } from "./right-no-slot-id";
 import { RightLoadingState } from "./right-loading-state";
 import { RightErrorState } from "./right-error-state";
+import { RightSideProgress } from "./right-side-progress-state";
+import { useHomeContext } from "@/routes/home/store/home.provider";
+import { isAxiosError } from "axios";
 
 export interface ErrorDataMap {
   filename: string;
   reason: string;
 }
 
+type ProgressStatus = "verified" | "progress" | "not-found";
+
 export function UploadImage() {
+  const {
+    fetcher: { date },
+  } = useHomeContext();
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [errorData, setErrorData] = useState<ErrorDataMap[]>([]);
 
+  const isCanFetch = useMemo(
+    () => !!date && selectedSlot !== null,
+    [date, selectedSlot],
+  );
+
   const url = useMemo(
     () =>
-      selectedSlot
-        ? buildUrl(`image-upload/manual?slotId=${selectedSlot}`)
+      isCanFetch
+        ? buildUrl(
+            `image-upload/manual?slotId=${selectedSlot}&date=${date?.toISOString()}`,
+          )
         : null,
-    [selectedSlot],
+    [isCanFetch, selectedSlot, date],
   );
+
   const { data, isLoading, isValidating, error, mutate } = useFetch<{
-    isHaveData: boolean;
+    status: ProgressStatus;
   }>(url);
 
-  const isHaveData = useMemo(() => (data ? data.isHaveData : false), [data]);
+  const status: ProgressStatus = useMemo(
+    () => (data?.status ? data.status : "not-found"),
+    [data],
+  );
 
   const handleUpload = async (values: UploadImageInput) => {
     setErrorData([]);
@@ -61,7 +80,7 @@ export function UploadImage() {
 
     try {
       const res = await api.postForm(
-        buildUrl("image-upload/manual"),
+        buildUrl(`image-upload/manual?date=${date?.toISOString()}`),
         valuesWithOs,
         {
           headers: {
@@ -73,7 +92,9 @@ export function UploadImage() {
       if (res.status === 422) return setErrorData(res.data.invalidImages);
       await mutate();
     } catch (error) {
-      console.error(error);
+      if (isAxiosError(error)) {
+        console.error(error.message);
+      }
       throw error;
     }
   };
@@ -103,7 +124,7 @@ export function UploadImage() {
             setSelectedSlot={setSelectedSlot}
           />
           <FlexSideContent
-            isHaveData={isHaveData}
+            status={status}
             selectedSlot={selectedSlot}
             errorData={errorData}
             onSubmit={handleUpload}
@@ -121,24 +142,26 @@ export function UploadImage() {
 const FlexSideContent: React.FC<
   {
     selectedSlot: number | null;
-    isHaveData: boolean;
+    status: ProgressStatus;
     isLoading: boolean;
     isValidating: boolean;
     error: any;
   } & UploadImageFormProps
 > = ({
   selectedSlot,
-  isHaveData,
+  status,
   error,
   isLoading,
   isValidating,
   ...formProps
 }) => {
   if (isLoading || isValidating) return <RightLoadingState />;
-  if (error)
-    return <RightErrorState />;
+  if (error) return <RightErrorState />;
   if (selectedSlot !== null) {
-    if (isHaveData) return <RightSideHaveData slotId={selectedSlot} />;
+    if (status === "verified")
+      return <RightSideHaveData slotId={selectedSlot} />;
+    else if (status === "progress")
+      return <RightSideProgress slotId={selectedSlot} />;
 
     return <UploadImageForm selectedSlot={selectedSlot} {...formProps} />;
   }
