@@ -30,6 +30,23 @@ export class ImageScannerService {
     private readonly analyzerAgent: AnalyzerAgentHelperService,
   ) {}
 
+  private async getCurrentWorkSession(userId: string) {
+    const { data, error } = await this.supabase
+      .from(TableName.WorkSessions)
+      .select('id')
+      .eq('user_id', userId)
+      .is('end_at', null)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    return data;
+  }
+
   async analyzeActivity(imageDataUrl: string, userId: string) {
     const s3Key = await this.helper.uploadToS3(imageDataUrl, userId);
 
@@ -39,35 +56,17 @@ export class ImageScannerService {
       userId,
     );
 
+    const workSession = await this.getCurrentWorkSession(userId);
+
     const mappedData = {
       ...(data as any),
       user_id: userId,
       s3_key: s3Key,
+      work_session_id: workSession ? workSession.id : null,
     };
 
     await this.helper.createNewData(mappedData);
   }
-
-  // async analyzeActivityManual(files: ImageWithDate[], userId: string) {
-  //   for (const file of files) {
-  //     const s3Key = await this.helper.uploadToS3Manual(file, userId);
-
-  //     await this.manualAnalyzeQueue.add(
-  //       'manual-upload-queue',
-  //       {
-  //         userId,
-  //         s3Key,
-  //         detectedDate: file.date,
-  //       },
-  //       {
-  //         attempts: 3,
-  //         backoff: { type: 'exponential', delay: 5000 },
-  //         removeOnComplete: 100,
-  //         removeOnFail: 50,
-  //       },
-  //     );
-  //   }
-  // }
 
   async getActivities() {
     const { data, error } = await this.supabase

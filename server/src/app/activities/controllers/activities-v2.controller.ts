@@ -9,16 +9,19 @@ export class ActivitiesV2Controller {
   constructor(private readonly service: ActivitiesService) {}
   @Get('')
   async getActivitiesV2(@UserId() userId: string, @Query('date') date: string) {
-    const [dailyActivity, activityData, totalWork] = await Promise.all([
-      this.service.getDailyActivity(userId, date),
-      this.service.getActivityData(userId, date),
-      this.service.getTotalWork(userId, date),
-    ]);
+    const [dailyActivity, activityData, totalWork, workSessions] =
+      await Promise.all([
+        this.service.getDailyActivity(userId, date),
+        this.service.getActivityData(userId, date),
+        this.service.getTotalWork(userId, date),
+        this.service.getWorkSession(userId, date),
+      ]);
 
     return {
       dailyActivity,
       activityData,
       totalWork,
+      workSessions,
     };
   }
 }

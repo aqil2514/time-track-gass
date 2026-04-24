@@ -7,7 +7,10 @@ import { getToken } from "@/utils/get-token";
 import { useState } from "react";
 
 export function StartSessionButton() {
-  const { controllerTime } = useHomeContext();
+  const {
+    controllerTime,
+    fetcher: { mutate },
+  } = useHomeContext();
   const { isRunning, startAutoCapture, stopAutoCapture } = controllerTime;
   const [isloading, setIsLoading] = useState(false);
 
@@ -25,6 +28,7 @@ export function StartSessionButton() {
           },
         },
       );
+      await mutate();
 
       startAutoCapture();
     } catch (error) {
@@ -49,6 +53,8 @@ export function StartSessionButton() {
           },
         },
       );
+
+      await mutate();
 
       stopAutoCapture();
     } catch (error) {

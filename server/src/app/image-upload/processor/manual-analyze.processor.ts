@@ -21,37 +21,36 @@ export class ManualAnalyzeProcessor extends WorkerHost {
   async process(job: Job) {
     const { userId, s3Key, detectedDate } = job.data;
 
-    console.log("OK")
-    // this.logger.log('Mengambil data dari S3');
-    // const command = new GetObjectCommand({ Key: s3Key, Bucket: 'tracker' });
-    // const response = await this.s3Client.send(command);
-    // const mimeType = response.ContentType || 'image/png';
+    this.logger.log('Mengambil data dari S3');
+    const command = new GetObjectCommand({ Key: s3Key, Bucket: 'tracker' });
+    const response = await this.s3Client.send(command);
+    const mimeType = response.ContentType || 'image/png';
 
-    // this.logger.log('Data berhasil didapat. Mengubah ke bentuk byte');
-    // const byteArray = await response.Body.transformToByteArray();
-    // const buffer = Buffer.from(byteArray);
-    // const base64Image = buffer.toString('base64');
+    this.logger.log('Data berhasil didapat. Mengubah ke bentuk byte');
+    const byteArray = await response.Body.transformToByteArray();
+    const buffer = Buffer.from(byteArray);
+    const base64Image = buffer.toString('base64');
 
-    // const imageDataUrl = `data:${mimeType};base64,${base64Image}`;
+    const imageDataUrl = `data:${mimeType};base64,${base64Image}`;
 
-    // this.logger.log('Data berhasil diubah ke byte. Menganalisis AI');
-    // const { data } = await this.analyzerAgent.analyzerAgentMapper(
-    //   'gemini-ai',
-    //   imageDataUrl,
-    //   userId,
-    // );
+    this.logger.log('Data berhasil diubah ke byte. Menganalisis AI');
+    const { data } = await this.analyzerAgent.analyzerAgentMapper(
+      'gemini-ai',
+      imageDataUrl,
+      userId,
+    );
 
-    // const mappedData = {
-    //   ...(data as any),
-    //   user_id: userId,
-    //   s3_key: s3Key,
-    //   created_at: new Date(detectedDate).toISOString(),
-    // };
+    const mappedData = {
+      ...(data as any),
+      user_id: userId,
+      s3_key: s3Key,
+      created_at: new Date(detectedDate).toISOString(),
+    };
 
-    // this.logger.log('Analisis AI berhasil, menambahkan ke db');
-    // await this.helper.createNewData(mappedData);
+    this.logger.log('Analisis AI berhasil, menambahkan ke db');
+    await this.helper.createNewData(mappedData);
 
-    // return mappedData;
+    return mappedData;
   }
 
   @OnWorkerEvent('completed')

@@ -46,8 +46,6 @@ export function HomeProvider({ children }: { children: React.ReactNode }) {
     : buildUrl(`activities/v2`);
   const fetcher = useFetch<HomeData>(url);
 
-  console.log(fetcher);
-
   const timerController = useHomeTimerController(fetcher.mutate);
   const excelController = useHomeExcelController();
 

@@ -15,6 +15,8 @@ import { SummarySessionProcessor } from './processor/summary-session.processor';
 import { SummarySessionProcessorHelper } from './processor/helpers/summary-session.helper';
 import { QUERY_NAME } from 'src/constants/queue.constant';
 import { ActivitiesV2Controller } from './controllers/activities-v2.controller';
+import { ActivitiesSummaryTimeService } from './services/helpers/activities-summary-time.service';
+import { ActivitiesWorkSession } from './services/helpers/activities-work-session.service';
 
 @Global()
 @Module({
@@ -42,6 +44,8 @@ import { ActivitiesV2Controller } from './controllers/activities-v2.controller';
     ActivitiesFetcherHelper,
     ActivitiesDailySummaryPerCategoryCronHelper,
     ActivitiesCronMessageHelper,
+    ActivitiesSummaryTimeService,
+    ActivitiesWorkSession,
 
     // Processor
     DailySummaryProcessor,
