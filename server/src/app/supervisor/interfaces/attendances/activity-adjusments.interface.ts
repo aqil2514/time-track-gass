@@ -8,6 +8,24 @@ export interface ActivityAdjusmentsDb {
   created_at: string;
 }
 
+export interface AdjustmentContent {
+  id: number;
+  date: string;
+  affected_minutes: number;
+  profile: {
+    id: string;
+    division: string;
+    username: string;
+    full_name: string;
+  };
+  adjustment: {
+    id: number;
+    name: string;
+    notes: string;
+  };
+}
+
+
 export interface ActivityAdjusmentsDbInsert extends Omit<
   ActivityAdjusmentsDb,
   'id' | 'created_at'

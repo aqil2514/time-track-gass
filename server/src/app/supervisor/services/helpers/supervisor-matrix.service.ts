@@ -6,6 +6,11 @@ import {
   TotalWeeklyActivity,
 } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { TableName } from 'src/services/supabase/supabase.interface';
+import { startOfDay, endOfDay, startOfWeek, endOfWeek } from 'date-fns';
+import { format, toZonedTime } from 'date-fns-tz';
+import { WorkSessionDb } from 'src/app/activities/interface/work_session.interface';
+import { TIMEZONE } from 'src/constants/timezone';
+import { AdjustmentContent } from '../../interfaces/attendances/activity-adjusments.interface';
 
 export interface MatrixResponse {
   userName: string;
@@ -13,11 +18,12 @@ export interface MatrixResponse {
   fullName: string;
   activity: number[];
   totalWeeklyActivity: number;
+  workSession?: WorkSessionDb[];
+  workAdjustment?: AdjustmentContent[];
 }
 
 @Injectable()
 export class SupervisorMatrixService {
-  // TODO Ini nanti intervalnya ambil dari databse kalo fitur udah siap
   private readonly INTERVAL = 5;
   constructor(
     @Inject('SUPABASE_CLIENT')
@@ -64,7 +70,7 @@ export class SupervisorMatrixService {
         .gte('created_at', startStr)
         .lte('created_at', endStr)
         .neq('category', 'unclassified')
-        .is("deleted_at", null)
+        .is('deleted_at', null)
         .range(from, to)
         .order('created_at', { ascending: true });
 
@@ -101,7 +107,6 @@ export class SupervisorMatrixService {
 
     const endStr = `${endDateOnly}T23:59:59+07:00`;
 
-
     const { data, error } = await this.supabase.rpc(
       'get_weekly_user_activity_by_date',
       { client_date: endStr },
@@ -115,10 +120,59 @@ export class SupervisorMatrixService {
     return data;
   }
 
+  async getWorkAdjustment(date: string): Promise<AdjustmentContent[]> {
+    const zonedTime = toZonedTime(date, TIMEZONE);
+
+    const monday = startOfWeek(zonedTime, { weekStartsOn: 1 });
+    const sunday = endOfWeek(zonedTime, { weekStartsOn: 1 });
+
+    const formattedMonday = format(monday, 'yyyy-MM-dd', {
+      timeZone: TIMEZONE,
+    });
+    const formattedSunday = format(sunday, 'yyyy-MM-dd', {
+      timeZone: TIMEZONE,
+    });
+
+    const { data, error } = await this.supabase
+      .from(TableName.ActivityAdjusments)
+      .select(
+        'id, date, affected_minutes, profile:profile_id(id, full_name, username, division), adjustment:adjusment_id(id, name, notes)',
+      )
+      .gte('date', formattedMonday)
+      .lte('date', formattedSunday);
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    return data as unknown as AdjustmentContent[];
+  }
+
+  async getWorkSession(date: string): Promise<WorkSessionDb[]> {
+    const startDate = startOfDay(date);
+    const endDate = endOfDay(date);
+
+    const { data, error } = await this.supabase
+      .from(TableName.WorkSessions)
+      .select('*')
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString());
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    return data;
+  }
+
   mapToMatrixData(
     rawData: AIScreenReportPopulateUser[],
     users: ProfilesDb[],
     weeklyActivity: TotalWeeklyActivity[],
+    workSession: WorkSessionDb[],
+    workAdjustment: AdjustmentContent[],
   ) {
     const finalMatrix: MatrixResponse[] = [];
 
@@ -128,6 +182,12 @@ export class SupervisorMatrixService {
       );
       const selectedWeeklyActivity = weeklyActivity.find(
         (activity) => activity.user_id === user.id,
+      );
+      const selectedWorkSession = workSession.filter(
+        (session) => session.user_id === user.id,
+      );
+      const selectedWorkAdjustment = workAdjustment.filter(
+        (adjustment) => adjustment.profile.id === user.id,
       );
 
       const hourlyActivity: number[] = new Array(24).fill(0);
@@ -153,6 +213,8 @@ export class SupervisorMatrixService {
         userName: user.username,
         activity: hourlyActivity,
         totalWeeklyActivity,
+        workSession: selectedWorkSession,
+        workAdjustment: selectedWorkAdjustment,
       };
 
       finalMatrix.push(matrixData);

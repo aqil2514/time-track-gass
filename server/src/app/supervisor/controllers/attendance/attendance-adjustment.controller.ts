@@ -11,7 +11,6 @@ import {
   UploadedFiles,
   UseGuards,
   UseInterceptors,
-  UsePipes,
 } from '@nestjs/common';
 import { Roles } from 'src/decorators/roles.decorator';
 import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';

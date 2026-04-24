@@ -34,9 +34,11 @@ export class SupervisorTrackerService {
   }
 
   async getTrackerMatrix(date: string) {
-    const [users, trackerWeekly] = await Promise.all([
+    const [users, trackerWeekly, workSession, workAdjustment] = await Promise.all([
       this.matrixHelper.getActiveUsers(),
       this.matrixHelper.getTrackerWeekly(date),
+      this.matrixHelper.getWorkSession(date),
+      this.matrixHelper.getWorkAdjustment(date)
     ]);
     const userIds = users.map((user) => user.id);
 
@@ -46,6 +48,8 @@ export class SupervisorTrackerService {
       rawData,
       users,
       trackerWeekly,
+      workSession,
+      workAdjustment
     );
 
     return mappedUser;

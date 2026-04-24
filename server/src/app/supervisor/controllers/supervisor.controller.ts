@@ -43,8 +43,6 @@ export class SupervisorController {
   @Post('trigger/session-summary')
   async triggerSessionSummary() {
     const users = await this.service.getAllUserProfile();
-    console.log('Total users:', users.length);
-    console.log('Queue name:', this.summaryQueue.name);
 
     for (const user of users) {
       const job = await this.summaryQueue.add(
@@ -58,11 +56,7 @@ export class SupervisorController {
           removeOnFail: 50,
         },
       );
-      console.log('Job added:', job.id, '| User:', user.id);
     }
-
-    const counts = await this.summaryQueue.getJobCounts();
-    console.log('Job counts:', counts);
 
     return { message: 'Tugas dibuat' };
   }

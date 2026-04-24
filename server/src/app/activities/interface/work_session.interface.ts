@@ -1,3 +1,11 @@
+export interface WorkSessionDb{
+    id:number;
+    created_at:string;
+    user_id:string;
+    start_at:string;
+    end_at:string | null;
+}
+
 // CLIENT
 export interface WorkSessionReport {
   id: string;
