@@ -150,8 +150,10 @@ export class SupervisorMatrixService {
   }
 
   async getWorkSession(date: string): Promise<WorkSessionDb[]> {
-    const startDate = startOfDay(date);
-    const endDate = endOfDay(date);
+    const zonedTime = toZonedTime(date, TIMEZONE);
+
+    const startDate = startOfDay(zonedTime);
+    const endDate = endOfDay(zonedTime);
 
     const { data, error } = await this.supabase
       .from(TableName.WorkSessions)
