@@ -96,8 +96,6 @@ export class ActivitiesFetcherHelper {
     return data[0];
   }
 
-
-
   async getDailyActivityPerCategory(
     userId: string,
     date: string,

@@ -1,11 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { endOfDay, startOfDay } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { TableName } from 'src/services/supabase/supabase.interface';
 import {
   WorkSessionItem,
   WorkSessionReport,
 } from '../../interface/work_session.interface';
+import { TIMEZONE } from 'src/constants/timezone';
 
 @Injectable()
 export class ActivitiesWorkSession {
@@ -17,8 +19,9 @@ export class ActivitiesWorkSession {
     userId: string,
     date: string,
   ): Promise<Omit<WorkSessionItem, 'reports'>[]> {
-    const start = startOfDay(new Date(date));
-    const end = endOfDay(new Date(date));
+    const zonedTime = toZonedTime(date, TIMEZONE);
+    const start = startOfDay(zonedTime);
+    const end = endOfDay(zonedTime);
 
     const { data, error } = await this.supabase
       .from(TableName.WorkSessions)
@@ -39,8 +42,9 @@ export class ActivitiesWorkSession {
     userId: string,
     date: string,
   ): Promise<WorkSessionReport[]> {
-    const start = startOfDay(new Date(date));
-    const end = endOfDay(new Date(date));
+    const zonedTime = toZonedTime(date, TIMEZONE);
+    const start = startOfDay(zonedTime);
+    const end = endOfDay(zonedTime);
 
     const { data, error } = await this.supabase
       .from(TableName.AIScreenReport)
@@ -66,7 +70,9 @@ export class ActivitiesWorkSession {
       const sessionEnd = session.end_at || new Date().toISOString();
 
       const reportsInSession = reports.filter((report) => {
-        return report.created_at >= sessionStart && report.created_at <= sessionEnd;
+        return (
+          report.created_at >= sessionStart && report.created_at <= sessionEnd
+        );
       });
 
       return {
