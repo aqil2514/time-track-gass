@@ -11,6 +11,7 @@
     "store:default",
     "updater:default",
     "shell:default",
+    "macos-permissions:default",
 
     "http:default",
     "http:allow-fetch",

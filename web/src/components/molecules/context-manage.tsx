@@ -12,23 +12,38 @@ export interface ContentTabConfig {
 interface Props {
   defaultValue: string;
   tabsConfig: ContentTabConfig[];
+  content?: string;
+  onContentChange?: (content: string) => void;
 }
 
-export function ContextManager({ defaultValue, tabsConfig }: Props) {
+export function ContextManager({
+  defaultValue,
+  tabsConfig,
+  content,
+  onContentChange,
+}: Props) {
   const { get, resetToContent } = useQueryParams();
 
-  const activeContent = get("content") ?? defaultValue;
-  
+  let activeContent = get("content") ?? defaultValue;
+  if (content) {
+    activeContent = content;
+  }
+
+  const handleChange = (value: string) => {
+    if (onContentChange) return onContentChange(value);
+    resetToContent(value)
+  };
+
   return (
     <Tabs
       value={activeContent}
-      onValueChange={resetToContent}
+      onValueChange={handleChange}
       className="w-full space-y-6"
     >
       <TabsList className="bg-slate-900/50 border border-slate-800 p-1">
         {tabsConfig.map((tab) => (
-          <TabsTrigger 
-            key={tab.value} 
+          <TabsTrigger
+            key={tab.value}
             value={tab.value}
             className="data-[state=active]:cursor-default cursor-pointer data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-slate-200 transition-all"
           >
@@ -38,13 +53,13 @@ export function ContextManager({ defaultValue, tabsConfig }: Props) {
       </TabsList>
 
       {tabsConfig.map((tab) => (
-        <TabsContent 
-          key={tab.value} 
-          value={tab.value} 
+        <TabsContent
+          key={tab.value}
+          value={tab.value}
           className="mt-0 focus-visible:outline-none"
         >
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-             {tab.Component}
+            {tab.Component}
           </div>
         </TabsContent>
       ))}

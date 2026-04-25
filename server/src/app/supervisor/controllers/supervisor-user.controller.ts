@@ -15,6 +15,7 @@ import { ProfilesWithNoPassword } from 'src/app/auth/interfaces/profiles.interfa
 import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
 import { RoleGuard } from 'src/guards/role.guard';
 import { Roles } from 'src/decorators/roles.decorator';
+import { UserSettingsDto } from '../dto/user-settings.dto';
 
 @UseGuards(JwtAuthSupervisorGuard, RoleGuard)
 @Roles('supervisor')
@@ -49,11 +50,26 @@ export class SupervisorUserController {
 
   @Patch(':id/reset-password')
   async resetPassword(@Param('id') id: string) {
-    return await this.supervisorUserService.deleteUserPassword(id)
+    return await this.supervisorUserService.deleteUserPassword(id);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<void> {
     return this.supervisorUserService.deleteUserData(id);
+  }
+
+  @Get(':id/settings')
+  async getUserSetting(@Param('id') id: string) {
+    const userSetting = await this.supervisorUserService.getUserSetting(id);
+    return userSetting;
+  }
+
+  @Patch(':id/settings')
+  async updateUserSetting(
+    @Param('id') id: string,
+    @Body() body: UserSettingsDto,
+  ) {
+    await this.supervisorUserService.updateUserSetting(id, body);
+    return { success: true };
   }
 }

@@ -26,7 +26,7 @@ export function ZoomDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="max-w-[95vw] md:max-w-[90vw] lg:max-w-7xl border-none bg-transparent p-0 shadow-none outline-none flex items-center justify-center z-[100]"
+        className="max-w-[95vw] md:max-w-[90vw] lg:max-w-7xl border-none bg-transparent p-0 shadow-none outline-none flex items-center justify-center z-100"
         onClick={() => onClose(false)}
       >
         <DialogTitle className="sr-only">{title}</DialogTitle>

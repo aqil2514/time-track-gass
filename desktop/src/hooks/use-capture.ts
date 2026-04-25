@@ -6,32 +6,33 @@ import { invoke } from "@tauri-apps/api/core";
 import { platform } from "@tauri-apps/plugin-os";
 import { useCallback } from "react";
 import { load, Store } from "@tauri-apps/plugin-store";
+import {
+  checkScreenRecordingPermission,
+  requestScreenRecordingPermission,
+} from "tauri-plugin-macos-permissions-api";
 
 let store: null | Store = null;
 
 const getStore = async () => {
-  if(!store)
-    store = await load("compare-capture.json")
-  return store
-}
+  if (!store) store = await load("compare-capture.json");
+  return store;
+};
 
 const addToOldStore = async (pathUrl: string) => {
-  const store = await getStore()
-  await store.set("old_path", pathUrl);
-  await store.save();
+  const s = await getStore();
+  await s.set("old_path", pathUrl);
+  await s.save();
 };
+
+const os = platform();
 
 export function useCapture() {
   const capture = useCallback(async () => {
-    const os = platform();
-
     if (os === "macos") {
-      const hasPermission = await invoke<boolean>(
-        "check_screen_permission_macos",
-      );
+      const hasPermission = await checkScreenRecordingPermission();
 
       if (!hasPermission) {
-        await invoke("request_screen_permission_macos");
+        await requestScreenRecordingPermission();
         throw new Error(
           "Screen Recording permission belum diaktifkan. Aktifkan di System Settings lalu restart aplikasi.",
         );
@@ -46,9 +47,10 @@ export function useCapture() {
     return await invoke<string>("resize_and_encode", { filePath: tempPath });
   }, []);
 
-  const compareImage = async (newPathUrl: string) => {
-    const store = await load("compare-capture.json");
-    const oldPath = await store.get("old_path");
+  const compareImage = useCallback(async (newPathUrl: string) => {
+    const s = await getStore(); // ✅ pakai getStore() yang sudah di-cache
+    const oldPath = await s.get("old_path");
+
     if (!oldPath) {
       await addToOldStore(newPathUrl);
       return false;
@@ -60,9 +62,8 @@ export function useCapture() {
     });
 
     await addToOldStore(newPathUrl);
-
     return isSameImage;
-  };
+  }, []);
 
   return { capture, compareImage };
 }

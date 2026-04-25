@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Key, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Eye, Key, MoreHorizontal, Pencil, Settings, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -62,12 +62,20 @@ export function TeamsTableActions({ user }: TeamsTableActionsProps) {
     {
       label: "Delete",
       icon: Trash2,
-      // Merah untuk aksi berbahaya
       className:
         "cursor-pointer focus:bg-red-500/10 focus:text-red-400 text-red-400",
       onClick: () =>
         dispatch({
           type: "OPEN_DELETE_USER_MODAL",
+          payload: { userId: user.id },
+        }),
+    },
+    {
+      label: "Setting",
+      icon: Settings,
+      onClick: () =>
+        dispatch({
+          type: "OPEN_SETTING_USER_MODAL",
           payload: { userId: user.id },
         }),
     },

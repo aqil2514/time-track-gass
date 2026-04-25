@@ -1,9 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js/dist/index.cjs';
 import { TableName } from 'src/services/supabase/supabase.interface';
 
 @Injectable()
 export class WorkSessionService {
+  private readonly logger = new Logger(WorkSessionService.name);
   constructor(
     @Inject('SUPABASE_CLIENT') private readonly supabaseClient: SupabaseClient,
   ) {}
@@ -24,7 +25,8 @@ export class WorkSessionService {
   async createNewWorkSession(userId: string) {
     const isExistingSession = await this.getCurrentWorkSession(userId);
     if (isExistingSession) {
-      throw new Error('An active work session already exists');
+      this.logger.warn('Sesi kerja yang aktif untuk user tersebut masih ada');
+      return;
     }
 
     const { data, error } = await this.supabaseClient

@@ -15,3 +15,12 @@ export interface Profile {
   email: string;
   division: string;
 }
+
+export type TrackerMode = "auto" | "manual";
+
+export interface UserSettings {
+  tracker: {
+    mode: TrackerMode;
+    allowedMode: TrackerMode[];
+  };
+}

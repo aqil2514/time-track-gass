@@ -12,6 +12,7 @@ import { TeamsControls } from "./components/teams-controls.soon";
 import { filterData } from "./utils/filter-data";
 import { useMemo } from "react";
 import { getColumns } from "./components/teams-table-columns";
+import { SettingDialog } from "./components/dialogs/setting-dialog";
 
 export function TeamsTemplate() {
   return (
@@ -61,6 +62,7 @@ const InnerTemplate = () => {
       <AddFormDialog />
       <DeleteUserDialog />
       <ResetPasswordDialog />
+      <SettingDialog />
     </>
   );
 };

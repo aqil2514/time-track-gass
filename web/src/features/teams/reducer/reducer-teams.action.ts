@@ -15,7 +15,7 @@ export function teamManagemetAction(
     ...state,
     controller: teamControllerAction(state.controller, action),
     modal: teamModalAction(state.modal, action),
-    data: teamDataAction(state.data, action)
+    data: teamDataAction(state.data, action),
   };
 }
 
@@ -85,6 +85,13 @@ const teamModalAction = (
       };
     case "CLOSE_RESET_PASSWORD_USER_MODAL":
       return { ...state, resetPassword: { isOpen: false, userId: "" } };
+    case "OPEN_SETTING_USER_MODAL":
+      return {
+        ...state,
+        settings: { isOpen: true, userId: action.payload.userId },
+      };
+    case "CLOSE_SETTING_USER_MODAL":
+      return { ...state, settings: { isOpen: false, userId: "" } };
     default:
       return state;
   }

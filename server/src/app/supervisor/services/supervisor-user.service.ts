@@ -11,6 +11,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { SupervisorUserHelper } from './helpers/supervisor-user-helper.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { UserSettingsDto } from '../dto/user-settings.dto';
 
 @Injectable()
 export class SupervisorUserService {
@@ -150,7 +151,7 @@ export class SupervisorUserService {
       throw error;
     }
 
-    this.eventEmitter.emit("profile.deleted", id)
+    this.eventEmitter.emit('profile.deleted', id);
   }
 
   async deleteUserPassword(id: string): Promise<void> {
@@ -164,4 +165,35 @@ export class SupervisorUserService {
       throw error;
     }
   }
+
+  // USER SETTINGS START
+
+  async getUserSetting(id: string) {
+    const { data, error } = await this.supabase
+      .from(TableName.Profiles)
+      .select('settings, id')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    return data;
+  }
+
+  async updateUserSetting(id: string, newSetting: UserSettingsDto) {
+    const { error } = await this.supabase
+      .from(TableName.Profiles)
+      .update({ settings: newSetting })
+      .eq('id', id);
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  // USER SETTINGS END
 }
