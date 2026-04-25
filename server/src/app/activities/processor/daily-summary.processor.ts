@@ -29,6 +29,7 @@ export class DailySummaryProcessor extends WorkerHost {
       await this.dailySummaryHelper.mapToDailySummaryDbInsert(data);
 
       await this.dailySummaryHelper.createNewDailySummary(mappedData);
+      return mappedData
   }
 
   @OnWorkerEvent('completed')

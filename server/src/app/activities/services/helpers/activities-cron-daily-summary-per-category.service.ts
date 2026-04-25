@@ -4,20 +4,24 @@ import axios from 'axios';
 import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { TableName } from 'src/services/supabase/supabase.interface';
 import { DailySummaryPerCategory } from '../../interface/daily_summary_per_category.interface';
+import { GoogleGenAI } from '@google/genai';
 
 @Injectable()
 export class ActivitiesDailySummaryPerCategoryCronHelper {
   private readonly logger = new Logger(
     ActivitiesDailySummaryPerCategoryCronHelper.name,
   );
-  private readonly endpoint: string =
-    'https://open.bigmodel.cn/api/coding/paas/v4/chat/completions';
-  private readonly apiKey: string = `Bearer ${process.env.Z_AI_API_KEY}`;
-  private readonly model: string = 'glm-4.6v';
+  // private readonly endpoint: string =
+  //   'https://open.bigmodel.cn/api/coding/paas/v4/chat/completions';
+  // private readonly apiKey: string = `Bearer ${process.env.Z_AI_API_KEY}`;
+  // private readonly model: string = 'glm-4.6v';
 
   constructor(
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
+
+    @Inject('GEMINI_AI')
+    private readonly gemini: GoogleGenAI,
   ) {}
 
   async getUserDailyActivity(userIds: string[]): Promise<AIScreenReportDb[]> {
@@ -72,40 +76,76 @@ export class ActivitiesDailySummaryPerCategoryCronHelper {
     }
   `;
 
-    try {
-      const response = await axios.post(
-        this.endpoint,
+    const res = await this.gemini.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
         {
-          model: this.model,
-          messages: [{ role: 'user', content: prompt }],
-          response_format: { type: 'json_object' },
+          role: 'user',
+          parts: [
+            {
+              text: prompt,
+            },
+          ],
         },
-        {
-          headers: {
-            Authorization: this.apiKey,
-            'Content-Type': 'application/json',
+      ],
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'object',
+          properties: {
+            category: { type: 'string' },
+            duration: { type: 'number' },
+            summary: { type: 'string' },
           },
+          required: ['category', 'duration', 'summary'],
         },
-      );
+      },
+    });
 
-      // 2. Parsing Response
-      const content = JSON.parse(response.data.choices[0].message.content);
-      const aiData = content.summaries || [];
+    const content = JSON.parse(res.text);
+    const today = new Date().toISOString().split('T')[0];
 
-      // 3. Enrichment (Menambahkan user_id dan date secara manual)
-      const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    return content.map((item: any) => ({
+      ...item,
+      user_id: user_id,
+      date: today,
+      created_at: new Date(),
+    }));
 
-      return aiData.map((item: any) => ({
-        ...item,
-        user_id: user_id,
-        date: today,
-        created_at: new Date(),
-      }));
-    } catch (error) {
-      // @ts-ignore
-      this.logger.error(`Error AI Summary for user ${user_id}:`, error.message);
-      return []; // Kembalikan array kosong agar loop utama tidak berhenti total
-    }
+    // try {
+    //   const response = await axios.post(
+    //     this.endpoint,
+    //     {
+    //       model: this.model,
+    //       messages: [{ role: 'user', content: prompt }],
+    //       response_format: { type: 'json_object' },
+    //     },
+    //     {
+    //       headers: {
+    //         Authorization: this.apiKey,
+    //         'Content-Type': 'application/json',
+    //       },
+    //     },
+    //   );
+
+    //   // 2. Parsing Response
+    //   const content = JSON.parse(response.data.choices[0].message.content);
+    //   const aiData = content.summaries || [];
+
+    //   // 3. Enrichment (Menambahkan user_id dan date secara manual)
+    //   const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
+    //   return aiData.map((item: any) => ({
+    //     ...item,
+    //     user_id: user_id,
+    //     date: today,
+    //     created_at: new Date(),
+    //   }));
+    // } catch (error) {
+    //   // @ts-ignore
+    //   this.logger.error(`Error AI Summary for user ${user_id}:`, error.message);
+    //   return []; // Kembalikan array kosong agar loop utama tidak berhenti total
+    // }
   }
 
   async getAllCategories(): Promise<string[]> {

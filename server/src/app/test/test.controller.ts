@@ -54,4 +54,7 @@ export class TestController {
     await this.bullService.testAttendanceLogs()
     return "OK"
   }
+
+  @Get("/daily-summary")
+  async testDailySummary(){}
 }

@@ -16,6 +16,9 @@ import { QUERY_NAME } from 'src/constants/queue.constant';
       name: QUERY_NAME.SUMMARY_SESSION,
     }),
     BullModule.registerQueue({
+      name: QUERY_NAME.DAILY_SUMMARY,
+    }),
+    BullModule.registerQueue({
       name: 'attendance-logs',
     }),
 

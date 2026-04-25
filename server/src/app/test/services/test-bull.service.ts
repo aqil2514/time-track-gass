@@ -14,6 +14,9 @@ export class TestBullService {
     @InjectQueue(QUERY_NAME.SUMMARY_SESSION)
     private summaryQueue: Queue,
 
+    @InjectQueue(QUERY_NAME.DAILY_SUMMARY)
+    private readonly dailySummaryQueue:Queue,
+
     @InjectQueue('attendance-logs')
     private attendanceLogsQueue: Queue,
 
@@ -59,5 +62,23 @@ export class TestBullService {
 
   async testAttendanceLogs() {
     await this.attendanceLogsQueue.add('attendance-logs', {});
+  }
+
+    async testDailySummaryQueue() {
+    const allUser = await this.getAllUser();
+
+    for (const user of allUser) {
+      await this.dailySummaryQueue.add(
+        'summary-session',
+        { userId: user },
+        {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 5000 },
+          jobId: `summary-${user}-${new Date().getFullYear()}-${new Date().getMonth()}-${new Date().getDate()}-${new Date().getHours()}`,
+          removeOnComplete: 100,
+          removeOnFail: 50,
+        },
+      );
+    }
   }
 }
