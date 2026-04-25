@@ -1,12 +1,14 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js/dist/index.cjs';
 import { TableName } from 'src/services/supabase/supabase.interface';
+import { LogService } from '../log/log.service';
 
 @Injectable()
 export class WorkSessionService {
   private readonly logger = new Logger(WorkSessionService.name);
   constructor(
     @Inject('SUPABASE_CLIENT') private readonly supabaseClient: SupabaseClient,
+    private readonly logService: LogService,
   ) {}
 
   private async getCurrentWorkSession(userId: string) {
@@ -16,7 +18,15 @@ export class WorkSessionService {
       .eq('user_id', userId)
       .is('end_at', null)
       .maybeSingle();
+
     if (error) {
+      await this.logService.createNewLog(userId, {
+        context: 'Fungsi ambil sesi jam kerja (getCurrentWorkSession)',
+        level: 'ERROR',
+        message: error.message,
+        metadata: error,
+        os: 'server',
+      });
       throw new Error(error.message);
     }
     return data;
@@ -25,14 +35,31 @@ export class WorkSessionService {
   async createNewWorkSession(userId: string) {
     const isExistingSession = await this.getCurrentWorkSession(userId);
     if (isExistingSession) {
-      this.logger.warn('Sesi kerja yang aktif untuk user tersebut masih ada');
+      await this.logService.createNewLog(userId, {
+        context: 'Fungsi buat sesi jam kerja baru (createNewWorkSession)',
+        level: 'WARN',
+        message: `Sesi kerja yang aktif untuk user ${userId} tersebut masih ada`,
+        metadata: {},
+        os: 'server',
+      });
+      this.logger.warn(
+        `Sesi kerja yang aktif untuk user ${userId} tersebut masih ada`,
+      );
       return;
     }
 
     const { data, error } = await this.supabaseClient
       .from(TableName.WorkSessions)
       .insert({ user_id: userId, start_at: new Date().toISOString() });
+
     if (error) {
+      await this.logService.createNewLog(userId, {
+        context: 'Fungsi ambil sesi jam kerja (getCurrentWorkSession)',
+        level: 'ERROR',
+        message: error.message,
+        metadata: error,
+        os: 'server',
+      });
       throw new Error(error.message);
     }
     return data;
@@ -41,7 +68,17 @@ export class WorkSessionService {
   async endCurrentWorkSession(userId: string, end_at?: Date) {
     const currentSession = await this.getCurrentWorkSession(userId);
     if (!currentSession) {
-      throw new Error('No active work session found');
+      await this.logService.createNewLog(userId, {
+        context: 'Fungsi ambil sesi jam kerja (endCurrentWorkSession)',
+        level: 'WARN',
+        message: 'Tidak ada sesi jam kerja yang aktif',
+        metadata: {},
+        os: 'server',
+      });
+      this.logger.warn(
+        `Tidak ada sesi jam kerja yang aktif dari user ${userId}`,
+      );
+      return;
     }
 
     const { error } = await this.supabaseClient
@@ -50,6 +87,13 @@ export class WorkSessionService {
       .eq('id', currentSession.id);
 
     if (error) {
+      await this.logService.createNewLog(userId, {
+        context: 'Fungsi ambil sesi jam kerja (endCurrentWorkSession)',
+        level: 'ERROR',
+        message: error.message,
+        metadata: error,
+        os: 'server',
+      });
       throw new Error(error.message);
     }
   }
