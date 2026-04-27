@@ -21,6 +21,7 @@ export class WorkSessionCronService {
       await this.workSessionService.endCurrentWorkSession(
         session.user_id,
         lastTimeUserActivity,
+        'auto',
       );
     }
   }

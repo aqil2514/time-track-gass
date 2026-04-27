@@ -65,7 +65,11 @@ export class WorkSessionService {
     return data;
   }
 
-  async endCurrentWorkSession(userId: string, end_at?: Date) {
+  async endCurrentWorkSession(
+    userId: string,
+    end_at?: Date,
+    stop_mode?: string,
+  ) {
     const currentSession = await this.getCurrentWorkSession(userId);
     if (!currentSession) {
       await this.logService.createNewLog(userId, {
@@ -83,7 +87,7 @@ export class WorkSessionService {
 
     const { error } = await this.supabaseClient
       .from(TableName.WorkSessions)
-      .update({ end_at: (end_at ?? new Date()).toISOString() })
+      .update({ end_at: (end_at ?? new Date()).toISOString(), stop_mode })
       .eq('id', currentSession.id);
 
     if (error) {

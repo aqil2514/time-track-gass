@@ -151,15 +151,23 @@ export class SupervisorMatrixService {
 
   async getWorkSession(date: string): Promise<WorkSessionDb[]> {
     const zonedTime = toZonedTime(date, TIMEZONE);
+    const dateOnly = format(zonedTime, 'yyyy-MM-dd', { timeZone: TIMEZONE });
 
-    const startDate = startOfDay(zonedTime);
-    const endDate = endOfDay(zonedTime);
+    const startStr = `${dateOnly}T00:00:00+07:00`;
+    const endStr = `${dateOnly}T23:59:59.999+07:00`;
 
     const { data, error } = await this.supabase
       .from(TableName.WorkSessions)
       .select('*')
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString());
+      .or(
+        `and(start_at.gte.${startStr},start_at.lte.${endStr}),and(end_at.gte.${startStr},end_at.lte.${endStr})`,
+      ); 
+      
+      // const { data, error } = await this.supabase
+    //   .from(TableName.WorkSessions)
+    //   .select('*')
+    //   .gte('start_at', startStr)
+    //   .lte('start_at', endStr);
 
     if (error) {
       console.error(error);

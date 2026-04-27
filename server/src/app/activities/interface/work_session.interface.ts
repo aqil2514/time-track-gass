@@ -1,9 +1,10 @@
-export interface WorkSessionDb{
-    id:number;
-    created_at:string;
-    user_id:string;
-    start_at:string;
-    end_at:string | null;
+export interface WorkSessionDb {
+  id: number;
+  created_at: string;
+  user_id: string;
+  start_at: string;
+  end_at: string | null;
+  stop_mode: string | null;
 }
 
 // CLIENT

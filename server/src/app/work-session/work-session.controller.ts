@@ -15,7 +15,7 @@ export class WorkSessionController {
 
   @Post('end')
   async endWorkSession(@UserId() userId: string) {
-    await this.service.endCurrentWorkSession(userId);
+    await this.service.endCurrentWorkSession(userId, new Date(), 'manual');
     return { success: true };
   }
 }
