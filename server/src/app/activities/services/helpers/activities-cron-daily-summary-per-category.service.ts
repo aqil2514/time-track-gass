@@ -93,19 +93,29 @@ export class ActivitiesDailySummaryPerCategoryCronHelper {
         responseSchema: {
           type: 'object',
           properties: {
-            category: { type: 'string' },
-            duration: { type: 'number' },
-            summary: { type: 'string' },
+            summaries: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  category: { type: 'string' },
+                  duration: { type: 'number' },
+                  summary: { type: 'string' },
+                },
+                required: ['category', 'duration', 'summary'],
+              },
+            },
           },
-          required: ['category', 'duration', 'summary'],
+          required: ['summaries'],
         },
       },
     });
 
     const content = JSON.parse(res.text);
     const today = new Date().toISOString().split('T')[0];
+    const aiData = content.summaries || [];
 
-    return content.map((item: any) => ({
+    return aiData.map((item: any) => ({
       ...item,
       user_id: user_id,
       date: today,

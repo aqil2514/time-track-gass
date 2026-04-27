@@ -1,6 +1,6 @@
 export interface AppLogInsertClient {
   level: string;
-  os: string;
+  os?: string;
   message: string;
   context: string; // nama fungsi
   metadata: unknown;

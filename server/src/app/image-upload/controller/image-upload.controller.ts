@@ -1,7 +1,9 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
+  Logger,
   Post,
   Query,
   UnprocessableEntityException,
@@ -21,6 +23,7 @@ import { ImageValidationService } from '../services/image-validation.service';
 @UseGuards(JwtAuthGuard)
 @Controller('image-upload')
 export class ImageUploadController {
+  private readonly logger = new Logger(ImageUploadController.name);
   constructor(
     private readonly scannerService: ImageScannerService,
     private readonly validationService: ImageValidationService,
@@ -41,27 +44,56 @@ export class ImageUploadController {
     @Query('date') date: string,
     @UserId() userId: string,
   ) {
-    const { invalidImages, validImages } =
-      await this.validationService.validateImage(images, body, date);
-
-    if (invalidImages.length !== 0) {
-      throw new UnprocessableEntityException({
-        message: 'Beberapa gambar tidak valid',
-        invalidImages: invalidImages.map((img) => ({
-          filename: img.file.originalname,
-          reason: img.invalidResult,
-        })),
-      });
-    }
-
-    await this.scannerService.analyzeActivityManual(
-      validImages,
-      userId,
-      body.slotId,
-      date,
+    this.logger.log(
+      `Memulai proses upload manual untuk User: ${userId} pada tanggal: ${date}`,
     );
 
-    return { success: true };
+    // 1. Validasi keberadaan file
+    if (!images || images.length === 0) {
+      this.logger.warn(`User ${userId} mencoba upload tanpa file`);
+      throw new BadRequestException('Tidak ada gambar yang diunggah');
+    }
+
+    try {
+      // 2. Proses validasi gambar
+      const { invalidImages, validImages } =
+        await this.validationService.validateImage(images, body, date);
+
+      if (invalidImages.length !== 0) {
+        this.logger.warn(
+          `${invalidImages.length} gambar gagal divalidasi untuk User ${userId}`,
+        );
+
+        throw new UnprocessableEntityException({
+          message: 'Beberapa gambar tidak valid',
+          invalidImages: invalidImages.map((img) => ({
+            // Gunakan optional chaining untuk menghindari 'cannot read property of undefined'
+            filename: img.file?.originalname || 'Unknown',
+            reason: img.invalidResult,
+          })),
+        });
+      }
+
+      // 3. Proses analisis aktivitas
+      this.logger.log(`Menganalisis ${validImages.length} gambar valid...`);
+
+      await this.scannerService.analyzeActivityManual(
+        validImages,
+        userId,
+        body.slotId, // Pastikan DTO sudah mentransform string ke number jika perlu
+        date,
+      );
+
+      this.logger.log(`Analisis selesai untuk User ${userId}`);
+      return { success: true };
+    } catch (error) {
+      // 4. Logging error tak terduga
+      this.logger.error(
+        `Gagal memproses upload: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw error; // Teruskan error agar ditangani Exception Filter
+    }
   }
 
   @Get('manual')

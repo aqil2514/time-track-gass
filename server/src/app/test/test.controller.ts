@@ -32,13 +32,13 @@ export class TestController {
     };
   }
 
-  @Get('/daily-summary-category')
-  async bullDailySummaryCategory() {
-    await this.cronTest.createDailySummaryPerCategory();
-    return {
-      message: 'Tugas Ditambah',
-    };
-  }
+  // @Get('/daily-summary-category')
+  // async bullDailySummaryCategory() {
+  //   await this.cronTest.createDailySummaryPerCategory();
+  //   return {
+  //     message: 'Tugas Ditambah',
+  //   };
+  // }
 
   @Get('/axios')
   async sendMessage() {
@@ -49,6 +49,12 @@ export class TestController {
   async summarySession() {
     await this.bullService.testSummaryQueue();
     return 'OK';
+  }
+
+  @Get('daily-summary-category')
+  async dailySummaryCategoryTest() {
+    await this.bullService.testDailySummaryCategoryQueue();
+    return { message: 'OK' };
   }
 
   @Get('/attendance-logs')

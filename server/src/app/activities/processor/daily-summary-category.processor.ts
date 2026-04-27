@@ -13,30 +13,56 @@ export class DailySummaryCategoryProcessor extends WorkerHost {
   ) {
     super();
   }
+  // async process(job: Job) {
+  //   const { userId } = job.data;
+  //   await job.updateProgress(10);
+
+  //   const [relevantCategories, userActivities] = await Promise.all([
+  //     this.helper.getCategoryByUser(userId),
+  //     this.helper.getUserDailyActivity([userId]),
+  //   ]);
+
+  //   await job.updateProgress(30);
+
+  //   if (!relevantCategories || userActivities.length === 0) {
+  //     await job.updateProgress(100);
+  //     return;
+  //   }
+  //   const summary = await this.helper.getDailyAiSummary(
+  //     userActivities,
+  //     relevantCategories,
+  //     userId,
+  //   );
+  //   await job.updateProgress(80);
+
+  //   await this.helper.saveToDb(summary);
+  //   await job.updateProgress(100);
+  // }
+
   async process(job: Job) {
     const { userId } = job.data;
-    await job.updateProgress(10);
 
+    // Step 1 : Ambil aktivitas dan kategori yang relevan dengan user
     const [relevantCategories, userActivities] = await Promise.all([
       this.helper.getCategoryByUser(userId),
       this.helper.getUserDailyActivity([userId]),
     ]);
 
-    await job.updateProgress(30);
-
+    // Kalo gak relevan dan ga ada aktivitas, stop sampai sini prosesnya
     if (!relevantCategories || userActivities.length === 0) {
       await job.updateProgress(100);
       return;
     }
+
     const summary = await this.helper.getDailyAiSummary(
       userActivities,
       relevantCategories,
       userId,
     );
-    await job.updateProgress(80);
-    
-    await this.helper.saveToDb(summary);
-    await job.updateProgress(100);
+
+     await this.helper.saveToDb(summary);
+
+    return { summary };
   }
 
   @OnWorkerEvent('completed')

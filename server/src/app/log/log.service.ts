@@ -13,6 +13,7 @@ export class LogService {
   async createNewLog(user_id: string, payload: AppLogInsertClient) {
     const dbPayload: AppLogInsertDb = {
       ...payload,
+      os: 'server',
       user_id,
     };
 

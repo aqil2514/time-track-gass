@@ -15,7 +15,10 @@ export class TestBullService {
     private summaryQueue: Queue,
 
     @InjectQueue(QUERY_NAME.DAILY_SUMMARY)
-    private readonly dailySummaryQueue:Queue,
+    private readonly dailySummaryQueue: Queue,
+
+    @InjectQueue(QUERY_NAME.DAILY_CATEGORY)
+    private readonly dailySummaryCategory: Queue,
 
     @InjectQueue('attendance-logs')
     private attendanceLogsQueue: Queue,
@@ -64,7 +67,7 @@ export class TestBullService {
     await this.attendanceLogsQueue.add('attendance-logs', {});
   }
 
-    async testDailySummaryQueue() {
+  async testDailySummaryQueue() {
     const allUser = await this.getAllUser();
 
     for (const user of allUser) {
@@ -75,6 +78,24 @@ export class TestBullService {
           attempts: 3,
           backoff: { type: 'exponential', delay: 5000 },
           jobId: `summary-${user}-${new Date().getFullYear()}-${new Date().getMonth()}-${new Date().getDate()}-${new Date().getHours()}`,
+          removeOnComplete: 100,
+          removeOnFail: 50,
+        },
+      );
+    }
+  }
+
+  async testDailySummaryCategoryQueue() {
+    const allUser = await this.getAllUser();
+
+    for (const user of allUser) {
+      await this.dailySummaryCategory.add(
+        'summary-category',
+        { userId: user },
+        {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 5000 },
+          // jobId: `category-${user}-${new Date().getFullYear()}-${new Date().getMonth()}-${new Date().getDate()}-${new Date().getHours()}`,
           removeOnComplete: 100,
           removeOnFail: 50,
         },

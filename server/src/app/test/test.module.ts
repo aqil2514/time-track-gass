@@ -20,6 +20,9 @@ import { TestGeminiService } from './services/test-gemini.service';
       name: QUERY_NAME.DAILY_SUMMARY,
     }),
     BullModule.registerQueue({
+      name: QUERY_NAME.DAILY_CATEGORY,
+    }),
+    BullModule.registerQueue({
       name: 'attendance-logs',
     }),
 
