@@ -6,7 +6,7 @@ import {
   TotalWeeklyActivity,
 } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { TableName } from 'src/services/supabase/supabase.interface';
-import { startOfDay, endOfDay, startOfWeek, endOfWeek } from 'date-fns';
+import { startOfWeek, endOfWeek } from 'date-fns';
 import { format, toZonedTime } from 'date-fns-tz';
 import { WorkSessionDb } from 'src/app/activities/interface/work_session.interface';
 import { TIMEZONE } from 'src/constants/timezone';
@@ -161,13 +161,7 @@ export class SupervisorMatrixService {
       .select('*')
       .or(
         `and(start_at.gte.${startStr},start_at.lte.${endStr}),and(end_at.gte.${startStr},end_at.lte.${endStr})`,
-      ); 
-      
-      // const { data, error } = await this.supabase
-    //   .from(TableName.WorkSessions)
-    //   .select('*')
-    //   .gte('start_at', startStr)
-    //   .lte('start_at', endStr);
+      );
 
     if (error) {
       console.error(error);

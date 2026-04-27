@@ -1,0 +1,1 @@
+- Fitur auto retry ketika terdeteksi error

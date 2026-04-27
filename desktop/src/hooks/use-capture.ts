@@ -10,6 +10,7 @@ import {
   checkScreenRecordingPermission,
   requestScreenRecordingPermission,
 } from "tauri-plugin-macos-permissions-api";
+import { message } from "@tauri-apps/plugin-dialog";
 
 let store: null | Store = null;
 
@@ -26,6 +27,15 @@ const addToOldStore = async (pathUrl: string) => {
 
 const os = platform();
 
+async function waitForPermission(maxSeconds: number): Promise<boolean> {
+  for (let i = 0; i < maxSeconds; i++) {
+    await new Promise((r) => setTimeout(r, 1000));
+    const granted = await checkScreenRecordingPermission();
+    if (granted) return true;
+  }
+  return false;
+}
+
 export function useCapture() {
   const capture = useCallback(async () => {
     if (os === "macos") {
@@ -33,9 +43,17 @@ export function useCapture() {
 
       if (!hasPermission) {
         await requestScreenRecordingPermission();
-        throw new Error(
-          "Screen Recording permission belum diaktifkan. Aktifkan di System Settings lalu restart aplikasi.",
-        );
+
+        // Poll sampai permission granted atau timeout
+        const granted = await waitForPermission(10); // tunggu max 10 detik
+
+        if (!granted) {
+          await message(
+            "Izin Screen Recording belum terdeteksi. Jika sudah mengaktifkan di System Settings, silakan restart aplikasi.",
+            { title: "Permission Diperlukan", kind: "warning" },
+          );
+          throw new Error("Screen Recording permission belum diaktifkan. Aktifkan di System Settings lalu restart aplikasi.");
+        }
       }
 
       return await invoke<string>("capture_screen_macos");
@@ -48,7 +66,7 @@ export function useCapture() {
   }, []);
 
   const compareImage = useCallback(async (newPathUrl: string) => {
-    const s = await getStore(); // ✅ pakai getStore() yang sudah di-cache
+    const s = await getStore();
     const oldPath = await s.get("old_path");
 
     if (!oldPath) {

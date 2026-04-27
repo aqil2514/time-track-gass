@@ -25,6 +25,10 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const nextCaptureAtRef = useRef<number | null>(null);
   const isCapturingRef = useRef(false);
+  const retryCountRef = useRef(0);
+
+  const MAX_RETRY = 3;
+  const RETRY_DELAY = 5; //detik
 
   // ==============================
   // CLEAR ALL TIMERS
@@ -67,26 +71,18 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
       setStatus("capturing");
 
       const dataUrl = await capture();
-
-      if (!dataUrl)
-        throw new Error("Capture failed: No data received from system");
+      if (!dataUrl) throw new Error("Capture failed: No data received");
 
       setStatus("uploading");
 
       const store = await load("auth.json");
       const token = await store.get<string>("accessToken");
-
-      if (!token)
-        throw new Error("Upload failed: Access token not found in auth.json");
+      if (!token) throw new Error("Upload failed: Access token not found");
 
       const res = await api.post(
         buildUrl("image-upload"),
         { image: dataUrl },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (res.status === 429) {
@@ -100,24 +96,40 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
         return;
       }
 
+      // ✅ Sukses — reset retry counter
+      retryCountRef.current = 0;
       await mutate();
     } catch (error) {
-      console.error(error);
-      setStatus("error");
+      retryCountRef.current += 1;
 
       await writeLogToDb({
         context: "captureHandler",
         level: "ERROR",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Terjadi kesalahan pada siklus capture",
+        message: error instanceof Error ? error.message : "Capture error",
         metadata: {
           error,
           stack: error instanceof Error ? error.stack : undefined,
-          lastStatus: status,
+          retryCount: retryCountRef.current,
         },
       });
+
+      if (retryCountRef.current < MAX_RETRY) {
+        // 🔄 Auto retry setelah RETRY_DELAY detik
+        setStatus("countdown");
+
+        const retryTarget = Date.now() + RETRY_DELAY * 1000;
+        nextCaptureAtRef.current = retryTarget;
+        setCountdown(RETRY_DELAY);
+        startCountdown();
+
+        timerRef.current = setTimeout(async () => {
+          await captureHandler();
+        }, RETRY_DELAY * 1000);
+      } else {
+        // ❌ Sudah MAX_RETRY kali gagal — stop
+        retryCountRef.current = 0;
+        setStatus("error");
+      }
 
       return;
     } finally {
@@ -125,7 +137,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
     }
 
     setStatus("countdown");
-  }, [capture, mutate, status]); // Tambahkan status ke dependency jika digunakan di metadata
+  }, [capture, mutate, startCountdown]);
 
   // ==============================
   // MAIN LOOP (ANTI DRIFT)

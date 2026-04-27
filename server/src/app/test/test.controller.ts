@@ -3,6 +3,7 @@ import { TestGuard } from 'src/guards/test.guard';
 import { TestBullService } from './services/test-bull.service';
 import { ActivitiesCronService } from '../activities/services/activities-cron.service';
 import { TestAxiosService } from './services/test-axios.service';
+import { TestGeminiService } from './services/test-gemini.service';
 
 @UseGuards(TestGuard)
 @Controller('test')
@@ -10,7 +11,8 @@ export class TestController {
   constructor(
     private readonly bullService: TestBullService,
     private readonly cronTest: ActivitiesCronService,
-    private readonly axiosTest: TestAxiosService
+    private readonly axiosTest: TestAxiosService,
+    private readonly geminiTest: TestGeminiService,
   ) {}
   @Get('/')
   async test() {
@@ -24,7 +26,7 @@ export class TestController {
 
   @Get('/daily-summary')
   async bullDailySummary() {
-    await this.cronTest.createDailySummary()
+    await this.cronTest.createDailySummary();
     return {
       message: 'Tugas Ditambah',
     };
@@ -32,29 +34,35 @@ export class TestController {
 
   @Get('/daily-summary-category')
   async bullDailySummaryCategory() {
-    await this.cronTest.createDailySummaryPerCategory()
+    await this.cronTest.createDailySummaryPerCategory();
     return {
       message: 'Tugas Ditambah',
     };
   }
 
-  @Get("/axios")
-  async sendMessage(){
-    return this.axiosTest.sendMessage()
+  @Get('/axios')
+  async sendMessage() {
+    return this.axiosTest.sendMessage();
   }
 
-  @Get("/summary-session")
-  async summarySession(){
-    await this.bullService.testSummaryQueue()
-    return "OK"
+  @Get('/summary-session')
+  async summarySession() {
+    await this.bullService.testSummaryQueue();
+    return 'OK';
   }
 
-  @Get("/attendance-logs")
-  async testAttendanceLogs(){
-    await this.bullService.testAttendanceLogs()
-    return "OK"
+  @Get('/attendance-logs')
+  async testAttendanceLogs() {
+    await this.bullService.testAttendanceLogs();
+    return 'OK';
   }
 
-  @Get("/daily-summary")
-  async testDailySummary(){}
+  @Get('/daily-summary')
+  async testDailySummary() {}
+
+  // GEMINI
+  @Get('gemini')
+  async testGemini() {
+    return await this.geminiTest.testGeminiVideo();
+  }
 }

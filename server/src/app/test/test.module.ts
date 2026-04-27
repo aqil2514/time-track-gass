@@ -6,6 +6,7 @@ import { TestBullProcessor } from './processor/test-bull.processor';
 import { HttpModule } from '@nestjs/axios';
 import { TestAxiosService } from './services/test-axios.service';
 import { QUERY_NAME } from 'src/constants/queue.constant';
+import { TestGeminiService } from './services/test-gemini.service';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { QUERY_NAME } from 'src/constants/queue.constant';
 
     HttpModule
   ],
-  providers: [TestBullService, TestBullProcessor, TestAxiosService],
+  providers: [TestBullService, TestBullProcessor, TestAxiosService, TestGeminiService],
   controllers: [TestController],
 })
 export class TestModule {}
