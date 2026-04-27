@@ -20,12 +20,15 @@ function getDayLabel(eventDate: Date, referenceDate: Date): string | null {
   const eventDay = toZonedTime(eventDate, TIMEZONE);
   const refDay = toZonedTime(referenceDate, TIMEZONE);
 
-  const diffDays =
-    Math.round(
-      (new Date(format(eventDay, "yyyy-MM-dd", { timeZone: TIMEZONE })).getTime() -
-        new Date(format(refDay, "yyyy-MM-dd", { timeZone: TIMEZONE })).getTime()) /
-        (1000 * 60 * 60 * 24),
-    );
+  const diffDays = Math.round(
+    (new Date(
+      format(eventDay, "yyyy-MM-dd", { timeZone: TIMEZONE }),
+    ).getTime() -
+      new Date(
+        format(refDay, "yyyy-MM-dd", { timeZone: TIMEZONE }),
+      ).getTime()) /
+      (1000 * 60 * 60 * 24),
+  );
 
   if (diffDays === 1) return "besok";
   if (diffDays === -1) return "kemarin";
@@ -54,8 +57,7 @@ export function MatrixDataUserActivity({ user, selectedDate }: Props) {
             if (!s.end_at) return false;
             const zonedEnd = toZonedTime(new Date(s.end_at), TIMEZONE);
             return (
-              getHours(zonedEnd) === idx &&
-              isSameDay(zonedEnd, selectedDateWib)
+              getHours(zonedEnd) === idx && isSameDay(zonedEnd, selectedDateWib)
             );
           }) || [];
 
@@ -70,12 +72,14 @@ export function MatrixDataUserActivity({ user, selectedDate }: Props) {
               ? toZonedTime(new Date(s.end_at), TIMEZONE)
               : null,
             id: s.id,
+            stopMode: s.stop_mode,
           })),
           ...endSessions.map((s) => ({
             type: "end" as const,
             time: toZonedTime(new Date(s.end_at!), TIMEZONE),
             endTime: null,
             id: s.id,
+            stopMode: s.stop_mode,
           })),
         ].sort((a, b) => a.time.getTime() - b.time.getTime());
 
@@ -163,7 +167,8 @@ export function MatrixDataUserActivity({ user, selectedDate }: Props) {
                             />
                             <span>
                               {event.type === "start" ? "Mulai" : "Selesai"}:{" "}
-                              {format(event.time, "HH:mm")}
+                              {format(event.time, "HH:mm")}{" "}
+                              {event.type === "end" && event.stopMode && `(${event.stopMode.toLocaleUpperCase()})`}
                               {dayLabel && (
                                 <span className="ml-1 text-slate-500 font-normal">
                                   ({dayLabel})

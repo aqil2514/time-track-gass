@@ -6,6 +6,7 @@ export interface WorkSessionDb {
   user_id: string;
   start_at: string;
   end_at: string | null;
+  stop_mode: string;
 }
 
 export interface MatrixResponse {
