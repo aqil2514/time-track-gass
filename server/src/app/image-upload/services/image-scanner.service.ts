@@ -48,6 +48,7 @@ export class ImageScannerService {
   }
 
   async analyzeActivity(imageDataUrl: string, userId: string) {
+    const workSession = await this.getCurrentWorkSession(userId);
     const s3Key = await this.helper.uploadToS3(imageDataUrl, userId);
 
     const { data } = await this.analyzerAgent.analyzerAgentMapper(
@@ -55,8 +56,6 @@ export class ImageScannerService {
       imageDataUrl,
       userId,
     );
-
-    const workSession = await this.getCurrentWorkSession(userId);
 
     const mappedData = {
       ...(data as any),
@@ -148,7 +147,7 @@ export class ImageScannerService {
       .gte('created_at', startOfHour.toISOString())
       .lte('created_at', endOfHour.toISOString())
       .eq('user_id', userId)
-      .is("deleted_at", null)
+      .is('deleted_at', null)
       .limit(1)
       .maybeSingle();
 

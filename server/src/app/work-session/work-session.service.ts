@@ -54,7 +54,7 @@ export class WorkSessionService {
 
     if (error) {
       await this.logService.createNewLog(userId, {
-        context: 'Fungsi ambil sesi jam kerja (getCurrentWorkSession)',
+        context: 'Fungsi ambil sesi jam kerja (createNewWorkSession)',
         level: 'ERROR',
         message: error.message,
         metadata: error,
@@ -132,5 +132,15 @@ export class WorkSessionService {
     }
 
     return data ? new Date(data.created_at) : null;
+  }
+
+  async endSessionById(sessionId: string, end_at?: Date, stop_mode?: string) {
+    const { error } = await this.supabaseClient
+      .from(TableName.WorkSessions)
+      .update({ end_at: (end_at ?? new Date()).toISOString(), stop_mode })
+      .eq('id', sessionId)
+      .is('end_at', null);
+
+    if (error) throw new Error(error.message);
   }
 }

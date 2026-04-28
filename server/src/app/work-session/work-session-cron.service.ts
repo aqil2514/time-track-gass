@@ -18,8 +18,8 @@ export class WorkSessionCronService {
       const diff = differenceInMinutes(new Date(), referenceTime);
 
       if (diff <= 15) continue;
-      await this.workSessionService.endCurrentWorkSession(
-        session.user_id,
+      await this.workSessionService.endSessionById(
+        session.id,
         lastTimeUserActivity,
         'auto',
       );

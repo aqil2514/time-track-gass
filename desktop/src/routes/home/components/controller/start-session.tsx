@@ -29,7 +29,7 @@ export function StartSessionButton() {
         },
       );
       await mutate();
-
+      
       startAutoCapture();
     } catch (error) {
       console.error("Failed to start session:", error);
@@ -44,6 +44,8 @@ export function StartSessionButton() {
     const url = buildUrl("work-session/end");
     try {
       setIsLoading(true);
+      stopAutoCapture();
+      
       await api.post(
         url,
         {},
@@ -56,7 +58,6 @@ export function StartSessionButton() {
 
       await mutate();
 
-      stopAutoCapture();
     } catch (error) {
       console.error("Failed to start session:", error);
       throw error;

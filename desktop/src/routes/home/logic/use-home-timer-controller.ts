@@ -26,6 +26,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   const nextCaptureAtRef = useRef<number | null>(null);
   const isCapturingRef = useRef(false);
   const retryCountRef = useRef(0);
+  const isStoppedRef = useRef(false);
 
   const MAX_RETRY = 3;
   const RETRY_DELAY = 5; //detik
@@ -73,6 +74,8 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
       const dataUrl = await capture();
       if (!dataUrl) throw new Error("Capture failed: No data received");
 
+      if (isStoppedRef.current) return;
+
       setStatus("uploading");
 
       const store = await load("auth.json");
@@ -114,6 +117,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
       });
 
       if (retryCountRef.current < MAX_RETRY) {
+        if (isStoppedRef.current) return;
         // 🔄 Auto retry setelah RETRY_DELAY detik
         setStatus("countdown");
 
@@ -161,6 +165,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   // START
   // ==============================
   const startAutoCapture = useCallback(async () => {
+    isStoppedRef.current = false;
     if (status !== "idle") return;
 
     await captureHandler(); // capture pertama langsung
@@ -171,6 +176,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   // STOP
   // ==============================
   const stopAutoCapture = useCallback(() => {
+    isStoppedRef.current = true;
     clearTimers();
     setCountdown(TIME_TO_SCREENSHOT);
     setStatus("idle");
