@@ -3,10 +3,6 @@
 import { createHash } from 'crypto';
 import { AIResult } from './image-validation.processor';
 import { parse } from 'date-fns/parse';
-import { toZonedTime } from 'date-fns-tz';
-import { TIMEZONE } from 'src/constants/timezone';
-import { format } from 'date-fns-tz';
-
 
 // Step 1 : Apakah ada gambar yang duplikat?
 export function isDuplicateImage(
@@ -89,12 +85,11 @@ export function parseLocalDateTime(
   aiResult: AIResult,
   localDate: Date,
 ): Date {
-  const combinedDateTime = parse(
+  const result = parse(
     `${todayString} ${aiResult.time}`,
     'yyyy-MM-dd HH:mm',
     localDate,
   );
-  const result = toZonedTime(combinedDateTime, TIMEZONE);
   console.log(
     `[parseLocalDateTime] combined: ${todayString} ${aiResult.time}, result: ${result.toISOString()}`,
   );
@@ -103,8 +98,7 @@ export function parseLocalDateTime(
 
 // Step 7 : Apakah jamnya sesuai dengan slot yang dikirim?
 export function isSameHour(localDateTime: Date, slotId: number): boolean {
-  console.log(`[isSameHour] : ${localDateTime}`)
-  const hour = parseInt(format(localDateTime, 'H', { timeZone: TIMEZONE }));
+  const hour = localDateTime.getHours();
   const match = hour === slotId;
   console.log(
     `[isSameHour] imageHour: ${hour}, slotId: ${slotId}, match: ${match}`,
