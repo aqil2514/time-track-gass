@@ -1,2 +1,3 @@
 - Fitur auto retry ketika terdeteksi error
 - Fitur untuk minta perizinan pada user macos
+- Fix bug upload manual

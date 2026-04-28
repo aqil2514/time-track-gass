@@ -7,15 +7,12 @@ import { SupabaseClient } from '@supabase/supabase-js/dist/index.cjs';
 import { ZAIService } from 'src/services/ai-z/ai-z.service';
 import { ZImageAnalyzeData } from 'src/services/ai-z/interface/ai-z.interface';
 import { ImageWithDate } from '../image-validation.service';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class ImageScannerHelper {
   constructor(
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
-
-    private readonly zAi: ZAIService,
 
     @Inject('AWS_S3_CLIENT')
     private readonly s3Client: S3Client,

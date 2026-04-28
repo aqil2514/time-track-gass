@@ -73,15 +73,16 @@ export function UploadImage() {
       throw new Error("Access token not found");
     }
 
-    const valuesWithOs = {
+    const valuesWithOsAndDate = {
       ...values,
       os,
+      date: date?.toISOString(),
     };
 
     try {
       const res = await api.postForm(
         buildUrl(`image-upload/manual?date=${date?.toISOString()}`),
-        valuesWithOs,
+        valuesWithOsAndDate,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -90,7 +91,9 @@ export function UploadImage() {
       );
 
       if (res.status === 422) return setErrorData(res.data.invalidImages);
-      await mutate();
+      if (res.status === 200 || res.status === 201) {
+        await mutate();
+      }
     } catch (error) {
       if (isAxiosError(error)) {
         console.error(error.message);

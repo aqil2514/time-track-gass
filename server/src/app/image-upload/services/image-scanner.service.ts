@@ -148,6 +148,7 @@ export class ImageScannerService {
       .gte('created_at', startOfHour.toISOString())
       .lte('created_at', endOfHour.toISOString())
       .eq('user_id', userId)
+      .is("deleted_at", null)
       .limit(1)
       .maybeSingle();
 
