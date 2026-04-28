@@ -103,6 +103,7 @@ export function parseLocalDateTime(
 
 // Step 7 : Apakah jamnya sesuai dengan slot yang dikirim?
 export function isSameHour(localDateTime: Date, slotId: number): boolean {
+  console.log(`[isSameHour] : ${localDateTime}`)
   const hour = parseInt(format(localDateTime, 'H', { timeZone: TIMEZONE }));
   const match = hour === slotId;
   console.log(
