@@ -40,8 +40,8 @@ export function MatrixDataUserActivity({ user, selectedDate }: Props) {
 
   return (
     <div className="flex gap-1 md:gap-1.5 w-full justify-between pb-2">
-      {user.activity.map((intensity, idx) => {
-        const minutes = intensity * 5;
+      {user.newActivity?.map((intensity, idx) => {
+        const minutes = intensity.totalMinutes;
 
         const startSessions =
           user.workSession?.filter((s) => {
@@ -89,7 +89,7 @@ export function MatrixDataUserActivity({ user, selectedDate }: Props) {
               <div className="flex-1 min-w-3 md:min-w-5">
                 <MatrixBox
                   config={{
-                    intensity,
+                    intensity:intensity.totalActivity,
                     isWorkSessionStart: isSessionStart,
                     isWorkSessionEnd: isSessionEnd,
                   }}
@@ -115,7 +115,7 @@ export function MatrixDataUserActivity({ user, selectedDate }: Props) {
                 <div className="flex items-center gap-2">
                   <div className="size-1.5 rounded-full bg-purple-500" />
                   <span>
-                    {intensity} Laporan (~{minutes} Menit)
+                    {intensity.totalActivity} Laporan (~{minutes} Menit)
                   </span>
                 </div>
 
