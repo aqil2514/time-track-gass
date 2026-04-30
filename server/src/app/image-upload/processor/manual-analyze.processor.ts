@@ -5,6 +5,7 @@ import { QUERY_NAME } from 'src/constants/queue.constant';
 import { ImageScannerHelper } from '../services/helpers/image-scanner-helper.service';
 import { AnalyzerAgentHelperService } from '../services/helpers/analyzer-agent-helper.service';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { subHours } from 'date-fns/subHours';
 
 @Processor(QUERY_NAME.MANUAL_ANALYZE)
 export class ManualAnalyzeProcessor extends WorkerHost {
@@ -40,11 +41,15 @@ export class ManualAnalyzeProcessor extends WorkerHost {
       userId,
     );
 
+    const originalDate = new Date(detectedDate);
+    const adjustedDate = subHours(originalDate, 7);
+
     const mappedData = {
       ...(data as any),
       user_id: userId,
       s3_key: s3Key,
-      created_at: new Date(detectedDate).toISOString(),
+      created_at: adjustedDate.toISOString(),
+      interval: 7.5,
     };
 
     this.logger.log('Analisis AI berhasil, menambahkan ke db');

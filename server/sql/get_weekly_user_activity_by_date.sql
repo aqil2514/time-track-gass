@@ -8,7 +8,6 @@ AS $$
 DECLARE
     start_of_week TIMESTAMPTZ;
 BEGIN
-    -- Eksplisit gunakan timezone WIB
     start_of_week := DATE_TRUNC('week', client_date AT TIME ZONE 'Asia/Jakarta') 
                      AT TIME ZONE 'Asia/Jakarta';
 

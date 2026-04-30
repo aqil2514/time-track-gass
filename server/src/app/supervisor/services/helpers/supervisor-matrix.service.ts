@@ -16,7 +16,12 @@ export interface MatrixResponse {
   userName: string;
   userId: string;
   fullName: string;
+  // TODO : Hapus kalo udah fix
   activity: number[];
+  newActivity: {
+    totalActivity: number;
+    totalMinutes: number;
+  }[];
   totalWeeklyActivity: number;
   workSession?: WorkSessionDb[];
   workAdjustment?: AdjustmentContent[];
@@ -108,7 +113,7 @@ export class SupervisorMatrixService {
     const endStr = `${endDateOnly}T23:59:59+07:00`;
 
     const { data, error } = await this.supabase.rpc(
-      'get_weekly_user_activity_by_date',
+      'new_get_weekly_user_activity_by_date',
       { client_date: endStr },
     );
 
@@ -195,6 +200,10 @@ export class SupervisorMatrixService {
       );
 
       const hourlyActivity: number[] = new Array(24).fill(0);
+      const newHourlyActivity = Array.from({ length: 24 }, () => ({
+        totalActivity: 0,
+        totalMinutes: 0,
+      }));
 
       for (let hour = 0; hour < 24; hour++) {
         const activityInThisHour = selectedActivity.filter((data) => {
@@ -206,16 +215,21 @@ export class SupervisorMatrixService {
         });
 
         hourlyActivity[hour] = activityInThisHour.length;
+        newHourlyActivity[hour].totalActivity = activityInThisHour.length;
+        newHourlyActivity[hour].totalMinutes = activityInThisHour.reduce(
+          (acc, curr) => acc + curr.interval,
+          0,
+        );
       }
 
-      const totalWeeklyActivity =
-        selectedWeeklyActivity?.total_activity * this.INTERVAL || 0;
+      const totalWeeklyActivity = selectedWeeklyActivity?.total_minutes || 0;
 
       const matrixData: MatrixResponse = {
         fullName: user.full_name,
         userId: user.id,
         userName: user.username,
         activity: hourlyActivity,
+        newActivity: newHourlyActivity,
         totalWeeklyActivity,
         workSession: selectedWorkSession,
         workAdjustment: selectedWorkAdjustment,

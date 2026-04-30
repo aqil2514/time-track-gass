@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ImageScannerHelper } from './helpers/image-scanner-helper.service';
 import { AnalyzerAgentHelperService } from './helpers/analyzer-agent-helper.service';
@@ -12,6 +12,7 @@ import { TIMEZONE } from 'src/constants/timezone';
 
 @Injectable()
 export class ImageScannerService {
+  private logger = new Logger(ImageScannerService.name);
   constructor(
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
@@ -29,6 +30,31 @@ export class ImageScannerService {
 
     private readonly analyzerAgent: AnalyzerAgentHelperService,
   ) {}
+
+  private async callWithRetry<T>(
+    fn: () => Promise<T>,
+    maxRetry = 4,
+    delayMs = 2000,
+  ): Promise<T> {
+    for (let i = 0; i < maxRetry; i++) {
+      try {
+        return await fn();
+      } catch (error) {
+        const is503 =
+          (error as any)?.error?.code === 503 ||
+          (error as any)?.error?.status === 'UNAVAILABLE';
+
+        if (!is503 || i === maxRetry - 1) throw error;
+
+        const wait = delayMs * Math.pow(2, i);
+        this.logger.warn(
+          `[Gemini] 503 - retry ${i + 1}/${maxRetry} in ${wait}ms`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, wait));
+      }
+    }
+    throw new Error('Max retry exceeded');
+  }
 
   private async getCurrentWorkSession(userId: string) {
     const { data, error } = await this.supabase
@@ -51,10 +77,8 @@ export class ImageScannerService {
     const workSession = await this.getCurrentWorkSession(userId);
     const s3Key = await this.helper.uploadToS3(imageDataUrl, userId);
 
-    const { data } = await this.analyzerAgent.analyzerAgentMapper(
-      'gemini-ai',
-      imageDataUrl,
-      userId,
+    const { data } = await this.callWithRetry(() =>
+      this.analyzerAgent.analyzerAgentMapper('gemini-ai', imageDataUrl, userId),
     );
 
     const mappedData = {

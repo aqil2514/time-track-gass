@@ -9,6 +9,7 @@ export interface AIScreenReportDb {
   summary: string;
   user_id: string;
   s3_key: string;
+  interval?: number;
 }
 
 export interface AIScreenReportPopulateUser extends Omit<
@@ -40,6 +41,7 @@ export type AIScreenReportDbInsert = Omit<
 export interface TotalWeeklyActivity {
   user_id: string;
   total_activity: number;
+  total_minutes: number;
 }
 
 export interface DailySummaryResponse {
@@ -59,7 +61,7 @@ export interface WeeklySummaryResponse {
 export interface UserSummaryTimeResponse {
   dailySummaryTime: DailySummaryResponse;
   weeklySummaryTime: WeeklySummaryResponse;
-  activityAdjustment: any
+  activityAdjustment: any;
 }
 
 export interface ActivityResponse extends UserSummaryTimeResponse {

@@ -7,6 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useMemo } from "react";
 
 interface Props {
   user: MatrixResponse;
@@ -24,10 +25,12 @@ export function DayIndicator({ user }: Props) {
     (adjustment) => adjustment.date === formattedDate,
   );
 
-  const activityMinutes = user.activity.reduce(
-    (acc, curr) => acc + curr * 5,
-    0,
-  );
+  const activityMinutes = useMemo(() => {
+    if (!user.newActivity)
+      return user.activity.reduce((acc, curr) => acc + curr * 5, 0);
+
+    return user.newActivity.reduce((acc, curr) => acc + curr.totalMinutes, 0);
+  }, [user]);
 
   const totalDailyMinutes = selectedAdjustment
     ? selectedAdjustment.affected_minutes + activityMinutes
@@ -49,21 +52,27 @@ export function DayIndicator({ user }: Props) {
           <span className="text-[10px] text-slate-400 font-mono">
             DAY:{" "}
             <span
-              className={selectedAdjustment ? "text-amber-400 font-bold" : "text-purple-300"}
+              className={
+                selectedAdjustment
+                  ? "text-amber-400 font-bold"
+                  : "text-purple-300"
+              }
             >
               {totalActive}
             </span>
           </span>
         </div>
       </TooltipTrigger>
-      
-      <TooltipContent 
-        side="right" 
+
+      <TooltipContent
+        side="right"
         className="bg-slate-950 border-slate-800 p-2 text-[10px] shadow-2xl min-w-40"
       >
         <div className="space-y-2">
           <div className="flex flex-col border-b border-white/5 pb-1.5">
-            <span className="font-bold text-slate-200">Detail Aktivitas Harian</span>
+            <span className="font-bold text-slate-200">
+              Detail Aktivitas Harian
+            </span>
             <span className="text-slate-500">{formattedDate}</span>
           </div>
 
@@ -78,7 +87,10 @@ export function DayIndicator({ user }: Props) {
                 <div className="flex justify-between items-center text-amber-400">
                   <span>Adjustment:</span>
                   <span>
-                    {formatToTime(selectedAdjustment.affected_minutes, "minutes")}
+                    {formatToTime(
+                      selectedAdjustment.affected_minutes,
+                      "minutes",
+                    )}
                   </span>
                 </div>
                 <div className="pt-1 mt-1 border-t border-white/5 text-[9px] text-slate-500 italic leading-relaxed">

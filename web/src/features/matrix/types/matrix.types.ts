@@ -14,6 +14,10 @@ export interface MatrixResponse {
   userId: string;
   fullName: string;
   activity: number[];
+  newActivity?: {
+    totalActivity: number;
+    totalMinutes: number;
+  }[];
   totalWeeklyActivity: number;
   workSession?: WorkSessionDb[];
   workAdjustment?: AdjustmentContent[];
