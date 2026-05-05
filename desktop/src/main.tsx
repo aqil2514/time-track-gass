@@ -5,6 +5,7 @@ import { RouterProvider } from "react-router/dom";
 import HomeTemplate from "./routes/home";
 import LoginPage from "./routes/login";
 import RegisterPage from "./routes/register";
+import ResetPasswordPage from "./routes/reset-password";
 import { check } from "@tauri-apps/plugin-updater";
 import { ask } from "@tauri-apps/plugin-dialog";
 import { writeLogToDb } from "./utils/write-log-to-db";
@@ -22,6 +23,10 @@ const router = createBrowserRouter([
   {
     path: "/register",
     element: <RegisterPage />,
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPasswordPage />,
   },
 ]);
 
