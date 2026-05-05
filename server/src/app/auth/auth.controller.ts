@@ -15,6 +15,8 @@ import { JwtAuthGuard } from 'src/guards/jwt.guard';
 import { CookieOptions, Response } from 'express';
 import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
 import { AuthFetcherService } from './services/auth-fetcher.service';
+import { CheckResetPasswordDto } from './dto/check-reset-password.dto';
+import { SetResetPasswordDto } from './dto/set-reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -102,5 +104,15 @@ export class AuthController {
     res.clearCookie('access_token', rest);
 
     return { message: 'Logout success' };
+  }
+
+  @Post('check-reset-password')
+  async checkResetPassword(@Body() body: CheckResetPasswordDto) {
+    return await this.service.checkResetPassword(body);
+  }
+
+  @Post('set-reset-password')
+  async setResetPassword(@Body() body: SetResetPasswordDto) {
+    return await this.service.setResetPassword(body);
   }
 }

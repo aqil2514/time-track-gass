@@ -21,7 +21,6 @@ export function ResetPasswordDialog() {
   const { mutate } = useSWRConfig();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  // Ambil state dari reducer
   const { isOpen, userId } = state.modal.resetPassword;
 
   const handleClose = () => {
@@ -33,12 +32,9 @@ export function ResetPasswordDialog() {
 
     setIsSubmitting(true);
     try {
-      // Endpoint sesuai Controller NestJS yang kita buat: PATCH /api/user/:id/reset-password
       await axios.patch(`/api/user/${userId}/reset-password`);
-      
-      alert("Password berhasil dihapus. User dapat mengatur ulang password saat login.");
-      
-      mutate("/api/user"); // Refresh data jika diperlukan
+      alert("Password berhasil di-reset. User dapat mengatur password baru saat login.");
+      mutate("/api/user");
       handleClose();
     } catch (error) {
       if (isAxiosError(error)) {
@@ -62,8 +58,8 @@ export function ResetPasswordDialog() {
             <AlertDialogTitle className="text-xl">Reset Password?</AlertDialogTitle>
           </div>
           <AlertDialogDescription className="text-slate-400 text-sm leading-relaxed">
-            Tindakan ini akan **menghapus password** pengguna saat ini. 
-            Pengguna yang bersangkutan harus melakukan pengaturan password baru 
+            Tindakan ini akan **mereset password** pengguna.
+            Pengguna yang bersangkutan harus mengatur password baru
             melalui aplikasi desktop saat login berikutnya.
           </AlertDialogDescription>
         </AlertDialogHeader>

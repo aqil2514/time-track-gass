@@ -50,7 +50,7 @@ export class SupervisorUserController {
 
   @Patch(':id/reset-password')
   async resetPassword(@Param('id') id: string) {
-    return await this.supervisorUserService.deleteUserPassword(id);
+    return await this.supervisorUserService.markUserMustResetPassword(id);
   }
 
   @Delete(':id')

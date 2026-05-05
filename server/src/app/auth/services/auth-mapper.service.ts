@@ -43,6 +43,7 @@ export class AuthMapperService {
       username: raw.username,
       division_id: Number(raw.division),
       division,
+      must_reset_password:false,
       updated_at: new Date().toISOString(),
       settings: {
         tracker: {

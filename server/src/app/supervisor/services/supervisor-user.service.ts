@@ -77,6 +77,7 @@ export class SupervisorUserService {
       password: createUserDto.password,
       role: createUserDto.role,
       division,
+      must_reset_password: false,
       division_id: createUserDto.division,
     };
 
@@ -154,14 +155,14 @@ export class SupervisorUserService {
     this.eventEmitter.emit('profile.deleted', id);
   }
 
-  async deleteUserPassword(id: string): Promise<void> {
+  async markUserMustResetPassword(id: string): Promise<void> {
     const { error } = await this.supabase
       .from(TableName.Profiles)
-      .update({ password: '' })
+      .update({ must_reset_password: true })
       .eq('id', id);
 
     if (error) {
-      console.error(`Error deleting user ${id}:`, error);
+      console.error(`Error resetting password for user ${id}:`, error);
       throw error;
     }
   }

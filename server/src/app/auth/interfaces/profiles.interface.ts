@@ -10,6 +10,7 @@ export interface ProfilesDb {
   created_at: string;
   updated_at?: string;
   settings: UserSettings;
+  must_reset_password: boolean
 }
 
 export type ProfilesDbInsert = Omit<ProfilesDb, 'created_at' | 'id'>;
