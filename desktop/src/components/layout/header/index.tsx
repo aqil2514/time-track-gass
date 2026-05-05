@@ -15,7 +15,7 @@ export function DashboardHeader() {
               <span className="text-white">Time</span>{" "}
               <span className="text-purple-400">Tracker</span>
             </h1>
-            <p className="font-semibold text-xs text-white">V0.2.13</p>
+            <p className="font-semibold text-xs text-white">V0.2.14</p>
           </div>
           <p className="text-slate-400 text-xs">
             Track every second that matters
