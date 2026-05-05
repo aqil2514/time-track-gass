@@ -1,99 +1,151 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Server
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## Overview
+Backend API untuk sistem time tracking, activity monitoring, attendance, dan supervisor tooling. Repo ini adalah pusat business logic: desktop dan web sama-sama bergantung pada server untuk auth, work session, activity summary, attendance, dan proses background.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Responsibilities
+- Auth untuk worker dan supervisor
+- Work session start/stop
+- Activity retrieval dan summary harian/per sesi
+- Attendance summary, adjustment, list-note, dan profile config
+- Upload image/screenshot dan analisis AI/OCR
+- Background jobs dan cron processing
+- Client log ingestion
 
-## Description
+## How it fits in the system
+- [desktop/](../desktop/) memakai server sebagai API utama untuk worker/end-user.
+- [web/](../web/) memakai server sebagai backend utama, biasanya lewat Next API proxy.
+- Server menyimpan dan mengambil data dari Supabase, menjalankan queue di Redis/BullMQ, dan mengakses layanan eksternal seperti S3 dan provider AI.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## Local development
+Install dependencies:
 
 ```bash
-$ npm install
+npm install
 ```
 
-## Compile and run the project
+Run in development:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run start:dev
 ```
 
-## Run tests
+Build:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run build
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Run production build locally:
 
 ```bash
-$ npm install -g mau
-$ mau deploy
+npm run start:prod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Tests:
 
-## Resources
+```bash
+npm run test
+npm run test:e2e
+npm run test:cov
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+Default port berasal dari `PORT` dan fallback ke `3000`.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Environment variables
+Env berikut dipakai langsung oleh kode saat ini:
 
-## Support
+| Variable | Purpose |
+| --- | --- |
+| `PORT` | Port HTTP server |
+| `NODE_ENV` | Runtime environment |
+| `JWT_SECRET_KEY` | Signing key untuk JWT |
+| `SUPABASE_URL` | URL project Supabase |
+| `SUPABASE_SECRET_KEY` | Service key Supabase |
+| `BULL_MQ_REDIS_HOST` | Host Redis untuk queue dan throttling |
+| `BULL_MQ_REDIS_PORT` | Port Redis |
+| `BULL_MQ_REDIS_PASSWORD` | Password Redis |
+| `BULL_MQ_DASHBOARD_USERNAME` | Username basic auth Bull Board |
+| `BULL_MQ_DASHBOARD_PASSWORD` | Password basic auth Bull Board |
+| `BULL_SUMMARY_SESSION` | Nama queue summary session |
+| `BULL_DAILY_SUMMARY_QUEUE` | Nama queue daily summary |
+| `BULL_DAILY_CATEGORY_SUMMARY_QUEUE` | Nama queue daily per-category summary |
+| `BULL_MANUAL_UPLOAD_QUEUE` | Nama queue manual image analyze |
+| `BULL_MANUAL_SLOT_STATUS_QUEUE` | Nama queue manual slot status |
+| `S3_ENDPOINT` | Endpoint object storage |
+| `S3_ACCESS_KEY_ID` | Access key object storage |
+| `S3_ACCES_SECRET_KEY` | Secret key object storage |
+| `GEMINI_API_KEY` | API key Gemini |
+| `Z_AI_API_KEY` | API key provider Zhipu/Z AI |
+| `SERVICE_KONEKWA_ENDPOINT` | Endpoint service reminder/message |
+| `SERVICE_KONEKWA_API_KEY` | API key service reminder/message |
+| `SERVICE_KONEKWA_SESSION_ID` | Session identifier service reminder/message |
+| `SERVICE_KONEKWA_NO_MBAK_NISA` | Target recipient untuk reminder tertentu |
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Key flows
+### 1. User auth
+- Worker login/register lewat controller auth.
+- Supervisor login memakai endpoint khusus yang mengeluarkan cookie `access_token`.
+- Password disimpan sebagai bcrypt hash.
 
-## Stay in touch
+Relevant files:
+- [server/src/app/auth/auth.controller.ts](src/app/auth/auth.controller.ts)
+- [server/src/app/auth/services/auth.service.ts](src/app/auth/services/auth.service.ts)
+- [server/src/app/auth/services/auth-mapper.service.ts](src/app/auth/services/auth-mapper.service.ts)
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### 2. Work session
+- Worker memulai sesi lewat `POST /work-session/start`.
+- Worker mengakhiri sesi lewat `POST /work-session/end`.
+- Data sesi dipakai dalam summary dan attendance flow.
 
-## License
+Relevant files:
+- [server/src/app/work-session/work-session.controller.ts](src/app/work-session/work-session.controller.ts)
+- [server/src/app/work-session/work-session.service.ts](src/app/work-session/work-session.service.ts)
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### 3. Activities and summaries
+- Endpoint user-level menyediakan activity data, total work, dan daily summary.
+- Endpoint v2 menggabungkan beberapa ringkasan untuk kebutuhan client.
+- Cron dan queue dipakai untuk summary per sesi, daily summary, per-category summary, dan attendance materialization.
+
+Relevant files:
+- [server/src/app/activities/controllers/activities.controller.ts](src/app/activities/controllers/activities.controller.ts)
+- [server/src/app/activities/controllers/activities-v2.controller.ts](src/app/activities/controllers/activities-v2.controller.ts)
+- [server/src/app/activities/services/activities-cron.service.ts](src/app/activities/services/activities-cron.service.ts)
+- [server/src/app/activities/processor/](src/app/activities/processor/)
+
+### 4. Supervisor and attendance
+- Semua endpoint supervisor dilindungi guard JWT supervisor dan role guard.
+- Area ini mencakup user management, division management, tracker/matrix, activity moderation, attendance summary, adjustment, dan list-note.
+
+Relevant files:
+- [server/src/app/supervisor/controllers/](src/app/supervisor/controllers/)
+- [server/src/app/supervisor/controllers/attendance/](src/app/supervisor/controllers/attendance/)
+- [server/src/app/supervisor/services/](src/app/supervisor/services/)
+
+### 5. Image upload and AI analysis
+- Worker dapat upload image biasa atau manual slot-based upload.
+- Analisis dijalankan dengan queue dan memanfaatkan OCR/AI helpers.
+
+Relevant files:
+- [server/src/app/image-upload/](src/app/image-upload/)
+- [server/src/services/ai-gemini/](src/services/ai-gemini/)
+- [server/src/services/ai-z/](src/services/ai-z/)
+- [server/src/services/aws-s3/](src/services/aws-s3/)
+
+## Important paths
+- [server/src/main.ts](src/main.ts) — bootstrap, CORS, validation, cookie parser
+- [server/src/app/app.module.ts](src/app/app.module.ts) — root composition
+- [server/src/app/app-registry/](src/app/app-registry/) — registries untuk config, built-in modules, third-party modules, queues, throttling
+- [server/src/app/auth/](src/app/auth/) — auth dan settings user
+- [server/src/app/work-session/](src/app/work-session/) — lifecycle work session
+- [server/src/app/activities/](src/app/activities/) — activity APIs, summary logic, cron, processors
+- [server/src/app/supervisor/](src/app/supervisor/) — admin/supervisor domain
+- [server/src/app/image-upload/](src/app/image-upload/) — upload + analyze flow
+- [server/src/services/](src/services/) — integrasi Supabase, S3, AI, analyzer, dll
+
+## Known caveats
+- CORS allowlist di-bootstrap manual di [server/src/main.ts](src/main.ts), jadi origin baru perlu ditambahkan secara eksplisit.
+- Supervisor auth bergantung pada cookie `access_token`, sedangkan desktop/worker flow memakai bearer token.
+- Queue, throttling, dan beberapa cron flow bergantung pada Redis yang sama.
+- Bull Board tersedia di `/queue` dan dilindungi basic auth.
+- README ini tidak memuat contoh credential atau secret; gunakan env lokal Anda sendiri.
