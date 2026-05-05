@@ -1,2 +1,0 @@
-SUPERVISOR_USERNAME = supervisortest
-SUPERVISOR_PASSWORD = Supervisor123
