@@ -1,6 +1,12 @@
 import { KeyedMutator } from "swr";
 import { AIScreenReportDb } from "../types/ai-record.type";
-import React, { createContext, useContext, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useFetch } from "@/hooks/use-fetch";
 import { buildUrl } from "@/utils/build-url";
 import {
@@ -28,6 +34,7 @@ interface HomeContextType {
     isRunning: boolean;
     status: TimerStatus;
     countdown: number;
+    didAutoResume: boolean;
   };
 
   controllerExcel: {
@@ -40,6 +47,11 @@ const HomeContext = createContext<HomeContextType>({} as HomeContextType);
 
 export function HomeProvider({ children }: { children: React.ReactNode }) {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [didAutoResume, setDidAutoResume] = useState(false);
+  const hasAutoResumedRef = useRef(false);
+  const autoResumeBadgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const url = date
     ? buildUrl(`activities/v2?date=${startOfDay(date).toISOString()}`)
@@ -49,9 +61,44 @@ export function HomeProvider({ children }: { children: React.ReactNode }) {
   const timerController = useHomeTimerController(fetcher.mutate);
   const excelController = useHomeExcelController();
 
+  useEffect(() => {
+    if (hasAutoResumedRef.current) return;
+    if (fetcher.isLoading) return;
+    if (!fetcher.data?.workSessions?.length) return;
+    if (timerController.isRunning) return;
+
+    const hasActiveSession = fetcher.data.workSessions.some(
+      (session) => session.end_at === null,
+    );
+
+    if (!hasActiveSession) return;
+
+    hasAutoResumedRef.current = true;
+    setDidAutoResume(true);
+
+    if (autoResumeBadgeTimerRef.current) {
+      clearTimeout(autoResumeBadgeTimerRef.current);
+    }
+
+    autoResumeBadgeTimerRef.current = setTimeout(() => {
+      setDidAutoResume(false);
+      autoResumeBadgeTimerRef.current = null;
+    }, 5000);
+
+    void timerController.startAutoCapture();
+  }, [fetcher.data, fetcher.isLoading, timerController]);
+
+  useEffect(() => {
+    return () => {
+      if (autoResumeBadgeTimerRef.current) {
+        clearTimeout(autoResumeBadgeTimerRef.current);
+      }
+    };
+  }, []);
+
   const values: HomeContextType = {
     fetcher: { ...fetcher, date, setDate },
-    controllerTime: { ...timerController },
+    controllerTime: { ...timerController, didAutoResume },
     controllerExcel: { ...excelController },
   };
   return <HomeContext.Provider value={values}>{children}</HomeContext.Provider>;
