@@ -117,11 +117,12 @@ export class WorkSessionService {
     return data;
   }
 
-  async getLastUserActivity(userId: string) {
+  async getLastUserActivity(userId: string, startAt: string) {
     const { data, error } = await this.supabaseClient
       .from(TableName.AIScreenReport)
       .select('created_at')
       .eq('user_id', userId)
+      .gte('created_at', startAt)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();

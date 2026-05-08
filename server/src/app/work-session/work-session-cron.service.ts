@@ -12,7 +12,10 @@ export class WorkSessionCronService {
 
     for (const session of activeSessions) {
       const lastTimeUserActivity =
-        await this.workSessionService.getLastUserActivity(session.user_id);
+        await this.workSessionService.getLastUserActivity(
+          session.user_id,
+          session.start_at,
+        );
       const referenceTime = lastTimeUserActivity ?? new Date(session.start_at);
 
       const diff = differenceInMinutes(new Date(), referenceTime);
@@ -20,7 +23,7 @@ export class WorkSessionCronService {
       if (diff <= 15) continue;
       await this.workSessionService.endSessionById(
         session.id,
-        lastTimeUserActivity,
+        referenceTime,
         'auto',
       );
     }
