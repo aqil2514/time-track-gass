@@ -7,6 +7,8 @@ export const QUERY_NAME = {
   MANUAL_ANALYZE: process.env.BULL_MANUAL_UPLOAD_QUEUE || 'manual-upload-queue',
   MANUAL_SLOT_STATUS:
     process.env.BULL_MANUAL_SLOT_STATUS_QUEUE || 'manual-slot-status-queue',
+  NORMAL_ANALYZE:
+    process.env.BULL_NORMAL_ANALYZE_QUEUE || 'normal-analyze-queue',
 };
 
 export const FLOW_NAME = {

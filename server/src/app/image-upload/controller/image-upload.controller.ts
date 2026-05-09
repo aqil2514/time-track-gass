@@ -31,7 +31,7 @@ export class ImageUploadController {
   @UseGuards(UserThrottlerGuard)
   @Post('')
   async uploadFile(@Body() body: ImageUploadDto, @UserId() userId: string) {
-    await this.scannerService.analyzeActivity(body.image, userId);
+    await this.scannerService.addToNormalQueue(body.image, userId);
     return { success: true };
   }
 

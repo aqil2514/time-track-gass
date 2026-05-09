@@ -12,7 +12,7 @@ export const THROTTLER_REGISTRY = [
         {
           name: 'short',
           limit: 1,
-          ttl: 300000,
+          ttl: 270000,
           // blockDuration: 300000,
         },
       ],

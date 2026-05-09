@@ -9,6 +9,12 @@ import { FlowChildJob, FlowProducer, Queue } from 'bullmq';
 import { TableName } from 'src/services/supabase/supabase.interface';
 import { format, toZonedTime } from 'node_modules/date-fns-tz/dist/cjs';
 import { TIMEZONE } from 'src/constants/timezone';
+import {
+  enqueueAnalyze,
+  getActiveSession,
+  uploadToS3,
+} from 'src/helpers/image-upload/image-upload-auto.helper';
+import { S3Client } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class ImageScannerService {
@@ -23,8 +29,14 @@ export class ImageScannerService {
     @InjectQueue(QUERY_NAME.MANUAL_SLOT_STATUS)
     private readonly manualSlotStatusQueue: Queue,
 
+    @InjectQueue(QUERY_NAME.NORMAL_ANALYZE)
+    private readonly normalAnalyzeQueue: Queue,
+
     @InjectFlowProducer(FLOW_NAME.MANUAL_ANALYZE_FLOW)
     private readonly manualAnalyzeFlow: FlowProducer,
+
+    @Inject('AWS_S3_CLIENT')
+    private readonly s3Client: S3Client,
 
     private readonly helper: ImageScannerHelper,
 
@@ -89,6 +101,20 @@ export class ImageScannerService {
     };
 
     await this.helper.createNewData(mappedData);
+  }
+
+  async addToNormalQueue(imageDataUrl: string, userId: string) {
+    const s3Key = await uploadToS3(this.s3Client, imageDataUrl, userId);
+
+    const workIdSession = await getActiveSession(this.supabase, userId);
+
+    await enqueueAnalyze(
+      this.normalAnalyzeQueue,
+      this.s3Client,
+      s3Key,
+      userId,
+      workIdSession,
+    );
   }
 
   async getActivities() {

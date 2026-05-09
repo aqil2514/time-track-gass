@@ -11,6 +11,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { FLOW_NAME, QUERY_NAME } from 'src/constants/queue.constant';
 import { ManualAnalyzeProcessor } from './processor/manual-analyze.processor';
 import { ManualStatusProcessor } from './processor/manual-status.processor';
+import { NormalAnalyzeProcessor } from './processor/normal-analyze.processor';
 
 @Module({
   imports: [
@@ -20,6 +21,9 @@ import { ManualStatusProcessor } from './processor/manual-status.processor';
       },
       {
         name: QUERY_NAME.MANUAL_SLOT_STATUS,
+      },
+      {
+        name: QUERY_NAME.NORMAL_ANALYZE,
       },
     ),
     BullModule.registerFlowProducer({
@@ -36,6 +40,7 @@ import { ManualStatusProcessor } from './processor/manual-status.processor';
 
     ManualAnalyzeProcessor,
     ManualStatusProcessor,
+    NormalAnalyzeProcessor,
 
     ZhipuAnalyzeMapper,
     GeminiAnalyzeMapper,
