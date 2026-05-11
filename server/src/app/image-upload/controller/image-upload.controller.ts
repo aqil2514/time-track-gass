@@ -1,9 +1,7 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
-  Logger,
   Post,
   Query,
   UnprocessableEntityException,
@@ -14,7 +12,6 @@ import {
 import { ImageScannerService } from '../services/image-scanner.service';
 import { JwtAuthGuard } from 'src/guards/jwt.guard';
 import { ImageUploadDto } from '../dto/image-upload.dto';
-import { UserThrottlerGuard } from 'src/guards/throttler.guard';
 import { UserId } from 'src/decorators/user-id.decorator';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { UploadImageManualDto } from '../dto/image-upload-manual.dto';

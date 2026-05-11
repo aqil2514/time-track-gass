@@ -13,6 +13,21 @@ import { TableName } from 'src/services/supabase/supabase.interface';
 const AUTO_UPLOAD_MIN_INTERVAL_MS = 4 * 60 * 1000 + 50 * 1000;
 const AUTO_UPLOAD_ERROR_MESSAGE = 'Minimal jeda upload otomatis adalah 5 menit.';
 
+const getRetryAfterSeconds = (latestAcceptedAt: Date) => {
+  const elapsed = differenceInMilliseconds(new Date(), latestAcceptedAt);
+  const remainingMs = Math.max(0, AUTO_UPLOAD_MIN_INTERVAL_MS - elapsed);
+  return Math.max(1, Math.ceil(remainingMs / 1000));
+};
+
+const buildAutoUploadError = (latestAcceptedAt: Date) => {
+  const retryAfterSeconds = getRetryAfterSeconds(latestAcceptedAt);
+
+  return {
+    message: `${AUTO_UPLOAD_ERROR_MESSAGE} Coba lagi dalam ${retryAfterSeconds} detik.`,
+    retryAfterSeconds,
+  };
+};
+
 type AutoAnalyzeJobData = {
   userId?: string;
   createdAt?: string;
@@ -83,9 +98,8 @@ export async function assertAutoUploadCooldown(
   const diff = differenceInMilliseconds(new Date(), latestAcceptedAt);
 
   if (diff < AUTO_UPLOAD_MIN_INTERVAL_MS) {
-    throw new UnprocessableEntityException({
-      message: AUTO_UPLOAD_ERROR_MESSAGE,
-    });
+    const error = buildAutoUploadError(latestAcceptedAt);
+    throw new UnprocessableEntityException(error);
   }
 }
 

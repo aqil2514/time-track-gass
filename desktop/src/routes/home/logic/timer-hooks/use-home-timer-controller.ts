@@ -32,6 +32,8 @@ export type TimerStatus =
   | "uploading"
   | "error";
 
+type CaptureResult = "success" | "cooldown" | "error";
+
 export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   const { capture } = useCapture();
 
@@ -84,8 +86,8 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   // ==============================
   // CAPTURE PROCESS
   // ==============================
-  const captureHandler = useCallback(async (): Promise<boolean> => {
-    if (isCapturingRef.current) return false;
+  const captureHandler = useCallback(async (): Promise<CaptureResult> => {
+    if (isCapturingRef.current) return "error";
     isCapturingRef.current = true;
 
     let attempts = 0;
@@ -98,7 +100,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
           const dataUrl = await capture();
           if (!dataUrl) throw new Error("Capture failed: No data received");
 
-          if (isStoppedRef.current) return false;
+          if (isStoppedRef.current) return "error";
 
           setStatus("uploading");
 
@@ -112,15 +114,38 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
             { headers: { Authorization: `Bearer ${token}` } },
           );
 
+          console.log(res)
+
           if (res.status === 422) {
+            const retryAfterSeconds =
+              typeof res.data?.retryAfterSeconds === "number"
+                ? res.data.retryAfterSeconds
+                : undefined;
+
+            if (retryAfterSeconds && retryAfterSeconds > 0) {
+              await writeLogToDb({
+                context: "captureHandler:Throttled",
+                level: "WARN",
+                message: "Auto upload cooldown reached",
+                metadata: { status: res.status, data: res.data },
+              });
+
+              const retryTarget = Date.now() + retryAfterSeconds * 1000;
+              nextCaptureAtRef.current = retryTarget;
+              setCountdown(retryAfterSeconds);
+              setStatus("countdown");
+              startCountdown();
+              return "cooldown";
+            }
+
             await writeLogToDb({
               context: "captureHandler:Throttled",
               level: "WARN",
-              message: "Rate limit reached (429)",
+              message: "Auto upload cooldown reached",
               metadata: { status: res.status, data: res.data },
             });
             setStatus("error");
-            return false;
+            return "error";
           }
 
           if (res.status < 200 || res.status >= 300) {
@@ -130,7 +155,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
           // ✅ sukses
           await mutate();
           setStatus("countdown");
-          return true;
+          return "success";
         } catch (error) {
           attempts++;
 
@@ -158,7 +183,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
             timerRef.current = setTimeout(resolve, RETRY_DELAY * 1000);
           });
 
-          if (isStoppedRef.current) return false;
+          if (isStoppedRef.current) return "error";
         }
       }
 
@@ -169,7 +194,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
         "Capture/upload gagal 3 kali berturut-turut. Coba hard-restart (CTRL + F5) aplikasi lalu jalankan session lagi.",
         { title: "Capture Failed", kind: "error" },
       );
-      return false;
+      return "error";
     } finally {
       isCapturingRef.current = false;
     }
@@ -189,11 +214,11 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
     timerRef.current = setTimeout(async () => {
       if (isStoppedRef.current) return;
 
-      const success = await captureHandler();
+      const result = await captureHandler();
 
-      if (!isStoppedRef.current && success) {
+      if (!isStoppedRef.current && result === "success") {
         scheduleNextCapture();
-      } else if (!isStoppedRef.current) {
+      } else if (!isStoppedRef.current && result === "error") {
         // ✅ loop berhenti karena error, bukan karena stop
         setIsRunning(false);
       }
@@ -208,11 +233,11 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
     setIsRunning(true);
     isStoppedRef.current = false;
 
-    const success = await captureHandler();
+    const result = await captureHandler();
 
-    if (!isStoppedRef.current && success) {
+    if (!isStoppedRef.current && result === "success") {
       scheduleNextCapture();
-    } else {
+    } else if (!isStoppedRef.current && result === "error") {
       setIsRunning(false);
     }
   }, [captureHandler, scheduleNextCapture, setIsRunning]);
