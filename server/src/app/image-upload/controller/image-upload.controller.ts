@@ -28,7 +28,6 @@ export class ImageUploadController {
     private readonly validationService: ImageValidationService,
   ) {}
 
-  @UseGuards(UserThrottlerGuard)
   @Post('')
   async uploadFile(@Body() body: ImageUploadDto, @UserId() userId: string) {
     await this.scannerService.addToNormalQueue(body.image, userId);

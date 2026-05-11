@@ -12,7 +12,7 @@ import { buildUrl } from "@/utils/build-url";
 import {
   TimerStatus,
   useHomeTimerController,
-} from "../logic/use-home-timer-controller";
+} from "../logic/timer-hooks/use-home-timer-controller";
 import { useHomeExcelController } from "../logic/use-home-excel-controller";
 import { HomeData } from "../types/activites-data.type";
 import { startOfDay } from "date-fns";

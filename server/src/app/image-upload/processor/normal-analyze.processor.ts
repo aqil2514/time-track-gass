@@ -54,10 +54,6 @@ export class NormalAnalyzeProcessor extends WorkerHost {
       const res = await analyzeImage(this.gemini, model, prompt, imageUrl);
       const analyzedData = JSON.parse(res.text);
 
-      this.logger.debug(
-        `User ${userId} analyzed data: ${JSON.stringify(analyzedData)}`,
-      );
-
       this.logger.log(
         `User ${userId} analyze succeeded with model ${model} on attempt ${attempt}/${maxAttempts}`,
       );
@@ -72,10 +68,6 @@ export class NormalAnalyzeProcessor extends WorkerHost {
         work_session_id: rest.workSessionId,
         created_at: rest.createdAt,
       };
-
-      this.logger.debug(
-        `User ${userId} mapped analyze data: ${JSON.stringify(mappedData)}`,
-      );
 
       await createNewAnalyzeData(this.supabase, mappedData);
 

@@ -10,6 +10,7 @@ import { TableName } from 'src/services/supabase/supabase.interface';
 import { format, toZonedTime } from 'node_modules/date-fns-tz/dist/cjs';
 import { TIMEZONE } from 'src/constants/timezone';
 import {
+  assertAutoUploadCooldown,
   enqueueAnalyze,
   getActiveSession,
   uploadToS3,
@@ -104,9 +105,15 @@ export class ImageScannerService {
   }
 
   async addToNormalQueue(imageDataUrl: string, userId: string) {
-    const s3Key = await uploadToS3(this.s3Client, imageDataUrl, userId);
-
     const workIdSession = await getActiveSession(this.supabase, userId);
+
+    await assertAutoUploadCooldown(
+      this.supabase,
+      this.normalAnalyzeQueue,
+      userId,
+    );
+
+    const s3Key = await uploadToS3(this.s3Client, imageDataUrl, userId);
 
     await enqueueAnalyze(
       this.normalAnalyzeQueue,
