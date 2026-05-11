@@ -68,20 +68,30 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   // ==============================
   // COUNTDOWN ENGINE
   // ==============================
-  const startCountdown = useCallback(() => {
-    if (countdownRef.current) clearInterval(countdownRef.current);
+  const startCountdown = useCallback(
+    (onComplete?: () => void) => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
 
-    countdownRef.current = setInterval(() => {
-      if (!nextCaptureAtRef.current) return;
+      countdownRef.current = setInterval(() => {
+        if (!nextCaptureAtRef.current) return;
 
-      const remaining = Math.max(
-        0,
-        Math.round((nextCaptureAtRef.current - Date.now()) / 1000),
-      );
+        const remaining = Math.max(
+          0,
+          Math.round((nextCaptureAtRef.current - Date.now()) / 1000),
+        );
 
-      setCountdown(remaining);
-    }, 500);
-  }, []);
+        setCountdown(remaining);
+
+        if (remaining === 0) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          countdownRef.current = null;
+          nextCaptureAtRef.current = null;
+          onComplete?.();
+        }
+      }, 500);
+    },
+    [],
+  );
 
   // ==============================
   // CAPTURE PROCESS
@@ -134,7 +144,17 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
               nextCaptureAtRef.current = retryTarget;
               setCountdown(retryAfterSeconds);
               setStatus("countdown");
-              startCountdown();
+              startCountdown(() => {
+                if (!isStoppedRef.current) {
+                  void captureHandler().then((result) => {
+                    if (!isStoppedRef.current && result === "success") {
+                      scheduleNextCapture();
+                    } else if (!isStoppedRef.current && result === "error") {
+                      setIsRunning(false);
+                    }
+                  });
+                }
+              });
               return "cooldown";
             }
 
