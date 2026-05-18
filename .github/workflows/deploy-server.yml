@@ -29,23 +29,26 @@ jobs:
       - name: Build
         run: npm run build
 
-
-      - name: Upload dist to VPS
+      - name: Upload server build to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "server/dist"
-          target: "/home/aqil/time-track-gass"
+          source: "server/dist,server/package.json,server/package-lock.json"
+          target: "/home/aqil/time-track-gass/server"
           strip_components: 1
           rm: false
 
-      - name: Restart PM2
+      - name: Install production dependencies & restart PM2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            pm2 restart timetrack
+            cd /home/aqil/time-track-gass/server
+            npm ci --omit=dev
+            pm2 delete timetrack || true
+            pm2 start npm --name timetrack -- run start:prod
+            pm2 save
