@@ -124,8 +124,6 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
             { headers: { Authorization: `Bearer ${token}` } },
           );
 
-          console.log(res)
-
           if (res.status === 422) {
             const retryAfterSeconds =
               typeof res.data?.retryAfterSeconds === "number"
