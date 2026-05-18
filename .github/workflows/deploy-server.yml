@@ -49,6 +49,4 @@ jobs:
           script: |
             cd /home/aqil/time-track-gass/server
             npm ci --omit=dev
-            pm2 delete timetrack || true
-            pm2 start npm --name timetrack -- run start:prod
-            pm2 save
+            pm2 restart timetrack
