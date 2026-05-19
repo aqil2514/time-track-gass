@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, Logger } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ImageScannerHelper } from './helpers/image-scanner-helper.service';
 import { AnalyzerAgentHelperService } from './helpers/analyzer-agent-helper.service';
@@ -106,6 +106,14 @@ export class ImageScannerService {
 
   async addToNormalQueue(imageDataUrl: string, userId: string) {
     const workIdSession = await getActiveSession(this.supabase, userId);
+
+    if (!workIdSession) {
+      throw new ConflictException({
+        code: 'NO_ACTIVE_WORK_SESSION',
+        message:
+          'No active work session. Please start a session before uploading screenshots.',
+      });
+    }
 
     await assertAutoUploadCooldown(
       this.supabase,

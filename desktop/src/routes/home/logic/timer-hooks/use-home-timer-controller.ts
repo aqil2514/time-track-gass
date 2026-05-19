@@ -7,22 +7,15 @@ import api from "@/lib/api";
 import { load } from "@tauri-apps/plugin-store";
 import { writeLogToDb } from "@/utils/write-log-to-db";
 import { HomeData } from "../../types/activites-data.type";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import { message } from "@tauri-apps/plugin-dialog";
+import { writeMacTimerLog } from "./macos-timer-log";
+import { bringWindowToFront } from "./timer-window";
+import {
+  startTimerDriftDetection,
+  stopTimerDriftDetection,
+} from "./timer-drift";
 
 const MAX_RETRY = 3;
-
-const bringWindowToFront = async () => {
-  try {
-    const window = getCurrentWindow();
-    await window.show();
-    await window.unminimize();
-    await window.setFocus();
-  } catch (error) {
-    console.error("[captureHandler] failed to focus window", error);
-  }
-};
-
 const RETRY_DELAY = 5;
 
 export type TimerStatus =
@@ -44,9 +37,17 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const nextCaptureAtRef = useRef<number | null>(null);
+  const driftHeartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastDriftHeartbeatAtRef = useRef<number | null>(null);
   const isCapturingRef = useRef(false);
   const isRunningRef = useRef(false);
   const isStoppedRef = useRef(false);
+  const statusRef = useRef<TimerStatus>("idle");
+
+  const setTimerStatus = useCallback((value: TimerStatus) => {
+    statusRef.current = value;
+    setStatus(value);
+  }, []);
 
   const setIsRunning = useCallback((value: boolean) => {
     isRunningRef.current = value;
@@ -59,6 +60,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   const clearTimers = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
     if (countdownRef.current) clearInterval(countdownRef.current);
+    stopTimerDriftDetection({ driftHeartbeatRef, lastDriftHeartbeatAtRef });
 
     timerRef.current = null;
     countdownRef.current = null;
@@ -100,19 +102,33 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
     if (isCapturingRef.current) return "error";
     isCapturingRef.current = true;
 
+    const captureCycleId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     let attempts = 0;
+
+    await writeMacTimerLog("mac_timer_capture_cycle_start", {
+      captureCycleId,
+      status: statusRef.current,
+    });
 
     try {
       while (attempts < MAX_RETRY) {
         try {
-          setStatus("capturing");
+          setTimerStatus("capturing");
+          await writeMacTimerLog("mac_timer_capture_attempt_start", {
+            captureCycleId,
+            attempt: attempts + 1,
+          });
 
           const dataUrl = await capture();
           if (!dataUrl) throw new Error("Capture failed: No data received");
 
           if (isStoppedRef.current) return "error";
 
-          setStatus("uploading");
+          setTimerStatus("uploading");
+          await writeMacTimerLog("mac_timer_upload_start", {
+            captureCycleId,
+            imageLength: dataUrl.length,
+          });
 
           const store = await load("auth.json");
           const token = await store.get<string>("accessToken");
@@ -123,6 +139,23 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
             { image: dataUrl },
             { headers: { Authorization: `Bearer ${token}` } },
           );
+
+          if (res.status === 409 && res.data?.code === "NO_ACTIVE_WORK_SESSION") {
+            await writeMacTimerLog(
+              "mac_timer_upload_no_active_session",
+              { captureCycleId, status: res.status, data: res.data },
+              "WARN",
+            );
+            await bringWindowToFront();
+            clearTimers();
+            setIsRunning(false);
+            setTimerStatus("idle");
+            await message(
+              "Sesi kerja belum dimulai atau sudah berakhir. Silakan klik Start Session terlebih dahulu.",
+              { title: "Session Belum Aktif", kind: "warning" },
+            );
+            return "error";
+          }
 
           if (res.status === 422) {
             const retryAfterSeconds =
@@ -137,11 +170,16 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
                 message: "Auto upload cooldown reached",
                 metadata: { status: res.status, data: res.data },
               });
+              await writeMacTimerLog(
+                "mac_timer_upload_cooldown",
+                { captureCycleId, status: res.status, retryAfterSeconds },
+                "WARN",
+              );
 
               const retryTarget = Date.now() + retryAfterSeconds * 1000;
               nextCaptureAtRef.current = retryTarget;
               setCountdown(retryAfterSeconds);
-              setStatus("countdown");
+              setTimerStatus("countdown");
               startCountdown(() => {
                 if (!isStoppedRef.current) {
                   void captureHandler().then((result) => {
@@ -162,7 +200,12 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
               message: "Auto upload cooldown reached",
               metadata: { status: res.status, data: res.data },
             });
-            setStatus("error");
+            await writeMacTimerLog(
+              "mac_timer_upload_cooldown_without_retry",
+              { captureCycleId, status: res.status },
+              "WARN",
+            );
+            setTimerStatus("error");
             return "error";
           }
 
@@ -170,9 +213,15 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
             throw new Error(`Upload failed: ${res.status}`);
           }
 
-          // ✅ sukses
+          await writeMacTimerLog("mac_timer_upload_success", {
+            captureCycleId,
+            status: res.status,
+          });
           await mutate();
-          setStatus("countdown");
+          setTimerStatus("countdown");
+          await writeMacTimerLog("mac_timer_capture_cycle_success", {
+            captureCycleId,
+          });
           return "success";
         } catch (error) {
           attempts++;
@@ -187,14 +236,29 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
               retryCount: attempts,
             },
           });
+          await writeMacTimerLog(
+            "mac_timer_capture_attempt_failed",
+            {
+              captureCycleId,
+              retryCount: attempts,
+              errorMessage: error instanceof Error ? error.message : String(error),
+            },
+            "ERROR",
+          );
 
           if (attempts >= MAX_RETRY || isStoppedRef.current) break;
 
           // ⏳ delay sebelum retry
-          setStatus("countdown");
+          setTimerStatus("countdown");
           const retryTarget = Date.now() + RETRY_DELAY * 1000;
           nextCaptureAtRef.current = retryTarget;
           setCountdown(RETRY_DELAY);
+          await writeMacTimerLog("mac_timer_retry_scheduled", {
+            captureCycleId,
+            retryCount: attempts,
+            retryDelaySeconds: RETRY_DELAY,
+            retryTarget,
+          });
           startCountdown();
 
           await new Promise<void>((resolve) => {
@@ -205,9 +269,13 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
         }
       }
 
-      // ❌ habis semua retry
+      await writeMacTimerLog(
+        "mac_timer_capture_cycle_failed_final",
+        { captureCycleId, retryCount: attempts, isStopped: isStoppedRef.current },
+        "ERROR",
+      );
       await bringWindowToFront();
-      setStatus("error");
+      setTimerStatus("error");
       await message(
         "Capture/upload gagal 3 kali berturut-turut. Coba hard-restart (CTRL + F5) aplikasi lalu jalankan session lagi.",
         { title: "Capture Failed", kind: "error" },
@@ -225,19 +293,37 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
     const nextTarget = Date.now() + TIME_TO_SCREENSHOT * 1000;
     nextCaptureAtRef.current = nextTarget;
     setCountdown(TIME_TO_SCREENSHOT);
-    setStatus("countdown");
+    setTimerStatus("countdown");
 
+    void writeMacTimerLog("mac_timer_schedule_next_capture", {
+      nextTarget,
+      delaySeconds: TIME_TO_SCREENSHOT,
+    });
     startCountdown();
 
     timerRef.current = setTimeout(async () => {
-      if (isStoppedRef.current) return;
+      if (isStoppedRef.current) {
+        void writeMacTimerLog("mac_timer_capture_trigger_skipped", {
+          reason: "timer_stopped",
+        });
+        return;
+      }
 
+      await writeMacTimerLog("mac_timer_capture_triggered", {
+        scheduledTarget: nextTarget,
+        driftMs: Date.now() - nextTarget,
+      });
       const result = await captureHandler();
+      await writeMacTimerLog("mac_timer_capture_result", { result });
 
       if (!isStoppedRef.current && result === "success") {
         scheduleNextCapture();
       } else if (!isStoppedRef.current && result === "error") {
-        // ✅ loop berhenti karena error, bukan karena stop
+        void writeMacTimerLog(
+          "mac_timer_stopped_by_error",
+          { result },
+          "ERROR",
+        );
         setIsRunning(false);
       }
     }, TIME_TO_SCREENSHOT * 1000);
@@ -247,15 +333,35 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   // START
   // ==============================
   const startAutoCapture = useCallback(async () => {
-    if (isRunningRef.current) return;
+    if (isRunningRef.current) {
+      void writeMacTimerLog("mac_timer_start_skipped", {
+        reason: "already_running",
+        status: statusRef.current,
+      });
+      return;
+    }
     setIsRunning(true);
     isStoppedRef.current = false;
+    startTimerDriftDetection({
+      driftHeartbeatRef,
+      lastDriftHeartbeatAtRef,
+      nextCaptureAtRef,
+      getStatus: () => statusRef.current,
+    });
+    await writeMacTimerLog("mac_timer_start", { status: statusRef.current });
 
     const result = await captureHandler();
+
+    await writeMacTimerLog("mac_timer_initial_capture_result", { result });
 
     if (!isStoppedRef.current && result === "success") {
       scheduleNextCapture();
     } else if (!isStoppedRef.current && result === "error") {
+      await writeMacTimerLog(
+        "mac_timer_stopped_by_initial_capture_error",
+        { result },
+        "ERROR",
+      );
       setIsRunning(false);
     }
   }, [captureHandler, scheduleNextCapture, setIsRunning]);
@@ -264,12 +370,13 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   // STOP
   // ==============================
   const stopAutoCapture = useCallback(() => {
+    void writeMacTimerLog("mac_timer_stop", { status: statusRef.current });
     isStoppedRef.current = true;
     setIsRunning(false);
     clearTimers();
     setCountdown(TIME_TO_SCREENSHOT);
-    setStatus("idle");
-  }, [setIsRunning]);
+    setTimerStatus("idle");
+  }, [setIsRunning, setTimerStatus]);
 
   // ==============================
   // CLEANUP ON UNMOUNT
