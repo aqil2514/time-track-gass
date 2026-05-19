@@ -3,3 +3,4 @@ stages:
 
 include:
   - local: ".gitlab/ci/deploy-server.yml"
+  - local: ".gitlab/ci/deploy-web.yml"
