@@ -199,12 +199,17 @@ export class ImageScannerService {
   }
 
   async isHaveInDb(slotId: number, userId: string, date: string) {
-    const localTime = toZonedTime(new Date(date), TIMEZONE);
-    const startOfHour = new Date(localTime);
-    startOfHour.setHours(slotId, 0, 0, 0);
+    const localDate = toZonedTime(new Date(date), TIMEZONE);
+    const dateString = format(localDate, 'yyyy-MM-dd');
 
-    const endOfHour = new Date(localTime);
-    endOfHour.setHours(slotId, 59, 59, 999);
+    // Konversi slotId (jam WIB) ke UTC
+    const utcHour = slotId - 7;
+
+    const startOfHour = new Date(`${dateString}T00:00:00.000Z`);
+    startOfHour.setUTCHours(utcHour, 0, 0, 0);
+
+    const endOfHour = new Date(`${dateString}T00:00:00.000Z`);
+    endOfHour.setUTCHours(utcHour, 59, 59, 999);
 
     const { data, error } = await this.supabase
       .from(TableName.AIScreenReport)
@@ -223,7 +228,7 @@ export class ImageScannerService {
 
     return !!data;
   }
-
+  
   async isHaveInBullMq(slotId: number, userId: string, date: string) {
     const localDate = toZonedTime(new Date(date), TIMEZONE);
     const formattedDate = format(localDate, 'dd-MM-yyyy');
