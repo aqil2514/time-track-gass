@@ -117,7 +117,7 @@ export class ImageValidationService {
           continue;
         }
 
-        const localDateTime = parseLocalDateTime(todayString, aiResult, localDate);
+        const localDateTime = parseLocalDateTime(todayString, aiResult);
 
         // 7. Cek jam sesuai slot
         if (isSameHour(localDateTime, slotId)) {

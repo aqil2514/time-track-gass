@@ -3,6 +3,7 @@
 import { createHash } from 'crypto';
 import { AIResult } from './image-validation.processor';
 import { parse } from 'date-fns/parse';
+import { fromZonedTime } from 'node_modules/date-fns-tz/dist/cjs';
 
 // Step 1 : Apakah ada gambar yang duplikat?
 export function isDuplicateImage(
@@ -83,22 +84,18 @@ export function isSameDay(aiResult: AIResult, todayString: string) {
 export function parseLocalDateTime(
   todayString: string,
   aiResult: AIResult,
-  localDate: Date,
 ): Date {
-  const result = parse(
-    `${todayString} ${aiResult.time}`,
-    'yyyy-MM-dd HH:mm',
-    localDate,
-  );
+  const localDateTimeString = `${todayString} ${aiResult.time}`;
+  const result = fromZonedTime(localDateTimeString, 'Asia/Jakarta');
   console.log(
-    `[parseLocalDateTime] combined: ${todayString} ${aiResult.time}, result: ${result.toISOString()}`,
+    `[parseLocalDateTime] combined: ${localDateTimeString}, result: ${result.toISOString()}`,
   );
   return result;
 }
 
 // Step 7 : Apakah jamnya sesuai dengan slot yang dikirim?
 export function isSameHour(localDateTime: Date, slotId: number): boolean {
-  const hour = localDateTime.getHours();
+  const hour = (localDateTime.getUTCHours() + 7) % 24;
   const match = hour === slotId;
   console.log(
     `[isSameHour] imageHour: ${hour}, slotId: ${slotId}, match: ${match}`,
