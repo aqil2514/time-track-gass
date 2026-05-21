@@ -10,6 +10,7 @@ import { useMemo } from "react";
 import { UploadImage } from "./upload-image";
 import { Badge } from "@/components/ui/badge";
 import { RotateCcw } from "lucide-react";
+import { NativeTimerDevControls } from "./native-timer-dev-controls";
 
 export function Controller() {
   const { fetcher, controllerTime } = useHomeContext();
@@ -33,6 +34,7 @@ export function Controller() {
             </div>
           )}
         <ExportToExcelButton />
+        <NativeTimerDevControls />
       </div>
 
       <div className="flex justify-between">

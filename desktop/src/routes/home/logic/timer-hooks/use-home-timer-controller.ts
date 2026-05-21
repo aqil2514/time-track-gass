@@ -14,6 +14,7 @@ import {
   startTimerDriftDetection,
   stopTimerDriftDetection,
 } from "./timer-drift";
+import { startKeepAwake, stopKeepAwake } from "./native-timer";
 
 const MAX_RETRY = 3;
 const RETRY_DELAY = 5;
@@ -52,6 +53,32 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   const setIsRunning = useCallback((value: boolean) => {
     isRunningRef.current = value;
     setIsRunningState(value);
+  }, []);
+
+  const startTimerKeepAwake = useCallback(async () => {
+    try {
+      await startKeepAwake();
+      await writeMacTimerLog("mac_timer_keep_awake_start_success");
+    } catch (error) {
+      await writeMacTimerLog(
+        "mac_timer_keep_awake_start_failed",
+        { errorMessage: error instanceof Error ? error.message : String(error) },
+        "ERROR",
+      );
+    }
+  }, []);
+
+  const stopTimerKeepAwake = useCallback(async () => {
+    try {
+      await stopKeepAwake();
+      await writeMacTimerLog("mac_timer_keep_awake_stop_success");
+    } catch (error) {
+      await writeMacTimerLog(
+        "mac_timer_keep_awake_stop_failed",
+        { errorMessage: error instanceof Error ? error.message : String(error) },
+        "ERROR",
+      );
+    }
   }, []);
 
   // ==============================
@@ -148,6 +175,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
             );
             await bringWindowToFront();
             clearTimers();
+            await stopTimerKeepAwake();
             setIsRunning(false);
             setTimerStatus("idle");
             await message(
@@ -276,6 +304,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
       );
       await bringWindowToFront();
       setTimerStatus("error");
+      await stopTimerKeepAwake();
       await message(
         "Capture/upload gagal 3 kali berturut-turut. Coba hard-restart (CTRL + F5) aplikasi lalu jalankan session lagi.",
         { title: "Capture Failed", kind: "error" },
@@ -284,7 +313,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
     } finally {
       isCapturingRef.current = false;
     }
-  }, [capture, mutate, startCountdown]);
+  }, [capture, mutate, startCountdown, stopTimerKeepAwake]);
 
   // ==============================
   // MAIN LOOP (ANTI DRIFT)
@@ -324,10 +353,11 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
           { result },
           "ERROR",
         );
+        void stopTimerKeepAwake();
         setIsRunning(false);
       }
     }, TIME_TO_SCREENSHOT * 1000);
-  }, [captureHandler, startCountdown, setIsRunning]);
+  }, [captureHandler, startCountdown, setIsRunning, stopTimerKeepAwake]);
 
   // ==============================
   // START
@@ -342,6 +372,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
     }
     setIsRunning(true);
     isStoppedRef.current = false;
+    await startTimerKeepAwake();
     startTimerDriftDetection({
       driftHeartbeatRef,
       lastDriftHeartbeatAtRef,
@@ -362,9 +393,16 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
         { result },
         "ERROR",
       );
+      await stopTimerKeepAwake();
       setIsRunning(false);
     }
-  }, [captureHandler, scheduleNextCapture, setIsRunning]);
+  }, [
+    captureHandler,
+    scheduleNextCapture,
+    setIsRunning,
+    startTimerKeepAwake,
+    stopTimerKeepAwake,
+  ]);
 
   // ==============================
   // STOP
@@ -374,9 +412,10 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
     isStoppedRef.current = true;
     setIsRunning(false);
     clearTimers();
+    void stopTimerKeepAwake();
     setCountdown(TIME_TO_SCREENSHOT);
     setTimerStatus("idle");
-  }, [setIsRunning, setTimerStatus]);
+  }, [setIsRunning, setTimerStatus, stopTimerKeepAwake]);
 
   // ==============================
   // CLEANUP ON UNMOUNT
@@ -384,8 +423,9 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   useEffect(() => {
     return () => {
       clearTimers();
+      void stopTimerKeepAwake();
     };
-  }, []);
+  }, [stopTimerKeepAwake]);
 
   return {
     startAutoCapture,

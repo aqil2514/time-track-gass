@@ -125,6 +125,36 @@ async fn check_if_images_match(path_a: String, path_b: String) -> bool {
     utils::compare_image::is_identical(&path_a, &path_b)
 }
 
+#[tauri::command]
+fn start_keep_awake() -> Result<(), String> {
+    utils::keep_awake::start_keep_awake()
+}
+
+#[tauri::command]
+fn stop_keep_awake() -> Result<(), String> {
+    utils::keep_awake::stop_keep_awake()
+}
+
+#[tauri::command]
+fn is_keep_awake_running() -> Result<bool, String> {
+    utils::keep_awake::is_keep_awake_running()
+}
+
+#[tauri::command]
+fn start_native_timer(app: tauri::AppHandle, interval_seconds: u64) -> Result<(), String> {
+    utils::native_timer::start_native_timer(app, interval_seconds)
+}
+
+#[tauri::command]
+fn stop_native_timer() -> Result<(), String> {
+    utils::native_timer::stop_native_timer()
+}
+
+#[tauri::command]
+fn is_native_timer_running() -> Result<bool, String> {
+    utils::native_timer::is_native_timer_running()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -143,6 +173,12 @@ pub fn run() {
             check_screen_permission_macos,
             request_screen_permission_macos,
             check_if_images_match,
+            start_keep_awake,
+            stop_keep_awake,
+            is_keep_awake_running,
+            start_native_timer,
+            stop_native_timer,
+            is_native_timer_running,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
