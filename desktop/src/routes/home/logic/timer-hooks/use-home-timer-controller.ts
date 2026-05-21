@@ -1,6 +1,7 @@
 import { TIME_TO_SCREENSHOT } from "@/constants/home";
 import { useCapture } from "@/hooks/use-capture";
 import { buildUrl } from "@/utils/build-url";
+import { listen, UnlistenFn } from "@tauri-apps/api/event";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { KeyedMutator } from "swr";
 import api from "@/lib/api";
@@ -14,7 +15,12 @@ import {
   startTimerDriftDetection,
   stopTimerDriftDetection,
 } from "./timer-drift";
-import { startKeepAwake, stopKeepAwake } from "./native-timer";
+import {
+  startKeepAwake,
+  startNativeTimer,
+  stopKeepAwake,
+  stopNativeTimer,
+} from "./native-timer";
 
 const MAX_RETRY = 3;
 const RETRY_DELAY = 5;
@@ -35,8 +41,8 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   const [countdown, setCountdown] = useState(TIME_TO_SCREENSHOT);
   const [isRunning, setIsRunningState] = useState(false);
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const nativeTimerUnlistenRef = useRef<UnlistenFn | null>(null);
   const nextCaptureAtRef = useRef<number | null>(null);
   const driftHeartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastDriftHeartbeatAtRef = useRef<number | null>(null);
@@ -81,18 +87,56 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
     }
   }, []);
 
+  const startTimerNativeTrigger = useCallback(
+    async (onTick: () => void | Promise<void>) => {
+      try {
+        nativeTimerUnlistenRef.current?.();
+        nativeTimerUnlistenRef.current = await listen("native_timer_tick", () => {
+          void onTick();
+        });
+        await startNativeTimer(1);
+        await writeMacTimerLog("mac_timer_native_timer_start_success");
+      } catch (error) {
+        await writeMacTimerLog(
+          "mac_timer_native_timer_start_failed",
+          { errorMessage: error instanceof Error ? error.message : String(error) },
+          "ERROR",
+        );
+      }
+    },
+    [],
+  );
+
+  const stopTimerNativeTrigger = useCallback(async () => {
+    try {
+      nativeTimerUnlistenRef.current?.();
+      nativeTimerUnlistenRef.current = null;
+      await stopNativeTimer();
+      await writeMacTimerLog("mac_timer_native_timer_stop_success");
+    } catch (error) {
+      await writeMacTimerLog(
+        "mac_timer_native_timer_stop_failed",
+        { errorMessage: error instanceof Error ? error.message : String(error) },
+        "ERROR",
+      );
+    }
+  }, []);
+
   // ==============================
   // CLEAR ALL TIMERS
   // ==============================
   const clearTimers = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
     if (countdownRef.current) clearInterval(countdownRef.current);
     stopTimerDriftDetection({ driftHeartbeatRef, lastDriftHeartbeatAtRef });
 
-    timerRef.current = null;
     countdownRef.current = null;
     nextCaptureAtRef.current = null;
   };
+
+  const stopAllNativeTimerSideEffects = useCallback(async () => {
+    await stopTimerNativeTrigger();
+    await stopTimerKeepAwake();
+  }, [stopTimerKeepAwake, stopTimerNativeTrigger]);
 
   // ==============================
   // COUNTDOWN ENGINE
@@ -114,7 +158,6 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
         if (remaining === 0) {
           if (countdownRef.current) clearInterval(countdownRef.current);
           countdownRef.current = null;
-          nextCaptureAtRef.current = null;
           onComplete?.();
         }
       }, 500);
@@ -175,7 +218,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
             );
             await bringWindowToFront();
             clearTimers();
-            await stopTimerKeepAwake();
+            await stopAllNativeTimerSideEffects();
             setIsRunning(false);
             setTimerStatus("idle");
             await message(
@@ -208,17 +251,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
               nextCaptureAtRef.current = retryTarget;
               setCountdown(retryAfterSeconds);
               setTimerStatus("countdown");
-              startCountdown(() => {
-                if (!isStoppedRef.current) {
-                  void captureHandler().then((result) => {
-                    if (!isStoppedRef.current && result === "success") {
-                      scheduleNextCapture();
-                    } else if (!isStoppedRef.current && result === "error") {
-                      setIsRunning(false);
-                    }
-                  });
-                }
-              });
+              startCountdown();
               return "cooldown";
             }
 
@@ -287,10 +320,20 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
             retryDelaySeconds: RETRY_DELAY,
             retryTarget,
           });
-          startCountdown();
-
           await new Promise<void>((resolve) => {
-            timerRef.current = setTimeout(resolve, RETRY_DELAY * 1000);
+            const startedAt = Date.now();
+            const waitForRetryTarget = setInterval(() => {
+              const remaining = Math.max(
+                0,
+                Math.round((retryTarget - Date.now()) / 1000),
+              );
+              setCountdown(remaining);
+
+              if (Date.now() >= retryTarget || Date.now() - startedAt >= RETRY_DELAY * 1000) {
+                clearInterval(waitForRetryTarget);
+                resolve();
+              }
+            }, 500);
           });
 
           if (isStoppedRef.current) return "error";
@@ -304,7 +347,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
       );
       await bringWindowToFront();
       setTimerStatus("error");
-      await stopTimerKeepAwake();
+      await stopAllNativeTimerSideEffects();
       await message(
         "Capture/upload gagal 3 kali berturut-turut. Coba hard-restart (CTRL + F5) aplikasi lalu jalankan session lagi.",
         { title: "Capture Failed", kind: "error" },
@@ -313,10 +356,10 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
     } finally {
       isCapturingRef.current = false;
     }
-  }, [capture, mutate, startCountdown, stopTimerKeepAwake]);
+  }, [capture, mutate, startCountdown, stopAllNativeTimerSideEffects]);
 
   // ==============================
-  // MAIN LOOP (ANTI DRIFT)
+  // MAIN LOOP (NATIVE TIMER TRIGGER)
   // ==============================
   const scheduleNextCapture = useCallback(() => {
     const nextTarget = Date.now() + TIME_TO_SCREENSHOT * 1000;
@@ -327,37 +370,51 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
     void writeMacTimerLog("mac_timer_schedule_next_capture", {
       nextTarget,
       delaySeconds: TIME_TO_SCREENSHOT,
+      trigger: "native_timer",
     });
     startCountdown();
+  }, [startCountdown, setTimerStatus]);
 
-    timerRef.current = setTimeout(async () => {
-      if (isStoppedRef.current) {
-        void writeMacTimerLog("mac_timer_capture_trigger_skipped", {
-          reason: "timer_stopped",
-        });
-        return;
-      }
+  const handleNativeTimerTick = useCallback(async () => {
+    if (isStoppedRef.current || !isRunningRef.current || isCapturingRef.current) return;
 
-      await writeMacTimerLog("mac_timer_capture_triggered", {
-        scheduledTarget: nextTarget,
-        driftMs: Date.now() - nextTarget,
-      });
-      const result = await captureHandler();
-      await writeMacTimerLog("mac_timer_capture_result", { result });
+    const nextTarget = nextCaptureAtRef.current;
+    if (!nextTarget || Date.now() < nextTarget) return;
 
-      if (!isStoppedRef.current && result === "success") {
-        scheduleNextCapture();
-      } else if (!isStoppedRef.current && result === "error") {
-        void writeMacTimerLog(
-          "mac_timer_stopped_by_error",
-          { result },
-          "ERROR",
-        );
-        void stopTimerKeepAwake();
-        setIsRunning(false);
-      }
-    }, TIME_TO_SCREENSHOT * 1000);
-  }, [captureHandler, startCountdown, setIsRunning, stopTimerKeepAwake]);
+    nextCaptureAtRef.current = null;
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    countdownRef.current = null;
+    setCountdown(0);
+
+    await writeMacTimerLog("mac_timer_capture_triggered", {
+      scheduledTarget: nextTarget,
+      driftMs: Date.now() - nextTarget,
+      trigger: "native_timer",
+    });
+
+    const result = await captureHandler();
+    await writeMacTimerLog("mac_timer_capture_result", {
+      result,
+      trigger: "native_timer",
+    });
+
+    if (!isStoppedRef.current && result === "success") {
+      scheduleNextCapture();
+    } else if (!isStoppedRef.current && result === "error") {
+      void writeMacTimerLog(
+        "mac_timer_stopped_by_error",
+        { result, trigger: "native_timer" },
+        "ERROR",
+      );
+      void stopAllNativeTimerSideEffects();
+      setIsRunning(false);
+    }
+  }, [
+    captureHandler,
+    scheduleNextCapture,
+    setIsRunning,
+    stopAllNativeTimerSideEffects,
+  ]);
 
   // ==============================
   // START
@@ -373,6 +430,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
     setIsRunning(true);
     isStoppedRef.current = false;
     await startTimerKeepAwake();
+    await startTimerNativeTrigger(handleNativeTimerTick);
     startTimerDriftDetection({
       driftHeartbeatRef,
       lastDriftHeartbeatAtRef,
@@ -393,15 +451,17 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
         { result },
         "ERROR",
       );
-      await stopTimerKeepAwake();
+      await stopAllNativeTimerSideEffects();
       setIsRunning(false);
     }
   }, [
     captureHandler,
+    handleNativeTimerTick,
     scheduleNextCapture,
     setIsRunning,
     startTimerKeepAwake,
-    stopTimerKeepAwake,
+    startTimerNativeTrigger,
+    stopAllNativeTimerSideEffects,
   ]);
 
   // ==============================
@@ -412,10 +472,10 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
     isStoppedRef.current = true;
     setIsRunning(false);
     clearTimers();
-    void stopTimerKeepAwake();
+    void stopAllNativeTimerSideEffects();
     setCountdown(TIME_TO_SCREENSHOT);
     setTimerStatus("idle");
-  }, [setIsRunning, setTimerStatus, stopTimerKeepAwake]);
+  }, [setIsRunning, setTimerStatus, stopAllNativeTimerSideEffects]);
 
   // ==============================
   // CLEANUP ON UNMOUNT
@@ -423,9 +483,9 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   useEffect(() => {
     return () => {
       clearTimers();
-      void stopTimerKeepAwake();
+      void stopAllNativeTimerSideEffects();
     };
-  }, [stopTimerKeepAwake]);
+  }, [stopAllNativeTimerSideEffects]);
 
   return {
     startAutoCapture,
