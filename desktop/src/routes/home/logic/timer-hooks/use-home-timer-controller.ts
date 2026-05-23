@@ -24,6 +24,7 @@ import {
 
 const MAX_RETRY = 3;
 const RETRY_DELAY = 5;
+const UPLOAD_TIMEOUT_MS = 60_000;
 
 export type TimerStatus =
   | "idle"
@@ -195,9 +196,11 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
           if (isStoppedRef.current) return "error";
 
           setTimerStatus("uploading");
+          const uploadStartedAt = Date.now();
           await writeMacTimerLog("mac_timer_upload_start", {
             captureCycleId,
             imageLength: dataUrl.length,
+            timeoutMs: UPLOAD_TIMEOUT_MS,
           });
 
           const store = await load("auth.json");
@@ -207,7 +210,10 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
           const res = await api.post(
             buildUrl("image-upload"),
             { image: dataUrl },
-            { headers: { Authorization: `Bearer ${token}` } },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+              timeout: UPLOAD_TIMEOUT_MS,
+            },
           );
 
           if (res.status === 409 && res.data?.code === "NO_ACTIVE_WORK_SESSION") {
@@ -277,6 +283,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
           await writeMacTimerLog("mac_timer_upload_success", {
             captureCycleId,
             status: res.status,
+            uploadDurationMs: Date.now() - uploadStartedAt,
           });
           await mutate();
           setTimerStatus("countdown");
@@ -287,6 +294,12 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
         } catch (error) {
           attempts++;
 
+          const isUploadTimeout =
+            typeof error === "object" &&
+            error !== null &&
+            "code" in error &&
+            error.code === "ECONNABORTED";
+
           await writeLogToDb({
             context: "captureHandler",
             level: "ERROR",
@@ -295,6 +308,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
               error,
               stack: error instanceof Error ? error.stack : undefined,
               retryCount: attempts,
+              isUploadTimeout,
             },
           });
           await writeMacTimerLog(
@@ -303,6 +317,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
               captureCycleId,
               retryCount: attempts,
               errorMessage: error instanceof Error ? error.message : String(error),
+              isUploadTimeout,
             },
             "ERROR",
           );
