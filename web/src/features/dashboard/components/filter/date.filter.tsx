@@ -25,7 +25,7 @@ export function DashboardDateFilter() {
   }
 
   return (
-    <div className="flex items-center border border-gray-600 bg-gray-800 px-1 rounded-2xl">
+    <div className="flex w-fit items-center border border-gray-600 bg-gray-800 px-1 rounded-2xl">
       {/* Previous Day */}
       <button
         onClick={prevDay}
@@ -66,3 +66,4 @@ export function DashboardDateFilter() {
     </div>
   );
 }
+

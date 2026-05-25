@@ -13,6 +13,7 @@ export interface MatrixResponse {
   userName: string;
   userId: string;
   fullName: string;
+  division: string;
   activity: number[];
   newActivity?: {
     totalActivity: number;

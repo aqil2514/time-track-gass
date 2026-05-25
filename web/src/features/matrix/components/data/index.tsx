@@ -1,4 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { useUsername } from "@/hooks/resources/use-username";
+import { useQueryParams } from "@/hooks/use-query-params";
 import { useMatrixContext } from "../../provider/matrix.provider";
 import { MatrixLegend } from "./legend";
 import { MatrixHeader } from "./header";
@@ -10,6 +12,15 @@ const hours = Array.from({ length: 24 }, (_, i) =>
 
 export function MatrixData() {
   const { data, isLoading } = useMatrixContext();
+  const { data: users } = useUsername();
+  const { get } = useQueryParams();
+  const selectedDivision = get("division");
+  const filteredData = selectedDivision
+    ? data?.filter((user) => {
+        const profile = users.find((profile) => profile.id === user.userId);
+        return profile?.division === selectedDivision;
+      })
+    : data;
 
   if (isLoading) {
     return (
@@ -19,7 +30,7 @@ export function MatrixData() {
     );
   }
 
-  if (!data || data.length === 0) {
+  if (!filteredData || filteredData.length === 0) {
     return (
       <div className="p-6 text-slate-500">
         Tidak ada data aktivitas untuk tanggal ini.
@@ -33,7 +44,7 @@ export function MatrixData() {
         <CardContent className="p-6">
           <MatrixHeader hours={hours} />
 
-          <MatrixUserData data={data} />
+          <MatrixUserData data={filteredData} />
         </CardContent>
       </Card>
 

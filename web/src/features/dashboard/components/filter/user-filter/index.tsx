@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { LoadingSpinner } from "@/components/atoms/loading-spinner";
 import { UserFilterTriggerButton } from "./trigger-button";
 import { UserList } from "./user-list";
 import { useUserFilter } from "./logics";
@@ -27,10 +26,16 @@ export function DashboardUserFilter() {
     filteredUsers,
     allDivisions,
     selectedDivision,
-    setSelectedDivision
+    setSelectedDivision,
   } = useUserFilter();
 
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading) {
+    return (
+      <div className="flex w-fit items-center border border-gray-600 bg-gray-800/80 rounded-lg px-3 py-2">
+        <div className="size-6 animate-spin rounded-full border-2 border-gray-600 border-t-white" />
+      </div>
+    );
+  }
 
   return (
     <Popover>
@@ -52,17 +57,19 @@ export function DashboardUserFilter() {
 
         <Separator className="bg-gray-700" />
         <div className="space-y-1">
-
-        <DivisionFilter allDivisions={allDivisions} selectedDivision={selectedDivision} setSelectedDivision={setSelectedDivision} />
-        <Input
-          placeholder="Search user..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-md bg-gray-700 border border-gray-600 px-3 py-2 text-sm text-white outline-none focus:border-green-500"
-        />
+          <DivisionFilter
+            allDivisions={allDivisions}
+            selectedDivision={selectedDivision}
+            setSelectedDivision={setSelectedDivision}
+          />
+          <Input
+            placeholder="Search user..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-md bg-gray-700 border border-gray-600 px-3 py-2 text-sm text-white outline-none focus:border-green-500"
+          />
         </div>
 
-        {/* Scroll User */}
         <UserList
           filteredUsers={filteredUsers}
           selectedUser={selectedUser}
@@ -71,7 +78,6 @@ export function DashboardUserFilter() {
 
         <Separator className="bg-gray-700" />
 
-        {/* Hover Name */}
         <p className="text-center text-white font-semibold text-sm tracking-wide">
           {hoverName}
         </p>

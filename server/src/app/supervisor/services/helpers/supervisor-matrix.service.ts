@@ -16,6 +16,7 @@ export interface MatrixResponse {
   userName: string;
   userId: string;
   fullName: string;
+  division: string;
   // TODO : Hapus kalo udah fix
   activity: number[];
   newActivity: {
@@ -226,6 +227,7 @@ export class SupervisorMatrixService {
 
       const matrixData: MatrixResponse = {
         fullName: user.full_name,
+        division: user.division,
         userId: user.id,
         userName: user.username,
         activity: hourlyActivity,
