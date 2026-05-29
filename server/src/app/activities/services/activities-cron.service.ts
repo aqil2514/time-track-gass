@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ActivitiesSessionSummaryCronHelper } from './helpers/activites-cron-session-summary-helper.service';
+import { ActivitiesCronMessageHelper } from './helpers/activities-cron-message.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { SupabaseClient } from '@supabase/supabase-js/dist/index.cjs';
@@ -30,6 +31,7 @@ export class ActivitiesCronService {
     private readonly supabase: SupabaseClient,
 
     private readonly sessionSummaryHelper: ActivitiesSessionSummaryCronHelper,
+    private readonly messageHelper: ActivitiesCronMessageHelper,
   ) {}
 
   @Cron(CronExpression.EVERY_HOUR, {
@@ -98,6 +100,27 @@ export class ActivitiesCronService {
         },
       );
     }
+  }
+
+  @Cron('0 11 * * *', { timeZone: 'Asia/Jakarta' })
+  async sendMorningBatchReminder() {
+    await this.messageHelper.sendMessageBulk(
+      'Cek Batch Pagi: Pastikan semua sudah Start Session (min. 2-3 jam).',
+    );
+  }
+
+  @Cron('0 15 * * *', { timeZone: 'Asia/Jakarta' })
+  async sendAfternoonBatchReminder() {
+    await this.messageHelper.sendMessageBulk(
+      'Cek Batch Siang: Rawan lupa! Aktifkan sesi setelah istirahat.',
+    );
+  }
+
+  @Cron('0 17 * * *', { timeZone: 'Asia/Jakarta' })
+  async sendFinalCheckReminder() {
+    await this.messageHelper.sendMessageBulk(
+      'Final Check: Verifikasi akhir sebelum operasional tutup.',
+    );
   }
 
   // WA reminders are disabled because KonekWA API key errors spam production logs.
