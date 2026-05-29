@@ -1,6 +1,31 @@
 stages:
   - deploy
 
-include:
-  - local: ".gitlab/ci/deploy-server.yml"
-  - local: ".gitlab/ci/deploy-web.yml"
+deploy:
+  stage: deploy
+  image: node:20
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "feature/fresh-start"'
+  before_script:
+    - apt-get update && apt-get install -y openssh-client rsync
+    - mkdir -p ~/.ssh
+    - echo "$VPS_SSH_KEY_B64" | base64 -d > ~/.ssh/deploy_key
+    - chmod 600 ~/.ssh/deploy_key
+    - ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+  script:
+    # Build web
+    - cd web
+    - npm ci
+    - NEXT_PUBLIC_SERVER_URL="$NEXT_PUBLIC_SERVER_URL" NEXT_PUBLIC_WEB_URL="$NEXT_PUBLIC_WEB_URL" npm run build
+    - cd ..
+    # Build server
+    - cd server
+    - npm ci
+    - npm run build
+    - cd ..
+    # Deploy web
+    - rsync -az -e "ssh -i ~/.ssh/deploy_key" web/.next web/package.json web/package-lock.json "$VPS_USER@$VPS_HOST:/www/wwwroot/time-track-gass/web/"
+    - ssh -i ~/.ssh/deploy_key "$VPS_USER@$VPS_HOST" "cd /www/wwwroot/time-track-gass/web && npm ci --omit=dev && pm2 restart timetrack-web"
+    # Deploy server
+    - rsync -az -e "ssh -i ~/.ssh/deploy_key" server/dist server/package.json server/package-lock.json "$VPS_USER@$VPS_HOST:/www/wwwroot/time-track-gass/server/"
+    - ssh -i ~/.ssh/deploy_key "$VPS_USER@$VPS_HOST" "cd /www/wwwroot/time-track-gass/server && npm ci --omit=dev && pm2 restart timetrack"
