@@ -24,8 +24,20 @@ Saat session dimulai:
 
 - `startAutoCapture()` dipanggil di `desktop/src/routes/home/logic/timer-hooks/use-home-timer-controller.ts:182`
 - fungsi ini langsung memanggil `captureHandler()` untuk screenshot pertama di `desktop/src/routes/home/logic/timer-hooks/use-home-timer-controller.ts:187`
+- setelah screenshot pertama, desktop memulai native timer Rust via `startNativeTimer(intervalMenit)`
 
 Artinya screenshot pertama tidak menunggu interval dulu.
+
+### Native timer (sejak v0.2.18)
+
+Timer tidak lagi dikendalikan oleh `setTimeout` JavaScript. Timer sekarang berjalan sebagai OS thread dari Rust dan mengirim event `native_timer_tick` ke frontend via Tauri.
+
+- Desktop mendaftarkan listener `native_timer_tick` lewat Tauri event API
+- Setiap tick yang diterima memicu `onTick()` → capture → upload
+- Interval dikontrol sepenuhnya dari sisi Rust menggunakan `std::thread::spawn` dan `AtomicBool` sebagai stop signal
+- JavaScript hanya menerima tick, tidak mengatur waktu sendiri
+
+Pendekatan ini menghilangkan drift yang sebelumnya terjadi saat tab tidak aktif, device sleep, atau CPU load tinggi — terutama pada macOS.
 
 ## 2. Capture gambar di desktop
 
@@ -108,7 +120,9 @@ Jika upload sukses, desktop:
 
 1. memanggil `mutate()` untuk refresh data home
 2. mengubah status menjadi countdown
-3. menjadwalkan screenshot berikutnya setelah interval yang ditentukan
+3. menunggu tick berikutnya dari native timer Rust
+
+Native timer yang mengatur interval — desktop tidak lagi menjadwalkan screenshot berikutnya secara manual dari JavaScript.
 
 Flow ini terus berjalan sampai user menekan stop.
 
