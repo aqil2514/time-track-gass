@@ -1,68 +1,33 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { SupabaseClient } from '@supabase/supabase-js/dist/index.cjs';
-import { TableName } from 'src/services/supabase/supabase.interface';
+import { Injectable } from '@nestjs/common';
 import { LogService } from '../log/log.service';
+import { PrismaService } from 'src/services/prisma/prisma.service';
+import {
+  getActiveWorkSession,
+  insertWorkSession,
+  logActiveSessionWarning,
+} from 'src/helpers/work-session/createNewWorkSession.helper';
+import {
+  logNoActiveSessionWarning,
+  updateWorkSessionEnd,
+} from 'src/helpers/work-session/endWorkSession.helper';
 
 @Injectable()
 export class WorkSessionService {
-  private readonly logger = new Logger(WorkSessionService.name);
   constructor(
-    @Inject('SUPABASE_CLIENT') private readonly supabaseClient: SupabaseClient,
     private readonly logService: LogService,
+    private readonly prisma: PrismaService,
   ) {}
 
-  private async getCurrentWorkSession(userId: string) {
-    const { data, error } = await this.supabaseClient
-      .from(TableName.WorkSessions)
-      .select()
-      .eq('user_id', userId)
-      .is('end_at', null)
-      .maybeSingle();
-
-    if (error) {
-      await this.logService.createNewLog(userId, {
-        context: 'Fungsi ambil sesi jam kerja (getCurrentWorkSession)',
-        level: 'ERROR',
-        message: error.message,
-        metadata: error,
-        os: 'server',
-      });
-      throw new Error(error.message);
-    }
-    return data;
-  }
-
   async createNewWorkSession(userId: string) {
-    const isExistingSession = await this.getCurrentWorkSession(userId);
-    if (isExistingSession) {
-      await this.logService.createNewLog(userId, {
-        context: 'Fungsi buat sesi jam kerja baru (createNewWorkSession)',
-        level: 'WARN',
-        message: `Sesi kerja yang aktif untuk user ${userId} tersebut masih ada`,
-        metadata: {},
-        os: 'server',
-      });
-      this.logger.warn(
-        `Sesi kerja yang aktif untuk user ${userId} tersebut masih ada`,
-      );
+    // Step 1: Cek apakah sesi aktif sudah ada
+    const existing = await getActiveWorkSession(this.prisma, userId);
+    if (existing) {
+      // Step 2: Log warning sesi sudah aktif
+      await logActiveSessionWarning(this.logService, userId);
       return;
     }
-
-    const { data, error } = await this.supabaseClient
-      .from(TableName.WorkSessions)
-      .insert({ user_id: userId, start_at: new Date().toISOString() });
-
-    if (error) {
-      await this.logService.createNewLog(userId, {
-        context: 'Fungsi ambil sesi jam kerja (createNewWorkSession)',
-        level: 'ERROR',
-        message: error.message,
-        metadata: error,
-        os: 'server',
-      });
-      throw new Error(error.message);
-    }
-    return data;
+    // Step 3: Buat sesi baru
+    await insertWorkSession(this.prisma, userId);
   }
 
   async endCurrentWorkSession(
@@ -70,78 +35,14 @@ export class WorkSessionService {
     end_at?: Date,
     stop_mode?: string,
   ) {
-    const currentSession = await this.getCurrentWorkSession(userId);
-    if (!currentSession) {
-      await this.logService.createNewLog(userId, {
-        context: 'Fungsi ambil sesi jam kerja (endCurrentWorkSession)',
-        level: 'WARN',
-        message: 'Tidak ada sesi jam kerja yang aktif',
-        metadata: {},
-        os: 'server',
-      });
-      this.logger.warn(
-        `Tidak ada sesi jam kerja yang aktif dari user ${userId}`,
-      );
+    // Step 1: Cek sesi aktif
+    const session = await getActiveWorkSession(this.prisma, userId);
+    if (!session) {
+      // Step 2: Log warning tidak ada sesi aktif
+      await logNoActiveSessionWarning(this.logService, userId);
       return;
     }
-
-    const { error } = await this.supabaseClient
-      .from(TableName.WorkSessions)
-      .update({ end_at: (end_at ?? new Date()).toISOString(), stop_mode })
-      .eq('id', currentSession.id);
-
-    if (error) {
-      await this.logService.createNewLog(userId, {
-        context: 'Fungsi ambil sesi jam kerja (endCurrentWorkSession)',
-        level: 'ERROR',
-        message: error.message,
-        metadata: error,
-        os: 'server',
-      });
-      throw new Error(error.message);
-    }
-  }
-
-  // CRON
-  async getActiveSessions() {
-    const { data, error } = await this.supabaseClient
-      .from(TableName.WorkSessions)
-      .select('id, user_id, end_at, start_at')
-      .is('end_at', null);
-
-    if (error) {
-      console.error(error);
-      throw error;
-    }
-
-    return data;
-  }
-
-  async getLastUserActivity(userId: string, startAt: string) {
-    const { data, error } = await this.supabaseClient
-      .from(TableName.AIScreenReport)
-      .select('created_at')
-      .eq('user_id', userId)
-      .gte('created_at', startAt)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      console.error(error);
-      throw error;
-    }
-
-    return data ? new Date(data.created_at) : null;
-  }
-
-  async endSessionById(sessionId: string, end_at?: Date, stop_mode?: string) {
-    const { error } = await this.supabaseClient
-      .from(TableName.WorkSessions)
-      .update({ end_at: (end_at ?? new Date()).toISOString(), stop_mode })
-      .eq('id', sessionId)
-      .is('end_at', null);
-
-    if (error) throw new Error(error.message);
+    // Step 3: Update sesi — set end_at dan stop_mode
+    await updateWorkSessionEnd(this.prisma, session.id, end_at, stop_mode);
   }
 }

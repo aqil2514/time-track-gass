@@ -1,58 +1,62 @@
 import { Injectable } from '@nestjs/common';
-import { ActivitiesFetcherHelper } from './helpers/activities-fetcher-helper.service';
 import { ActivityData } from '../interface/activities_data.interface';
-import { ActivitiesSummaryTimeService } from './helpers/activities-summary-time.service';
-import { ActivitiesWorkSession } from './helpers/activities-work-session.service';
+import { PrismaService } from 'src/services/prisma/prisma.service';
+import {
+  getAiReportsByIds,
+  getSessionSummaries,
+  mapToActivityData,
+} from 'src/helpers/activities/getActivityData.helper';
+import {
+  getActivityAdjustment,
+  getDailySummaryTime,
+  getWeeklySummaryTime,
+} from 'src/helpers/activities/getTotalWork.helper';
+import { getDailyActivity } from 'src/helpers/activities/getDailyActivity.helper';
+import {
+  getWorkReports,
+  getWorkSessions,
+  mapToWorkSessionReport,
+} from 'src/helpers/activities/getWorkSession.helper';
 
 @Injectable()
 export class ActivitiesService {
-  constructor(
-    private readonly helper: ActivitiesFetcherHelper,
-    private readonly summaryTimeHelper: ActivitiesSummaryTimeService,
-    private readonly workSessionHelper: ActivitiesWorkSession,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async getActivityData(userId: string, date: string): Promise<ActivityData[]> {
-    const summariesData = await this.helper.getSessionActivityByUserId(
-      userId,
-      date,
-    );
-
-    const allRawIds = summariesData.flatMap((data) => data.raw_ids);
-
-    const allReports = await this.helper.getRawActivityRawIds(allRawIds);
-
-    const data = this.helper.mapToActivityData(allReports, summariesData);
-
-    return data;
+    // Step 1: Ambil session summaries berdasarkan tanggal
+    const summaries = await getSessionSummaries(this.prisma, userId, date);
+    // Step 2: Ambil raw AI reports berdasarkan raw_ids
+    const allRawIds = summaries.flatMap((s) => s.raw_ids);
+    const reports = await getAiReportsByIds(this.prisma, allRawIds);
+    // Step 3: Map ke ActivityData
+    return mapToActivityData(reports, summaries);
   }
 
   async getTotalWork(userId: string, date: string) {
-    const { dailySummaryTime, weeklySummaryTime, activityAdjustment } =
-      await this.summaryTimeHelper.getSummaryTime(userId, date);
+    // Step 1: Ambil daily summary, weekly summary, dan activity adjustment secara paralel
+    const [dailySummaryTime, weeklySummaryTime, activityAdjustment] =
+      await Promise.all([
+        getDailySummaryTime(this.prisma, userId, date),
+        getWeeklySummaryTime(this.prisma, userId, date),
+        getActivityAdjustment(this.prisma, userId, date),
+      ]);
 
     return { dailySummaryTime, weeklySummaryTime, activityAdjustment };
   }
 
   async getDailyActivity(userId: string, date: string) {
-    return await this.helper.getDailyActivity(userId, date);
+    // Step 1: Ambil ringkasan harian berdasarkan tanggal
+    return await getDailyActivity(this.prisma, userId, date);
   }
 
   async getWorkSession(userId: string, date: string) {
-    const [reports, sessions] = await Promise.all([
-      this.workSessionHelper.getWorkReport(userId, date),
-      this.workSessionHelper.getWorkSession(userId, date),
+    // Step 1: Ambil work sessions dan reports secara paralel
+    const [sessions, reports] = await Promise.all([
+      getWorkSessions(this.prisma, userId, date),
+      getWorkReports(this.prisma, userId, date),
     ]);
-
-    const mappedSessions = this.workSessionHelper.mapToWorkSessionReport(
-      sessions,
-      reports,
-    );
-
-    return mappedSessions;
+    // Step 2: Map reports ke dalam setiap sesi
+    return mapToWorkSessionReport(sessions, reports);
   }
 
-  async getDailyActivityPerCategory(userId: string, date: string) {
-    return await this.helper.getDailyActivityPerCategory(userId, date);
-  }
 }

@@ -1,35 +1,48 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { ActivitiesDailySummaryCronHelper } from '../services/helpers/activites-cron-daily-summary-helper.service';
-import { ActivitiesFetcherHelper } from '../services/helpers/activities-fetcher-helper.service';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
+import { PrismaService } from 'src/services/prisma/prisma.service';
+import { GoogleGenAI } from '@google/genai';
 import { QUERY_NAME } from 'src/constants/queue.constant';
+import {
+  getSessionActivityByUserId,
+  getRawActivityByIds,
+  mapToActivityData,
+  mapToDailySummaryDbInsert,
+  createNewDailySummary,
+} from 'src/helpers/activities/processor/dailySummary.helper';
 
 @Processor(QUERY_NAME.DAILY_SUMMARY)
 export class DailySummaryProcessor extends WorkerHost {
   private readonly logger = new Logger(DailySummaryProcessor.name);
 
   constructor(
-    private readonly dailySummaryHelper: ActivitiesDailySummaryCronHelper,
-    private readonly helper: ActivitiesFetcherHelper,
+    private readonly prisma: PrismaService,
+    @Inject('GEMINI_AI') private readonly gemini: GoogleGenAI,
   ) {
     super();
   }
+
   async process(job: Job) {
     const { userId } = job.data;
 
-    const summariesData =
-      await this.dailySummaryHelper.getSessionActivityByUserId([userId]);
+    // Step 1: Ambil session activities hari ini
+    const summariesData = await getSessionActivityByUserId(this.prisma, [userId]);
 
-    const report = await this.helper.getRawActivityRawIds([userId]);
+    // Step 2: Ambil raw AI reports berdasarkan raw_ids
+    const allRawIds = summariesData.flatMap((s) => s.raw_ids);
+    const report = await getRawActivityByIds(this.prisma, allRawIds);
 
-    const data = this.helper.mapToActivityData(report, summariesData);
+    // Step 3: Map ke ActivityData
+    const data = mapToActivityData(report, summariesData);
 
-    const mappedData =
-      await this.dailySummaryHelper.mapToDailySummaryDbInsert(data);
+    // Step 4: Generate AI summary dan build payload
+    const mappedData = await mapToDailySummaryDbInsert(this.gemini, data);
 
-      await this.dailySummaryHelper.createNewDailySummary(mappedData);
-      return mappedData
+    // Step 5: Simpan ke DB
+    await createNewDailySummary(this.prisma, mappedData);
+
+    return mappedData;
   }
 
   @OnWorkerEvent('completed')

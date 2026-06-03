@@ -1,48 +1,58 @@
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { SummarySessionProcessorHelper } from './helpers/summary-session.helper';
 import { Logger } from '@nestjs/common';
+import { PrismaService } from 'src/services/prisma/prisma.service';
+import { AnalyzerService } from 'src/services/analyzer/services/analyzer.service';
 import { QUERY_NAME } from 'src/constants/queue.constant';
+import {
+  getLatestSummary,
+  getNewestData,
+  groupByHour,
+  mapToSessionSummaryDbInsert,
+  createNewSessionSummary,
+} from 'src/helpers/activities/processor/summarySession.helper';
 
 @Processor(QUERY_NAME.SUMMARY_SESSION)
 export class SummarySessionProcessor extends WorkerHost {
   private readonly logger = new Logger(SummarySessionProcessor.name);
 
-  constructor(private readonly helper: SummarySessionProcessorHelper) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly analyzer: AnalyzerService,
+  ) {
     super();
   }
+
   async process(job: Job) {
-    const { data } = job;
-    const userId = data.userId;
+    const userId = job.data.userId;
 
+    // Step 1: Ambil ringkasan terakhir
     this.logger.log('Mengambil hasil ringkasan terakhir...');
-    const latestSummary = await this.helper.getLatestSummary(userId);
+    const latestSummary = await getLatestSummary(this.prisma, userId);
 
+    // Step 2: Ambil data terbaru
     this.logger.log('Mengambil data terbaru...');
-    const newestData = await this.helper.getNewestData(latestSummary, userId);
+    const newestData = await getNewestData(this.prisma, latestSummary, userId);
     if (!newestData || newestData.length === 0) {
-      this.logger.log(
-        'Data terbaru tidak ditemukan. Ringkasan telah dilakukan',
-      );
+      this.logger.log('Data terbaru tidak ditemukan. Ringkasan telah dilakukan');
       return;
     }
 
+    // Step 3: Kelompokkan per jam
     this.logger.log('Mengelompokkan jadi per jam');
-    const groupedData = this.helper.groupByHour(newestData);
+    const groupedData = groupByHour(newestData);
 
+    // Step 4: Analisis AI dan simpan ke DB
+    this.logger.log('Melakukan analisis oleh AI dan menambahkannya ke database...');
     const finalData = [];
-
-    this.logger.log(
-      'Melakukan analisis oleh AI dan menambahkannya ke database...',
-    );
     for (const [hourKey, items] of Object.entries(groupedData)) {
-      const mapped = await this.helper.mapToSessionSummaryDbInsert(
+      const mapped = await mapToSessionSummaryDbInsert(
+        this.analyzer,
         userId,
         hourKey,
         items,
       );
-
-      await this.helper.createNewSessionSummary(mapped);
+      await createNewSessionSummary(this.prisma, mapped);
       finalData.push(mapped);
     }
 

@@ -1,66 +1,51 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { Logger } from '@nestjs/common';
-import { ActivitiesDailySummaryPerCategoryCronHelper } from '../services/helpers/activities-cron-daily-summary-per-category.service';
+import { Inject, Logger } from '@nestjs/common';
+import { PrismaService } from 'src/services/prisma/prisma.service';
+import { GoogleGenAI } from '@google/genai';
 import { QUERY_NAME } from 'src/constants/queue.constant';
+import {
+  getCategoryByUser,
+  getUserDailyActivity,
+  getDailyAiSummary,
+  saveDailySummaryPerCategory,
+} from 'src/helpers/activities/processor/dailySummaryPerCategory.helper';
 
 @Processor(QUERY_NAME.DAILY_CATEGORY)
 export class DailySummaryCategoryProcessor extends WorkerHost {
   private readonly logger = new Logger(DailySummaryCategoryProcessor.name);
 
   constructor(
-    private readonly helper: ActivitiesDailySummaryPerCategoryCronHelper,
+    private readonly prisma: PrismaService,
+    @Inject('GEMINI_AI') private readonly gemini: GoogleGenAI,
   ) {
     super();
   }
-  // async process(job: Job) {
-  //   const { userId } = job.data;
-  //   await job.updateProgress(10);
-
-  //   const [relevantCategories, userActivities] = await Promise.all([
-  //     this.helper.getCategoryByUser(userId),
-  //     this.helper.getUserDailyActivity([userId]),
-  //   ]);
-
-  //   await job.updateProgress(30);
-
-  //   if (!relevantCategories || userActivities.length === 0) {
-  //     await job.updateProgress(100);
-  //     return;
-  //   }
-  //   const summary = await this.helper.getDailyAiSummary(
-  //     userActivities,
-  //     relevantCategories,
-  //     userId,
-  //   );
-  //   await job.updateProgress(80);
-
-  //   await this.helper.saveToDb(summary);
-  //   await job.updateProgress(100);
-  // }
 
   async process(job: Job) {
     const { userId } = job.data;
 
-    // Step 1 : Ambil aktivitas dan kategori yang relevan dengan user
+    // Step 1: Ambil aktivitas dan kategori relevan
     const [relevantCategories, userActivities] = await Promise.all([
-      this.helper.getCategoryByUser(userId),
-      this.helper.getUserDailyActivity([userId]),
+      getCategoryByUser(this.prisma, userId),
+      getUserDailyActivity(this.prisma, [userId]),
     ]);
 
-    // Kalo gak relevan dan ga ada aktivitas, stop sampai sini prosesnya
     if (!relevantCategories || userActivities.length === 0) {
       await job.updateProgress(100);
       return;
     }
 
-    const summary = await this.helper.getDailyAiSummary(
+    // Step 2: Generate AI summary
+    const summary = await getDailyAiSummary(
+      this.gemini,
       userActivities,
       relevantCategories,
       userId,
     );
 
-     await this.helper.saveToDb(summary);
+    // Step 3: Simpan ke DB
+    await saveDailySummaryPerCategory(this.prisma, summary);
 
     return { summary };
   }

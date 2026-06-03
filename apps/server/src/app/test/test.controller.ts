@@ -1,7 +1,7 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { TestGuard } from 'src/guards/test.guard';
 import { TestBullService } from './services/test-bull.service';
-import { ActivitiesCronService } from '../activities/services/activities-cron.service';
+import { ActivitiesSummaryCronService } from '../activities/cron/activities-summary.cron';
 import { TestAxiosService } from './services/test-axios.service';
 import { TestGeminiService } from './services/test-gemini.service';
 
@@ -10,7 +10,7 @@ import { TestGeminiService } from './services/test-gemini.service';
 export class TestController {
   constructor(
     private readonly bullService: TestBullService,
-    private readonly cronTest: ActivitiesCronService,
+    private readonly cronTest: ActivitiesSummaryCronService,
     private readonly axiosTest: TestAxiosService,
     private readonly geminiTest: TestGeminiService,
   ) {}
