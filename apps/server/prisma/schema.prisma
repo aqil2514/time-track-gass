@@ -1,0 +1,180 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../generated/prisma"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model activity_adjustment_lists {
+  id                   BigInt                 @id @default(autoincrement())
+  name                 String?                @unique(map: "activity_adjustment_lists_name_unique")
+  added_minutes        Decimal?               @db.Decimal
+  notes                String?
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  deleted_at           DateTime?              @db.Timestamptz(6)
+  activity_adjustments activity_adjustments[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model activity_adjustments {
+  id                        BigInt                     @id @default(autoincrement())
+  adjusment_id              BigInt?
+  profile_id                String?                    @db.Uuid
+  date                      DateTime?                  @db.Date
+  created_at                DateTime                   @default(now()) @db.Timestamptz(6)
+  affected_minutes          Decimal?                   @db.Decimal
+  s3_key                    String?
+  activity_adjustment_lists activity_adjustment_lists? @relation(fields: [adjusment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  profiles                  profiles?                  @relation(fields: [profile_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ai_screen_report {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at      DateTime       @default(now()) @db.Timestamptz(6)
+  app_name        String?
+  window_title    String?
+  category        String?
+  summary         String?
+  user_id         String?        @default(dbgenerated("'ad936a2a-5fc3-4270-975f-fb7e739866d4'::uuid")) @db.Uuid
+  s3_key          String?
+  interval        Decimal?       @default(5) @db.Decimal
+  deleted_at      DateTime?      @db.Timestamptz(6)
+  work_session_id BigInt?
+  profiles        profiles?      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  work_sessions   work_sessions? @relation(fields: [work_session_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model app_logs {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String?   @db.Uuid
+  level      String
+  os         String
+  message    String
+  context    String?
+  metadata   Json?
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  profiles   profiles? @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model attendance_logs {
+  id               BigInt    @id @default(autoincrement())
+  profile_id       String?   @db.Uuid
+  work_date        DateTime? @db.Date
+  duration_minutes Decimal?  @db.Decimal
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
+  profiles         profiles? @relation(fields: [profile_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([profile_id, work_date])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model daily_summary {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                  String?   @db.Uuid
+  date                     DateTime  @db.Timestamptz(6)
+  summary                  String
+  highlights               String[]
+  productivity_description String?
+  created_at               DateTime? @default(now()) @db.Timestamptz(6)
+  profiles                 profiles? @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([user_id, date], map: "daily_summary_unique_user_date")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model daily_summary_per_categories {
+  id         BigInt    @id @default(autoincrement())
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  user_id    String?   @db.Uuid
+  category   String?
+  duration   Decimal?  @db.Decimal
+  summary    String?
+  date       DateTime? @db.Date
+  profiles   profiles? @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model divisions {
+  id            BigInt     @id @default(autoincrement())
+  created_at    DateTime   @default(now()) @db.Timestamptz(6)
+  name          String?
+  description   String?
+  vision_config Json?      @default("{\"allowed_categories\": [], \"category_definitions\": {}}")
+  deleted_at    DateTime?  @db.Timestamptz(6)
+  profiles      profiles[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model profile_work_configs {
+  id                BigInt    @id(map: "proflie_work_configs_pkey") @default(autoincrement())
+  profile_id        String?   @db.Uuid
+  min_hours_weekly  Decimal?  @db.Decimal
+  min_hours_monthly Decimal?  @db.Decimal
+  penalty_per_hour  Decimal?  @db.Decimal
+  bonus_per_hour    Decimal?  @db.Decimal
+  created_at        DateTime  @default(now()) @db.Timestamptz(6)
+  penalty_type      String?
+  profiles          profiles? @relation(fields: [profile_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "proflie_work_configs_profile_id_fkey")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model profiles {
+  id                           String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  full_name                    String
+  username                     String
+  email                        String
+  password                     String
+  role                         String
+  created_at                   DateTime                       @default(now()) @db.Timestamptz(6)
+  updated_at                   DateTime?                      @db.Timestamptz(6)
+  deleted_at                   DateTime?                      @db.Timestamptz(6)
+  division                     String?
+  division_id                  BigInt?
+  settings                     Json?
+  must_reset_password          Boolean                        @default(false)
+  activity_adjustments         activity_adjustments[]
+  ai_screen_report             ai_screen_report[]
+  app_logs                     app_logs[]
+  attendance_logs              attendance_logs[]
+  daily_summary                daily_summary[]
+  daily_summary_per_categories daily_summary_per_categories[]
+  profile_work_configs         profile_work_configs[]
+  divisions                    divisions?                     @relation(fields: [division_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  session_summary              session_summary[]
+  work_sessions                work_sessions?
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model session_summary {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id       String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+  session_start DateTime @db.Timestamptz(6)
+  session_end   DateTime @db.Timestamptz(6)
+  title         String
+  categories    String
+  raw_ids       String[]
+  description   String?
+  profiles      profiles @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([user_id, session_start, categories], map: "session_summary_unique_user_session")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model work_sessions {
+  id               BigInt             @id @default(autoincrement())
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  user_id          String?            @unique(map: "work_sessions_one_active_per_user", where: raw("(end_at IS NULL)")) @db.Uuid
+  start_at         DateTime?          @db.Timestamptz(6)
+  end_at           DateTime?          @db.Timestamptz(6)
+  stop_mode        String?
+  ai_screen_report ai_screen_report[]
+  profiles         profiles?          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}

@@ -7,7 +7,8 @@ import { InjectFlowProducer, InjectQueue } from '@nestjs/bullmq';
 import { FLOW_NAME, QUERY_NAME } from 'src/constants/queue.constant';
 import { FlowChildJob, FlowProducer, Queue } from 'bullmq';
 import { TableName } from 'src/services/supabase/supabase.interface';
-import { format, toZonedTime } from 'node_modules/date-fns-tz/dist/cjs';
+import { format } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { TIMEZONE } from 'src/constants/timezone';
 import {
   assertAutoUploadCooldown,

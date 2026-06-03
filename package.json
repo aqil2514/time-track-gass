@@ -2,7 +2,7 @@
   "name": "time-track-gass",
   "private": true,
   "scripts": {
-    "dev:server": "npm --prefix apps/server run dev",
+    "dev:server": "npm --prefix apps/server run start:dev",
     "dev:web": "npm --prefix apps/web run dev",
     "dev:desktop": "npm --prefix apps/desktop run dev",
     "build:server": "npm --prefix apps/server run build",

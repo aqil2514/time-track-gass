@@ -3,7 +3,7 @@
 import { createHash } from 'crypto';
 import { AIResult } from './image-validation.processor';
 import { parse } from 'date-fns/parse';
-import { fromZonedTime } from 'node_modules/date-fns-tz/dist/cjs';
+import { fromZonedTime } from 'date-fns-tz';
 
 // Step 1 : Apakah ada gambar yang duplikat?
 export function isDuplicateImage(
