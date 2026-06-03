@@ -7,20 +7,20 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { RegisterDto } from './dto/register.dto';
-import { AuthService } from './auth.service';
-import { AuthService as AuthServiceLegacy } from './services/auth.service';
-import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from '../dto/register.dto';
+import { AuthCoreService } from './auth-core.service';
+import { LoginDto } from '../dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtAuthGuard } from 'src/guards/jwt.guard';
 import { CookieOptions, Response } from 'express';
 import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
-import { AuthFetcherService } from './services/auth-fetcher.service';
-import { CheckResetPasswordDto } from './dto/check-reset-password.dto';
-import { SetResetPasswordDto } from './dto/set-reset-password.dto';
+import { PrismaService } from 'src/services/prisma/prisma.service';
+import { getAllDivisions } from 'src/helpers/auth/getAllDivisions.helper';
+import { CheckResetPasswordDto } from '../dto/check-reset-password.dto';
+import { SetResetPasswordDto } from '../dto/set-reset-password.dto';
 
 @Controller('auth')
-export class AuthController {
+export class AuthCoreController {
   private readonly supervisorCookiesOption: CookieOptions = {
     httpOnly: true,
     // secure: process.env.NODE_ENV === 'production',
@@ -30,10 +30,9 @@ export class AuthController {
   };
 
   constructor(
-    private readonly service: AuthService,
-    private readonly legacyService: AuthServiceLegacy,
+    private readonly service: AuthCoreService,
     private readonly jwt: JwtService,
-    private readonly fetcher: AuthFetcherService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -45,20 +44,19 @@ export class AuthController {
 
   @Get('/divisions')
   async getAllDivisions() {
-    return await this.fetcher.getAllDivisions();
+    return await getAllDivisions(this.prisma);
   }
 
   @UseGuards(JwtAuthSupervisorGuard)
   @Get('me/supervisor')
   async getMeSupervisor(@Req() req) {
     const user = req.user;
-
     return user;
   }
 
   @Post('/register')
   async register(@Body() body: RegisterDto) {
-    return await this.legacyService.createNewProfile(body);
+    return await this.service.createNewProfile(body);
   }
 
   @Post('/login')
@@ -110,11 +108,11 @@ export class AuthController {
 
   @Post('check-reset-password')
   async checkResetPassword(@Body() body: CheckResetPasswordDto) {
-    return await this.legacyService.checkResetPassword(body);
+    return await this.service.checkResetPassword(body);
   }
 
   @Post('set-reset-password')
   async setResetPassword(@Body() body: SetResetPasswordDto) {
-    return await this.legacyService.setResetPassword(body);
+    return await this.service.setResetPassword(body);
   }
 }

@@ -1,15 +1,14 @@
-import { NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { SupabaseService } from 'src/services/supabase/supabase.service';
 import { TableName } from 'src/services/supabase/supabase.interface';
 import { ProfilesDb } from 'src/app/auth/interfaces/profiles.interface';
+import {
+  getIdentifierColumn,
+  ensureUserCanResetPassword,
+  buildCheckResetPasswordResponse,
+} from 'src/helpers/auth/checkResetPassword.helper';
 
-export function isEmailIdentifier(identifier: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
-}
-
-export function getIdentifierColumn(identifier: string): 'email' | 'username' {
-  return isEmailIdentifier(identifier) ? 'email' : 'username';
-}
+export { getIdentifierColumn, ensureUserCanResetPassword, buildCheckResetPasswordResponse };
 
 export async function getResetPasswordUser(
   supabaseService: SupabaseService,
@@ -34,17 +33,4 @@ export async function getResetPasswordUser(
   );
 
   return users[0];
-}
-
-export function ensureUserCanResetPassword(user: ProfilesDb): void {
-  if (!user.must_reset_password) {
-    throw new UnauthorizedException('Password reset is not available');
-  }
-}
-
-export function buildCheckResetPasswordResponse(user: ProfilesDb) {
-  return {
-    success: true,
-    mustResetPassword: user.must_reset_password,
-  };
 }
