@@ -1,7 +1,4 @@
-import {
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { SupabaseService } from 'src/services/supabase/supabase.service';
 import { TableName } from 'src/services/supabase/supabase.interface';
 import { ProfilesDb } from 'src/app/auth/interfaces/profiles.interface';

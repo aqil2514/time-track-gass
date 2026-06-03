@@ -25,13 +25,13 @@ import {
   buildCheckResetPasswordResponse,
   getResetPasswordUser,
   ensureUserCanResetPassword,
-} from 'src/helpers/auth-reset-password/check-reset-password-service';
+} from 'src/helpers/auth/auth-reset-password/check-reset-password-service';
 import {
   buildResetPasswordPayload,
   buildSetResetPasswordResponse,
   ensureResetPasswordAllowed,
   hashNewPassword,
-} from 'src/helpers/auth-reset-password/set-reset-password-service';
+} from 'src/helpers/auth/auth-reset-password/set-reset-password-service';
 
 @Injectable()
 export class AuthService {

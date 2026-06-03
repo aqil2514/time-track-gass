@@ -8,7 +8,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
-import { AuthService } from './services/auth.service';
+import { AuthService } from './auth.service';
+import { AuthService as AuthServiceLegacy } from './services/auth.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtAuthGuard } from 'src/guards/jwt.guard';
@@ -30,6 +31,7 @@ export class AuthController {
 
   constructor(
     private readonly service: AuthService,
+    private readonly legacyService: AuthServiceLegacy,
     private readonly jwt: JwtService,
     private readonly fetcher: AuthFetcherService,
   ) {}
@@ -56,7 +58,7 @@ export class AuthController {
 
   @Post('/register')
   async register(@Body() body: RegisterDto) {
-    return await this.service.createNewProfile(body);
+    return await this.legacyService.createNewProfile(body);
   }
 
   @Post('/login')
@@ -108,11 +110,11 @@ export class AuthController {
 
   @Post('check-reset-password')
   async checkResetPassword(@Body() body: CheckResetPasswordDto) {
-    return await this.service.checkResetPassword(body);
+    return await this.legacyService.checkResetPassword(body);
   }
 
   @Post('set-reset-password')
   async setResetPassword(@Body() body: SetResetPasswordDto) {
-    return await this.service.setResetPassword(body);
+    return await this.legacyService.setResetPassword(body);
   }
 }
