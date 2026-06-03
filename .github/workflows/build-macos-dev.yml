@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: 24
           cache: 'npm'
-          cache-dependency-path: desktop/package-lock.json
+          cache-dependency-path: apps/desktop/package-lock.json
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -49,7 +49,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
         with:
-          projectPath: ./desktop
+          projectPath: ./apps/desktop
           args: --target ${{ matrix.target }}
           includeUpdaterJson: false
 
@@ -58,6 +58,6 @@ jobs:
         with:
           name: desktop-${{ matrix.label }}
           path: |
-            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app
+            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app
           if-no-files-found: warn

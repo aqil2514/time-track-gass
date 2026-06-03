@@ -2,9 +2,9 @@
 
 Dokumen ini menjelaskan flow utama aplikasi berdasarkan struktur codebase saat ini. Secara arsitektur, repo ini terdiri dari tiga bagian:
 
-- `desktop/` — aplikasi worker berbasis Tauri + React
-- `server/` — backend API berbasis NestJS
-- `web/` — aplikasi supervisor/admin berbasis Next.js
+- `apps/desktop/` — aplikasi worker berbasis Tauri + React
+- `apps/server/` — backend API berbasis NestJS
+- `apps/web/` — aplikasi supervisor/admin berbasis Next.js
 
 ## Gambaran umum
 
@@ -23,7 +23,7 @@ Alur end-to-end utamanya seperti ini:
 
 ### 1.1 Entry point dan routing
 
-Desktop app diinisialisasi dari `desktop/src/main.tsx:12`.
+Desktop app diinisialisasi dari `apps/desktop/src/main.tsx:12`.
 
 Route utama yang terdaftar:
 
@@ -32,23 +32,23 @@ Route utama yang terdaftar:
 - `/register`
 - `/reset-password`
 
-Saat startup, desktop juga melakukan pengecekan update aplikasi melalui integrasi Tauri updater di `desktop/src/main.tsx:34`.
+Saat startup, desktop juga melakukan pengecekan update aplikasi melalui integrasi Tauri updater di `apps/desktop/src/main.tsx:34`.
 
 ### 1.2 Flow autentikasi worker
 
 Flow autentikasi worker berjalan seperti ini:
 
-1. User login dari halaman `desktop/src/routes/login/index.tsx:32`.
+1. User login dari halaman `apps/desktop/src/routes/login/index.tsx:32`.
 2. Desktop memanggil endpoint backend login.
 3. Jika sukses, token disimpan ke Tauri Store lokal.
-4. Hook auth membaca token lokal lalu memvalidasi user ke endpoint `auth/me` di `desktop/src/hooks/use-auth.ts:28`.
+4. Hook auth membaca token lokal lalu memvalidasi user ke endpoint `auth/me` di `apps/desktop/src/hooks/use-auth.ts:28`.
 5. Jika token tidak valid, token akan dihapus dan user dianggap logout.
 
-Home page desktop bersifat protected secara client-side di `desktop/src/routes/home/index.tsx:7`, sehingga user yang belum login akan diarahkan ke halaman login.
+Home page desktop bersifat protected secara client-side di `apps/desktop/src/routes/home/index.tsx:7`, sehingga user yang belum login akan diarahkan ke halaman login.
 
 ### 1.3 Flow halaman home worker
 
-State utama halaman home dipusatkan di `desktop/src/routes/home/store/home.provider.tsx:45`.
+State utama halaman home dipusatkan di `apps/desktop/src/routes/home/store/home.provider.tsx:45`.
 
 Saat halaman home dibuka:
 
@@ -56,31 +56,31 @@ Saat halaman home dibuka:
 2. Data ini berasal dari endpoint `activities/v2`.
 3. Hasilnya dipakai untuk menampilkan ringkasan aktivitas, total work, dan work session hari itu.
 
-Provider ini juga menangani logic auto-resume. Jika ditemukan work session yang masih aktif dan belum memiliki `end_at`, desktop akan mencoba melanjutkan auto-capture setelah aplikasi dibuka ulang di `desktop/src/routes/home/store/home.provider.tsx:63`.
+Provider ini juga menangani logic auto-resume. Jika ditemukan work session yang masih aktif dan belum memiliki `end_at`, desktop akan mencoba melanjutkan auto-capture setelah aplikasi dibuka ulang di `apps/desktop/src/routes/home/store/home.provider.tsx:63`.
 
 ### 1.4 Flow start dan stop work session
 
 Flow sesi kerja worker:
 
 1. Worker menekan tombol start.
-2. Desktop memanggil `POST /work-session/start` dari `desktop/src/routes/home/components/controller/start-session.tsx:16`.
+2. Desktop memanggil `POST /work-session/start` dari `apps/desktop/src/routes/home/components/controller/start-session.tsx:16`.
 3. Jika sukses, desktop memulai auto-capture screenshot.
-4. Saat worker menekan stop, desktop menghentikan capture lalu memanggil `POST /work-session/end` dari `desktop/src/routes/home/components/controller/start-session.tsx:41`.
+4. Saat worker menekan stop, desktop menghentikan capture lalu memanggil `POST /work-session/end` dari `apps/desktop/src/routes/home/components/controller/start-session.tsx:41`.
 
 Di backend, endpoint sesi kerja didefinisikan di:
 
-- `server/src/app/work-session/work-session.controller.ts:9` — start
-- `server/src/app/work-session/work-session.controller.ts:15` — end
+- `apps/server/src/app/work-session/work-session.controller.ts:9` — start
+- `apps/server/src/app/work-session/work-session.controller.ts:15` — end
 
 ### 1.5 Flow auto-capture screenshot
 
-Logic utama timer dan capture ada di `desktop/src/routes/home/logic/use-home-timer-controller.ts:17`.
+Logic utama timer dan capture ada di `apps/desktop/src/routes/home/logic/use-home-timer-controller.ts:17`.
 
 Flow-nya:
 
 1. Saat auto-capture dimulai, desktop langsung mengambil screenshot pertama.
 2. Setelah itu, desktop menjadwalkan capture berikutnya dengan countdown internal.
-3. Screenshot diambil melalui hook `desktop/src/hooks/use-capture.ts`.
+3. Screenshot diambil melalui hook `apps/desktop/src/hooks/use-capture.ts`.
 4. Hasil screenshot di-upload ke backend melalui `POST /image-upload`.
 
 Behavior capture per platform:
@@ -88,11 +88,11 @@ Behavior capture per platform:
 - **macOS**: cek permission screen recording lalu memanggil native command Tauri.
 - **non-macOS**: mengambil screenshot monitor pertama lalu menjalankan proses resize/encode sebelum upload.
 
-Upload screenshot dari desktop dilakukan di `desktop/src/routes/home/logic/use-home-timer-controller.ts:84`.
+Upload screenshot dari desktop dilakukan di `apps/desktop/src/routes/home/logic/use-home-timer-controller.ts:84`.
 
 ### 1.6 Flow upload manual
 
-Selain auto-capture, tersedia upload manual dari komponen `desktop/src/routes/home/components/controller/upload-image/index.tsx:34`.
+Selain auto-capture, tersedia upload manual dari komponen `apps/desktop/src/routes/home/components/controller/upload-image/index.tsx:34`.
 
 Flow upload manual:
 
@@ -106,7 +106,7 @@ Flow upload manual:
 
 ### 2.1 Entry point server
 
-Server NestJS dibootstrap dari `server/src/main.ts:6`.
+Server NestJS dibootstrap dari `apps/server/src/main.ts:6`.
 
 Saat startup, server mengaktifkan:
 
@@ -115,7 +115,7 @@ Saat startup, server mengaktifkan:
 - cookie parser
 - CORS untuk domain yang diizinkan, termasuk skema desktop app
 
-Komposisi module utama ada di `server/src/app/app.module.ts:9`.
+Komposisi module utama ada di `apps/server/src/app/app.module.ts:9`.
 
 ### 2.2 Module utama
 
@@ -128,11 +128,11 @@ Registry module bisnis utama yang aktif mencakup:
 - Log
 - Work Session
 
-Registrasi ini tersusun di `server/src/app/app-registry/built-in-registry.ts:8`.
+Registrasi ini tersusun di `apps/server/src/app/app-registry/built-in-registry.ts:8`.
 
 ### 2.3 Flow endpoint `activities/v2`
 
-Endpoint gabungan aktivitas harian ada di `server/src/app/activities/controllers/activities-v2.controller.ts:5`.
+Endpoint gabungan aktivitas harian ada di `apps/server/src/app/activities/controllers/activities-v2.controller.ts:5`.
 
 Endpoint ini menggabungkan beberapa sumber data sekaligus, termasuk:
 
@@ -145,7 +145,7 @@ Endpoint ini menjadi salah satu sumber data utama untuk halaman home worker di d
 
 ### 2.4 Flow upload dan queue processing
 
-Endpoint upload screenshot ada di `server/src/app/image-upload/controller/image-upload.controller.ts:22`.
+Endpoint upload screenshot ada di `apps/server/src/app/image-upload/controller/image-upload.controller.ts:22`.
 
 Flow backend untuk screenshot otomatis:
 
@@ -159,7 +159,7 @@ Untuk upload manual, server juga melakukan validasi file lebih dulu. Jika file t
 
 ### 2.5 Queue dan background jobs
 
-Sistem queue memakai BullMQ/Redis dan diregistrasikan di `server/src/app/app-registry/bull-registry.ts:8`.
+Sistem queue memakai BullMQ/Redis dan diregistrasikan di `apps/server/src/app/app-registry/bull-registry.ts:8`.
 
 Server juga memiliki background job terjadwal, terutama untuk:
 
@@ -168,7 +168,7 @@ Server juga memiliki background job terjadwal, terutama untuk:
 - pembuatan summary per kategori
 - materialisasi attendance total work
 
-Logic cron utama ada di `server/src/app/activities/services/activities-cron.service.ts:16`.
+Logic cron utama ada di `apps/server/src/app/activities/services/activities-cron.service.ts:16`.
 
 ## 3. Flow aplikasi web supervisor
 
@@ -176,8 +176,8 @@ Logic cron utama ada di `server/src/app/activities/services/activities-cron.serv
 
 Web app menggunakan Next.js App Router.
 
-- Root page ada di `web/src/app/page.tsx:3`
-- Protected layout ada di `web/src/app/(protected)/layout.tsx:12`
+- Root page ada di `apps/web/src/app/page.tsx:3`
+- Protected layout ada di `apps/web/src/app/(protected)/layout.tsx:12`
 
 Saat user membuka root page:
 
@@ -189,16 +189,16 @@ Saat user membuka root page:
 
 Login supervisor tidak langsung dari browser ke backend. Flow-nya memakai proxy route internal Next.js:
 
-1. Browser memanggil `POST /api/auth/login` di `web/src/app/api/auth/login/route.ts:5`.
+1. Browser memanggil `POST /api/auth/login` di `apps/web/src/app/api/auth/login/route.ts:5`.
 2. Route Next.js meneruskan request ke backend `auth/login/supervisor`.
 3. Jika sukses, token disimpan sebagai cookie `access_token` httpOnly.
 4. Saat render halaman protected, helper auth membaca cookie lalu memanggil backend untuk mendapatkan profil user.
 
-Helper auth web ada di `web/src/lib/auth.ts:5`.
+Helper auth web ada di `apps/web/src/lib/auth.ts:5`.
 
 ### 3.3 Flow proxy API web
 
-Web app menggunakan pola proxy server-side melalui `web/src/lib/api-server.ts:6`.
+Web app menggunakan pola proxy server-side melalui `apps/web/src/lib/api-server.ts:6`.
 
 Artinya flow request supervisor adalah:
 
@@ -211,7 +211,7 @@ Pendekatan ini membuat auth supervisor berbasis cookie lebih mudah dikelola di s
 
 ### 3.4 Flow dashboard supervisor
 
-Dashboard page ada di `web/src/app/(protected)/dashboard/page.tsx:7` dan dirender lewat template `web/src/features/dashboard/dashboard.template.tsx:9`.
+Dashboard page ada di `apps/web/src/app/(protected)/dashboard/page.tsx:7` dan dirender lewat template `apps/web/src/features/dashboard/dashboard.template.tsx:9`.
 
 Flow dashboard:
 
@@ -219,7 +219,7 @@ Flow dashboard:
 2. Provider dashboard mengambil data aktivitas melalui endpoint web internal.
 3. Data tersebut ditampilkan sebagai ringkasan dashboard.
 
-Provider dashboard ada di `web/src/features/dashboard/provider/dashboard.provider.tsx:20`.
+Provider dashboard ada di `apps/web/src/features/dashboard/provider/dashboard.provider.tsx:20`.
 
 ### 3.5 Flow moderasi aktivitas dan manajemen user
 
@@ -234,8 +234,8 @@ Supervisor dapat melakukan beberapa aksi administratif, seperti:
 
 Contoh controller terkait:
 
-- `server/src/app/supervisor/controllers/supervisor-activity.controller.ts:12`
-- `server/src/app/supervisor/controllers/supervisor-user.controller.ts:25`
+- `apps/server/src/app/supervisor/controllers/supervisor-activity.controller.ts:12`
+- `apps/server/src/app/supervisor/controllers/supervisor-user.controller.ts:25`
 
 ## 4. Ringkasan flow end-to-end
 
@@ -268,29 +268,29 @@ Contoh controller terkait:
 
 ### Desktop
 
-- `desktop/src/main.tsx:12`
-- `desktop/src/hooks/use-auth.ts:14`
-- `desktop/src/routes/home/store/home.provider.tsx:45`
-- `desktop/src/routes/home/logic/use-home-timer-controller.ts:17`
-- `desktop/src/hooks/use-capture.ts:39`
+- `apps/desktop/src/main.tsx:12`
+- `apps/desktop/src/hooks/use-auth.ts:14`
+- `apps/desktop/src/routes/home/store/home.provider.tsx:45`
+- `apps/desktop/src/routes/home/logic/use-home-timer-controller.ts:17`
+- `apps/desktop/src/hooks/use-capture.ts:39`
 
 ### Server
 
-- `server/src/main.ts:6`
-- `server/src/app/app.module.ts:9`
-- `server/src/app/activities/controllers/activities-v2.controller.ts:5`
-- `server/src/app/image-upload/controller/image-upload.controller.ts:22`
-- `server/src/app/work-session/work-session.controller.ts:5`
-- `server/src/app/activities/services/activities-cron.service.ts:16`
+- `apps/server/src/main.ts:6`
+- `apps/server/src/app/app.module.ts:9`
+- `apps/server/src/app/activities/controllers/activities-v2.controller.ts:5`
+- `apps/server/src/app/image-upload/controller/image-upload.controller.ts:22`
+- `apps/server/src/app/work-session/work-session.controller.ts:5`
+- `apps/server/src/app/activities/services/activities-cron.service.ts:16`
 
 ### Web
 
-- `web/src/app/page.tsx:3`
-- `web/src/app/(protected)/layout.tsx:12`
-- `web/src/app/api/auth/login/route.ts:5`
-- `web/src/lib/auth.ts:5`
-- `web/src/lib/api-server.ts:6`
-- `web/src/features/dashboard/dashboard.template.tsx:9`
+- `apps/web/src/app/page.tsx:3`
+- `apps/web/src/app/(protected)/layout.tsx:12`
+- `apps/web/src/app/api/auth/login/route.ts:5`
+- `apps/web/src/lib/auth.ts:5`
+- `apps/web/src/lib/api-server.ts:6`
+- `apps/web/src/features/dashboard/dashboard.template.tsx:9`
 
 ## 6. Catatan penting
 

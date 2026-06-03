@@ -18,12 +18,12 @@ Flow utama:
 
 Pengambilan screenshot dikendalikan oleh hook timer di:
 
-- `desktop/src/routes/home/logic/timer-hooks/use-home-timer-controller.ts:20`
+- `apps/desktop/src/routes/home/logic/timer-hooks/use-home-timer-controller.ts:20`
 
 Saat session dimulai:
 
-- `startAutoCapture()` dipanggil di `desktop/src/routes/home/logic/timer-hooks/use-home-timer-controller.ts:182`
-- fungsi ini langsung memanggil `captureHandler()` untuk screenshot pertama di `desktop/src/routes/home/logic/timer-hooks/use-home-timer-controller.ts:187`
+- `startAutoCapture()` dipanggil di `apps/desktop/src/routes/home/logic/timer-hooks/use-home-timer-controller.ts:182`
+- fungsi ini langsung memanggil `captureHandler()` untuk screenshot pertama di `apps/desktop/src/routes/home/logic/timer-hooks/use-home-timer-controller.ts:187`
 - setelah screenshot pertama, desktop memulai native timer Rust via `startNativeTimer(intervalMenit)`
 
 Artinya screenshot pertama tidak menunggu interval dulu.
@@ -43,7 +43,7 @@ Pendekatan ini menghilangkan drift yang sebelumnya terjadi saat tab tidak aktif,
 
 Implementasi capture ada di:
 
-- `desktop/src/hooks/use-capture.ts:38`
+- `apps/desktop/src/hooks/use-capture.ts:38`
 
 ### macOS
 
@@ -69,7 +69,7 @@ Output akhirnya adalah string gambar siap upload.
 
 Setelah capture berhasil, desktop meng-upload hasil screenshot ke backend dari:
 
-- `desktop/src/routes/home/logic/timer-hooks/use-home-timer-controller.ts:94`
+- `apps/desktop/src/routes/home/logic/timer-hooks/use-home-timer-controller.ts:94`
 
 Flow upload:
 
@@ -79,7 +79,7 @@ Flow upload:
 
 Backend endpoint upload ada di:
 
-- `server/src/app/image-upload/controller/image-upload.controller.ts:31`
+- `apps/server/src/app/image-upload/controller/image-upload.controller.ts:31`
 
 Endpoint ini tidak memproses gambar langsung, tetapi meneruskan pekerjaan ke queue normal analyze.
 
@@ -87,11 +87,11 @@ Endpoint ini tidak memproses gambar langsung, tetapi meneruskan pekerjaan ke que
 
 Nama queue untuk flow ini didefinisikan di:
 
-- `server/src/constants/queue.constant.ts:9`
+- `apps/server/src/constants/queue.constant.ts:9`
 
 Processor queue ada di:
 
-- `server/src/app/image-upload/processor/normal-analyze.processor.ts:21`
+- `apps/server/src/app/image-upload/processor/normal-analyze.processor.ts:21`
 
 Saat job diproses:
 

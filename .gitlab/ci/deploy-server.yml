@@ -11,9 +11,7 @@ deploy_server:
     - chmod 600 ~/.ssh/deploy_key
     - ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
   script:
-    - cd server
-    - npm ci
-    - npm run build
-    - cd ..
-    - rsync -az -e "ssh -i ~/.ssh/deploy_key" server/dist server/package.json server/package-lock.json "$VPS_USER@$VPS_HOST:/www/wwwroot/time-track-gass/server/"
+    - npm --prefix apps/server ci
+    - npm --prefix apps/server run build
+    - rsync -az -e "ssh -i ~/.ssh/deploy_key" apps/server/dist apps/server/package.json apps/server/package-lock.json "$VPS_USER@$VPS_HOST:/www/wwwroot/time-track-gass/server/"
     - ssh -i ~/.ssh/deploy_key "$VPS_USER@$VPS_HOST" "cd /www/wwwroot/time-track-gass/server && npm ci --omit=dev && pm2 restart timetrack"

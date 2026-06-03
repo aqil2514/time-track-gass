@@ -41,7 +41,7 @@ jobs:
         with:
           node-version: 24
           cache: 'npm'
-          cache-dependency-path: desktop/package-lock.json
+          cache-dependency-path: apps/desktop/package-lock.json
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -66,7 +66,7 @@ jobs:
             libssl-dev
 
       - name: Install frontend dependencies
-        working-directory: desktop
+        working-directory: apps/desktop
         run: npm ci
 
       # ↓ Tambahkan di sini
@@ -98,7 +98,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Release ${{ github.ref_name }}'
-          projectPath: ./desktop
+          projectPath: ./apps/desktop
           releaseBody: |
             ## Changes
             See commits for details.

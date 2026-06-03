@@ -10,9 +10,7 @@ deploy_web:
     - chmod 600 ~/.ssh/deploy_key
     - ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
   script:
-    - cd web
-    - npm ci
-    - NEXT_PUBLIC_SERVER_URL="$NEXT_PUBLIC_SERVER_URL" NEXT_PUBLIC_WEB_URL="$NEXT_PUBLIC_WEB_URL" npm run build
-    - cd ..
-    - rsync -az -e "ssh -i ~/.ssh/deploy_key" web/.next web/package.json web/package-lock.json "$VPS_USER@$VPS_HOST:/www/wwwroot/time-track-gass/web/"
+    - npm --prefix apps/web ci
+    - NEXT_PUBLIC_SERVER_URL="$NEXT_PUBLIC_SERVER_URL" NEXT_PUBLIC_WEB_URL="$NEXT_PUBLIC_WEB_URL" npm --prefix apps/web run build
+    - rsync -az -e "ssh -i ~/.ssh/deploy_key" apps/web/.next apps/web/package.json apps/web/package-lock.json "$VPS_USER@$VPS_HOST:/www/wwwroot/time-track-gass/web/"
     - ssh -i ~/.ssh/deploy_key "$VPS_USER@$VPS_HOST" "cd /www/wwwroot/time-track-gass/web && npm ci --omit=dev && pm2 restart timetrack-web"
