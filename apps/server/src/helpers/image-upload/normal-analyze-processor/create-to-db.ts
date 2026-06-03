@@ -1,15 +1,9 @@
-import { SupabaseClient } from '@supabase/supabase-js/dist/index.cjs';
+import { PrismaService } from 'src/services/prisma/prisma.service';
 import { ZImageAnalyzeData } from 'src/services/ai-z/interface/ai-z.interface';
-import { TableName } from 'src/services/supabase/supabase.interface';
 
 export async function createNewAnalyzeData(
-  supabase: SupabaseClient,
+  prisma: PrismaService,
   data: ZImageAnalyzeData,
 ) {
-  const { error } = await supabase.from(TableName.AIScreenReport).insert(data);
-
-  if (error) {
-    console.error(error);
-    throw error;
-  }
+  await prisma.ai_screen_report.create({ data: data as any });
 }

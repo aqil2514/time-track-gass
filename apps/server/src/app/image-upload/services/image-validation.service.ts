@@ -1,15 +1,11 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UploadImageManualDto } from '../dto/image-upload-manual.dto';
-import sharp from 'sharp';
 import { format } from 'date-fns/format';
-import { parse } from 'date-fns/parse';
 import { compareAsc } from 'date-fns/compareAsc';
 import { differenceInMinutes } from 'date-fns/differenceInMinutes';
-import { createHash } from 'crypto';
 import { toZonedTime } from 'date-fns-tz';
 import { TIMEZONE } from 'src/constants/timezone';
 import { AnalyzerService } from 'src/services/analyzer/services/analyzer.service';
-import { GenerateContentResponse } from '@google/genai';
 import {
   isDuplicateImage,
   isReadableDate,

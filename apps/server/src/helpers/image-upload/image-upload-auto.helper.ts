@@ -5,13 +5,13 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { UnprocessableEntityException } from '@nestjs/common';
-import { SupabaseClient } from '@supabase/supabase-js/dist/index.cjs';
 import { differenceInMilliseconds } from 'date-fns';
 import { Queue } from 'bullmq';
-import { TableName } from 'src/services/supabase/supabase.interface';
+import { PrismaService } from 'src/services/prisma/prisma.service';
 
 const AUTO_UPLOAD_MIN_INTERVAL_MS = 4 * 60 * 1000 + 50 * 1000;
-const AUTO_UPLOAD_ERROR_MESSAGE = 'Minimal jeda upload otomatis adalah 5 menit.';
+const AUTO_UPLOAD_ERROR_MESSAGE =
+  'Minimal jeda upload otomatis adalah 5 menit.';
 
 const getRetryAfterSeconds = (latestAcceptedAt: Date) => {
   const elapsed = differenceInMilliseconds(new Date(), latestAcceptedAt);
@@ -59,31 +59,26 @@ async function getLatestQueuedAutoUploadAt(queue: Queue, userId: string) {
 }
 
 async function getLatestStoredAutoUploadAt(
-  supabase: SupabaseClient,
+  prisma: PrismaService,
   userId: string,
 ) {
-  const { data, error } = await supabase
-    .from(TableName.AIScreenReport)
-    .select('created_at')
-    .eq('user_id', userId)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw error;
+  const data = await prisma.ai_screen_report.findFirst({
+    where: { user_id: userId, deleted_at: null },
+    orderBy: { created_at: 'desc' },
+    select: { created_at: true },
+  });
 
   return data ? new Date(data.created_at) : null;
 }
 
 export async function assertAutoUploadCooldown(
-  supabase: SupabaseClient,
+  prisma: PrismaService,
   queue: Queue,
   userId: string,
 ) {
   const [latestQueuedAt, latestStoredAt] = await Promise.all([
     getLatestQueuedAutoUploadAt(queue, userId),
-    getLatestStoredAutoUploadAt(supabase, userId),
+    getLatestStoredAutoUploadAt(prisma, userId),
   ]);
 
   const latestAcceptedAt =
@@ -91,7 +86,7 @@ export async function assertAutoUploadCooldown(
       ? latestQueuedAt > latestStoredAt
         ? latestQueuedAt
         : latestStoredAt
-      : latestQueuedAt ?? latestStoredAt;
+      : (latestQueuedAt ?? latestStoredAt);
 
   if (!latestAcceptedAt) return;
 
@@ -126,19 +121,15 @@ export async function uploadToS3(
 }
 
 export async function getActiveSession(
-  supabase: SupabaseClient,
+  prisma: PrismaService,
   userId: string,
 ): Promise<string | null> {
-  const { data, error } = await supabase
-    .from(TableName.WorkSessions)
-    .select('id')
-    .eq('user_id', userId)
-    .is('end_at', null)
-    .maybeSingle();
+  const data = await prisma.work_sessions.findFirst({
+    where: { user_id: userId, end_at: null },
+    select: { id: true },
+  });
 
-  if (error) throw error;
-
-  return data?.id ?? null;
+  return data ? data.id.toString() : null;
 }
 
 export async function enqueueAnalyze(

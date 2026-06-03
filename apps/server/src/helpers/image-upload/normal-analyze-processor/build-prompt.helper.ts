@@ -1,6 +1,5 @@
-import { SupabaseClient } from '@supabase/supabase-js/dist/index.cjs';
 import { DivisionsDb } from 'src/app/supervisor/interfaces/divisions.interface';
-import { TableName } from 'src/services/supabase/supabase.interface';
+import { PrismaService } from 'src/services/prisma/prisma.service';
 
 const FALLBACK_PROMPT = `
     Analyze this image and extract the relevant information.
@@ -30,49 +29,34 @@ const FALLBACK_PROMPT = `
 const ALL_DIVISIONS_ID = 8;
 
 async function getUserDivisionByUserId(
-  supabase: SupabaseClient,
+  prisma: PrismaService,
   userId: string,
 ): Promise<DivisionsDb | null> {
-  const { data, error } = await supabase
-    .from(TableName.Profiles)
-    .select('division:division_id(*)')
-    .eq('id', userId)
-    .maybeSingle();
+  const data = await prisma.profiles.findUnique({
+    where: { id: userId },
+    select: { division: true },
+  });
 
-  if (error) {
-    console.error(error);
-    return null;
-  }
-
-  if (!data) return null;
-
-  return data.division as unknown as DivisionsDb;
+  return data?.division as unknown as DivisionsDb ?? null;
 }
 
 async function getGeneralDivisionConfig(
-  supabase: SupabaseClient,
+  prisma: PrismaService,
 ): Promise<DivisionsDb> {
-  const { data, error } = await supabase
-    .from(TableName.Divisions)
-    .select('*')
-    .eq('id', ALL_DIVISIONS_ID)
-    .maybeSingle();
+  const data = await prisma.divisions.findUnique({
+    where: { id: ALL_DIVISIONS_ID },
+  });
 
-  if (error) {
-    console.error(error);
-    return null;
-  }
-
-  return data;
+  return data as unknown as DivisionsDb;
 }
 
 export async function buildPrompt(
-  supabase: SupabaseClient,
+  prisma: PrismaService,
   userId: string,
 ): Promise<string> {
   const [divisionConfig, generalConfig] = await Promise.all([
-    getUserDivisionByUserId(supabase, userId),
-    getGeneralDivisionConfig(supabase),
+    getUserDivisionByUserId(prisma, userId),
+    getGeneralDivisionConfig(prisma),
   ]);
 
   if (

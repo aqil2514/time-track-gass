@@ -1,13 +1,12 @@
 import { GoogleGenAI } from '@google/genai';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Logger } from '@nestjs/common';
-import { SupabaseClient } from '@supabase/supabase-js/dist/index.cjs';
 import { Job } from 'bullmq';
 import { QUERY_NAME } from 'src/constants/queue.constant';
 import { buildPrompt } from 'src/helpers/image-upload/normal-analyze-processor/build-prompt.helper';
 import { createNewAnalyzeData } from 'src/helpers/image-upload/normal-analyze-processor/create-to-db';
 import { analyzeImage } from 'src/helpers/image-upload/normal-analyze-processor/gemini-analyze.helper';
-import { ZImageAnalyzeData } from 'src/services/ai-z/interface/ai-z.interface';
+import { PrismaService } from 'src/services/prisma/prisma.service';
 
 interface ProcessData {
   userId: string;
@@ -22,8 +21,7 @@ const models = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'];
 @Processor(QUERY_NAME.NORMAL_ANALYZE)
 export class NormalAnalyzeProcessor extends WorkerHost {
   constructor(
-    @Inject('SUPABASE_CLIENT')
-    private readonly supabase: SupabaseClient,
+    private readonly prisma: PrismaService,
     @Inject('GEMINI_AI')
     private readonly gemini: GoogleGenAI,
   ) {
@@ -43,7 +41,9 @@ export class NormalAnalyzeProcessor extends WorkerHost {
       `Starting normal analyze job for user ${userId} on attempt ${attempt}/${maxAttempts}`,
     );
 
-    const prompt = await buildPrompt(this.supabase, rest.userId);
+    // Step 1: Build prompt berdasarkan divisi user
+    const prompt = await buildPrompt(this.prisma, rest.userId);
+    // Step 2: Pilih model berdasarkan jumlah attempt
     const model = models[Math.min(job.attemptsMade, models.length - 1)];
 
     this.logger.log(
@@ -51,6 +51,7 @@ export class NormalAnalyzeProcessor extends WorkerHost {
     );
 
     try {
+      // Step 3: Analisis gambar dengan Gemini
       const res = await analyzeImage(this.gemini, model, prompt, imageUrl);
       const analyzedData = JSON.parse(res.text);
 
@@ -69,7 +70,8 @@ export class NormalAnalyzeProcessor extends WorkerHost {
         created_at: rest.createdAt,
       };
 
-      await createNewAnalyzeData(this.supabase, mappedData);
+      // Step 4: Simpan hasil analisis ke DB
+      await createNewAnalyzeData(this.prisma, mappedData);
 
       this.logger.log(
         `User ${userId} analyze data saved to database on attempt ${attempt}/${maxAttempts}`,

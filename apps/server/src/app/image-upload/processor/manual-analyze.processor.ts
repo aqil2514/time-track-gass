@@ -2,56 +2,76 @@ import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { QUERY_NAME } from 'src/constants/queue.constant';
-import { ImageScannerHelper } from '../services/helpers/image-scanner-helper.service';
-import { AnalyzerAgentHelperService } from '../services/helpers/analyzer-agent-helper.service';
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { S3Client } from '@aws-sdk/client-s3';
+import { GoogleGenAI } from '@google/genai';
+import { PrismaService } from 'src/services/prisma/prisma.service';
+import { fetchImageFromS3 } from 'src/helpers/image-upload/manual-analyze-processor/fetch-from-s3.helper';
+import { buildPrompt } from 'src/helpers/image-upload/normal-analyze-processor/build-prompt.helper';
+import { analyzeManualImage } from 'src/helpers/image-upload/manual-analyze-processor/analyze-manual-image.helper';
+import { createNewAnalyzeData } from 'src/helpers/image-upload/normal-analyze-processor/create-to-db';
+
+const models = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'];
 
 @Processor(QUERY_NAME.MANUAL_ANALYZE)
 export class ManualAnalyzeProcessor extends WorkerHost {
   private readonly logger = new Logger(ManualAnalyzeProcessor.name);
 
   constructor(
+    private readonly prisma: PrismaService,
     @Inject('AWS_S3_CLIENT')
     private readonly s3Client: S3Client,
-    private readonly helper: ImageScannerHelper,
-    private readonly analyzerAgent: AnalyzerAgentHelperService,
+    @Inject('GEMINI_AI')
+    private readonly gemini: GoogleGenAI,
   ) {
     super();
   }
+
   async process(job: Job) {
     const { userId, s3Key, detectedDate } = job.data;
+    const attempt = job.attemptsMade + 1;
+    const maxAttempts = job.opts.attempts ?? 1;
+    const model = models[Math.min(job.attemptsMade, models.length - 1)];
 
-    this.logger.log('Mengambil data dari S3');
-    const command = new GetObjectCommand({ Key: s3Key, Bucket: 'tracker' });
-    const response = await this.s3Client.send(command);
-    const mimeType = response.ContentType || 'image/png';
-
-    this.logger.log('Data berhasil didapat. Mengubah ke bentuk byte');
-    const byteArray = await response.Body.transformToByteArray();
-    const buffer = Buffer.from(byteArray);
-    const base64Image = buffer.toString('base64');
-
-    const imageDataUrl = `data:${mimeType};base64,${base64Image}`;
-
-    this.logger.log('Data berhasil diubah ke byte. Menganalisis AI');
-    const { data } = await this.analyzerAgent.analyzerAgentMapper(
-      'gemini-ai',
-      imageDataUrl,
-      userId,
+    this.logger.log(
+      `Starting manual analyze job for user ${userId} on attempt ${attempt}/${maxAttempts}`,
     );
 
-    const createdAt = new Date(detectedDate).toISOString();
+    // Step 1: Ambil image dari S3
+    const { base64Data, mimeType } = await fetchImageFromS3(
+      this.s3Client,
+      s3Key,
+    );
+
+    // Step 2: Build prompt berdasarkan divisi user
+    const prompt = await buildPrompt(this.prisma, userId);
+
+    // Step 3: Analisis gambar dengan Gemini
+    const res = await analyzeManualImage(
+      this.gemini,
+      model,
+      prompt,
+      base64Data,
+      mimeType,
+    );
+    const analyzedData = JSON.parse(res.text);
 
     const mappedData = {
-      ...(data as any),
+      app_name: analyzedData.app_name,
+      window_title: analyzedData.window_title,
+      category: analyzedData.category,
+      summary: analyzedData.summary,
       user_id: userId,
       s3_key: s3Key,
-      created_at: createdAt,
+      created_at: new Date(detectedDate).toISOString(),
       interval: 7.5,
     };
 
-    this.logger.log('Analisis AI berhasil, menambahkan ke db');
-    await this.helper.createNewData(mappedData);
+    // Step 4: Simpan hasil analisis ke DB
+    await createNewAnalyzeData(this.prisma, mappedData);
+
+    this.logger.log(
+      `User ${userId} manual analyze succeeded on attempt ${attempt}/${maxAttempts}`,
+    );
 
     return mappedData;
   }

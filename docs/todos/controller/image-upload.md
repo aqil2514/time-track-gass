@@ -2,13 +2,13 @@
 
 ## Controller: `ImageUploadController` (`/image-upload`)
 
-- [ ] POST /image-upload
-- [ ] POST /image-upload/manual
-- [ ] GET /image-upload/manual
-- [ ] GET /image-upload
+- [x] POST /image-upload
+- [x] POST /image-upload/manual
+- [x] GET /image-upload/manual
+- [x] GET /image-upload
 
 ## Processor
 
-- [ ] NormalAnalyzeProcessor
-- [ ] ManualAnalyzeProcessor
-- [ ] ManualStatusProcessor
+- [x] NormalAnalyzeProcessor
+- [x] ManualAnalyzeProcessor
+- [x] ManualStatusProcessor

@@ -1,30 +1,30 @@
 import { ConflictException, Inject, Injectable, Logger } from '@nestjs/common';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { ImageScannerHelper } from './helpers/image-scanner-helper.service';
-import { AnalyzerAgentHelperService } from './helpers/analyzer-agent-helper.service';
 import { ImageWithDate } from './image-validation.service';
 import { InjectFlowProducer, InjectQueue } from '@nestjs/bullmq';
 import { FLOW_NAME, QUERY_NAME } from 'src/constants/queue.constant';
-import { FlowChildJob, FlowProducer, Queue } from 'bullmq';
-import { TableName } from 'src/services/supabase/supabase.interface';
-import { format } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
-import { TIMEZONE } from 'src/constants/timezone';
+import { FlowProducer, Queue } from 'bullmq';
 import {
   assertAutoUploadCooldown,
   enqueueAnalyze,
   getActiveSession,
   uploadToS3,
 } from 'src/helpers/image-upload/image-upload-auto.helper';
+import { getActivities } from 'src/helpers/image-upload/get-activities.helper';
+import {
+  checkIsHaveInDb,
+  checkIsHaveInBullMq,
+} from 'src/helpers/image-upload/get-manual-status.helper';
+import {
+  uploadToS3Manual,
+  enqueueManualAnalyze,
+} from 'src/helpers/image-upload/analyze-activity-manual.helper';
 import { S3Client } from '@aws-sdk/client-s3';
+import { PrismaService } from 'src/services/prisma/prisma.service';
 
 @Injectable()
 export class ImageScannerService {
   private logger = new Logger(ImageScannerService.name);
   constructor(
-    @Inject('SUPABASE_CLIENT')
-    private readonly supabase: SupabaseClient,
-
     @InjectQueue(QUERY_NAME.MANUAL_ANALYZE)
     private readonly manualAnalyzeQueue: Queue,
 
@@ -40,73 +40,12 @@ export class ImageScannerService {
     @Inject('AWS_S3_CLIENT')
     private readonly s3Client: S3Client,
 
-    private readonly helper: ImageScannerHelper,
-
-    private readonly analyzerAgent: AnalyzerAgentHelperService,
+    private readonly prisma: PrismaService,
   ) {}
 
-  private async callWithRetry<T>(
-    fn: () => Promise<T>,
-    maxRetry = 4,
-    delayMs = 2000,
-  ): Promise<T> {
-    for (let i = 0; i < maxRetry; i++) {
-      try {
-        return await fn();
-      } catch (error) {
-        const is503 =
-          (error as any)?.error?.code === 503 ||
-          (error as any)?.error?.status === 'UNAVAILABLE';
-
-        if (!is503 || i === maxRetry - 1) throw error;
-
-        const wait = delayMs * Math.pow(2, i);
-        this.logger.warn(
-          `[Gemini] 503 - retry ${i + 1}/${maxRetry} in ${wait}ms`,
-        );
-        await new Promise((resolve) => setTimeout(resolve, wait));
-      }
-    }
-    throw new Error('Max retry exceeded');
-  }
-
-  private async getCurrentWorkSession(userId: string) {
-    const { data, error } = await this.supabase
-      .from(TableName.WorkSessions)
-      .select('id')
-      .eq('user_id', userId)
-      .is('end_at', null)
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      console.error(error);
-      throw error;
-    }
-
-    return data;
-  }
-
-  async analyzeActivity(imageDataUrl: string, userId: string) {
-    const workSession = await this.getCurrentWorkSession(userId);
-    const s3Key = await this.helper.uploadToS3(imageDataUrl, userId);
-
-    const { data } = await this.callWithRetry(() =>
-      this.analyzerAgent.analyzerAgentMapper('gemini-ai', imageDataUrl, userId),
-    );
-
-    const mappedData = {
-      ...(data as any),
-      user_id: userId,
-      s3_key: s3Key,
-      work_session_id: workSession ? workSession.id : null,
-    };
-
-    await this.helper.createNewData(mappedData);
-  }
-
   async addToNormalQueue(imageDataUrl: string, userId: string) {
-    const workIdSession = await getActiveSession(this.supabase, userId);
+    // Step 1: Cek active work session
+    const workIdSession = await getActiveSession(this.prisma, userId);
 
     if (!workIdSession) {
       throw new ConflictException({
@@ -116,14 +55,17 @@ export class ImageScannerService {
       });
     }
 
+    // Step 2: Cek cooldown upload otomatis
     await assertAutoUploadCooldown(
-      this.supabase,
+      this.prisma,
       this.normalAnalyzeQueue,
       userId,
     );
 
+    // Step 3: Upload gambar ke S3
     const s3Key = await uploadToS3(this.s3Client, imageDataUrl, userId);
 
+    // Step 4: Tambahkan job ke queue
     await enqueueAnalyze(
       this.normalAnalyzeQueue,
       this.s3Client,
@@ -134,17 +76,8 @@ export class ImageScannerService {
   }
 
   async getActivities() {
-    const { data, error } = await this.supabase
-      .from('ai_screen_report')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error(error);
-      throw error;
-    }
-
-    return data;
+    // Step 1: Ambil semua data aktivitas dari DB
+    return getActivities(this.prisma);
   }
 
   async analyzeActivityManual(
@@ -153,92 +86,29 @@ export class ImageScannerService {
     slotId: number,
     date: string,
   ) {
-    const localDate = toZonedTime(new Date(date), TIMEZONE);
-    const formattedDate = format(localDate, 'dd-MM-yyyy');
-
-    const childrenJobs = await Promise.all(
-      files.map(async (file) => {
-        const s3Key = await this.helper.uploadToS3Manual(file, userId);
-
-        const flowJob: FlowChildJob = {
-          name: 'analyze-manual-upload',
-          queueName: QUERY_NAME.MANUAL_ANALYZE,
-          data: {
-            userId,
-            s3Key,
-            detectedDate: file.date,
-          },
-          opts: {
-            jobId: `file-${slotId}-${userId}-${file.file.originalname}-${Date.now()}`,
-            attempts: 3,
-            backoff: { type: 'exponential', delay: 5000 },
-            removeOnComplete: 100,
-            removeOnFail: 50,
-          },
-        };
-
-        return flowJob;
-      }),
+    // Step 1: Upload tiap file ke S3
+    const s3Keys = await Promise.all(
+      files.map((file) => uploadToS3Manual(this.s3Client, file, userId)),
     );
 
-    await this.manualAnalyzeFlow.add({
-      name: 'aggregate-manual-analyze',
-      queueName: QUERY_NAME.MANUAL_SLOT_STATUS,
-      data: {
-        slotId,
-        userId,
-      },
-      opts: {
-        jobId: `manual-analyze-${userId}-${slotId}-${formattedDate}`,
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 5000 },
-        removeOnComplete: 100,
-        removeOnFail: 50,
-      },
-      children: childrenJobs,
-    });
+    // Step 2: Enqueue BullMQ flow untuk analisis manual
+    await enqueueManualAnalyze(
+      this.manualAnalyzeFlow,
+      files,
+      s3Keys,
+      userId,
+      slotId,
+      date,
+    );
   }
 
   async isHaveInDb(slotId: number, userId: string, date: string) {
-    const localDate = toZonedTime(new Date(date), TIMEZONE);
-    const dateString = format(localDate, 'yyyy-MM-dd');
-
-    // Konversi slotId (jam WIB) ke UTC
-    const utcHour = slotId - 7;
-
-    const startOfHour = new Date(`${dateString}T00:00:00.000Z`);
-    startOfHour.setUTCHours(utcHour, 0, 0, 0);
-
-    const endOfHour = new Date(`${dateString}T00:00:00.000Z`);
-    endOfHour.setUTCHours(utcHour, 59, 59, 999);
-
-    const { data, error } = await this.supabase
-      .from(TableName.AIScreenReport)
-      .select('id')
-      .gte('created_at', startOfHour.toISOString())
-      .lte('created_at', endOfHour.toISOString())
-      .eq('user_id', userId)
-      .is('deleted_at', null)
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      console.error(error);
-      throw error;
-    }
-
-    return !!data;
+    // Step 1: Cek apakah data sudah ada di DB untuk slot dan tanggal tersebut
+    return checkIsHaveInDb(this.prisma, slotId, userId, date);
   }
-  
+
   async isHaveInBullMq(slotId: number, userId: string, date: string) {
-    const localDate = toZonedTime(new Date(date), TIMEZONE);
-    const formattedDate = format(localDate, 'dd-MM-yyyy');
-
-    const flows = await this.manualAnalyzeFlow.getFlow({
-      id: `manual-analyze-${userId}-${slotId}-${formattedDate}`,
-      queueName: QUERY_NAME.MANUAL_SLOT_STATUS,
-    });
-
-    return !!flows;
+    // Step 1: Cek apakah job masih ada di queue BullMQ
+    return checkIsHaveInBullMq(this.manualAnalyzeFlow, slotId, userId, date);
   }
 }
