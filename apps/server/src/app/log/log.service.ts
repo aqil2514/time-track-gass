@@ -1,29 +1,19 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { AppLogInsertDb, AppLogInsertClient } from './log.interface';
-import { TableName } from 'src/services/supabase/supabase.interface';
+import { Injectable } from '@nestjs/common';
+import { AppLogInsertClient } from './log.interface';
+import { PrismaService } from 'src/services/prisma/prisma.service';
+import {
+  buildLogPayload,
+  insertLog,
+} from 'src/helpers/log/createNewLog.helper';
 
 @Injectable()
 export class LogService {
-  constructor(
-    @Inject('SUPABASE_CLIENT')
-    private readonly supabase: SupabaseClient,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async createNewLog(user_id: string, payload: AppLogInsertClient) {
-    const dbPayload: AppLogInsertDb = {
-      ...payload,
-      os: 'server',
-      user_id,
-    };
-
-    const { error } = await this.supabase
-      .from(TableName.AppLogs)
-      .insert(dbPayload);
-
-    if (error) {
-      console.error(error);
-      throw error;
-    }
+  async createNewLog(userId: string, payload: AppLogInsertClient) {
+    // Step 1: Build db payload
+    const dbPayload = buildLogPayload(userId, payload);
+    // Step 2: Insert log
+    await insertLog(this.prisma, dbPayload);
   }
 }
