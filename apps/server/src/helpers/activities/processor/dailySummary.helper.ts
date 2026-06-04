@@ -5,7 +5,11 @@ import { SessionSummaryDb } from 'src/app/activities/interface/session_summary.i
 import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { ActivityData } from 'src/app/activities/interface/activities_data.interface';
 import { DailySummaryDbInsert } from 'src/app/activities/interface/daily_summary.interface';
-import { AiDailySummaryResult } from 'src/services/ai-z/interface/ai-z.interface';
+interface AiDailySummaryResult {
+  summary: string;
+  highlights: string[];
+  productivity_description: string;
+}
 
 export async function getSessionActivityByUserId(
   prisma: PrismaService,

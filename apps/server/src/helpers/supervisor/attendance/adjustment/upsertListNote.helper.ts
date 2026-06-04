@@ -1,5 +1,5 @@
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { ActivityAdjusmentListDbInsert } from 'src/app/supervisor/interfaces/attendances/activity-adjusment-list.interface';
+import { ActivityAdjusmentListDbInsert } from 'src/app/supervisor/_interfaces/attendances/activity-adjusment-list.interface';
 
 export async function upsertListNoteMany(
   prisma: PrismaService,

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { AttendanceLogsQueryDto } from '../../dto/attendance/attendance-logs-query.dto';
-import { AttendanceLogsRpc } from '../../interfaces/attendances/attendances-logs.interface';
+import { AttendanceLogsQueryDto } from '../../_dto/attendance/attendance-logs-query.dto';
+import { AttendanceLogsRpc } from '../../_interfaces/attendances/attendances-logs.interface';
 import { getSummaryByDateRange } from 'src/helpers/supervisor/attendance/summary/getSummaryByDateRange.helper';
 import { getSummaryByDateRangeAndUser } from 'src/helpers/supervisor/attendance/summary/getSummaryByDateRangeAndUser.helper';
 import { getAdjustmentByDateRange } from 'src/helpers/supervisor/attendance/summary/getAdjustmentByDateRange.helper';

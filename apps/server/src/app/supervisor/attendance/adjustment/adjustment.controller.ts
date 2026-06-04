@@ -19,8 +19,8 @@ import { RoleGuard } from 'src/guards/role.guard';
 import {
   CreateAttendanceAdjustmentDto,
   UpdateAttendanceAdjustmentDto,
-} from '../../dto/attendance/adjustment.dto';
-import { AttendanceLogsQueryDto } from '../../dto/attendance/attendance-logs-query.dto';
+} from '../../_dto/attendance/adjustment.dto';
+import { AttendanceLogsQueryDto } from '../../_dto/attendance/attendance-logs-query.dto';
 import { AdjustmentService } from './adjustment.service';
 import 'multer';
 

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { CreateUserDto } from '../../dto/create-user.dto';
-import { UpdateUserDto } from '../../dto/update-user.dto';
+import { CreateUserDto } from '../../_dto/create-user.dto';
+import { UpdateUserDto } from '../../_dto/update-user.dto';
 import { getAllUsers } from 'src/helpers/supervisor/user/getAllUsers.helper';
 import { getUserById } from 'src/helpers/supervisor/user/getUserById.helper';
 import { checkUserUniqueness } from 'src/helpers/supervisor/user/checkUserUniqueness.helper';

@@ -12,8 +12,8 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
 import { RoleGuard } from 'src/guards/role.guard';
 import { UserCoreService } from './user-core.service';
-import { CreateUserDto } from '../../dto/create-user.dto';
-import { UpdateUserDto } from '../../dto/update-user.dto';
+import { CreateUserDto } from '../../_dto/create-user.dto';
+import { UpdateUserDto } from '../../_dto/update-user.dto';
 
 @UseGuards(JwtAuthSupervisorGuard, RoleGuard)
 @Roles('supervisor')

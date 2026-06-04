@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ActivitiesModule } from '../activities/activities.module';
-import { BULL_MQ_SUMMARY_SESSION, PROFILE_LISTENER } from './registry/providers';
+import { SummarySessionProcessor } from '../activities/processor/summary-session.processor';
 import { BullModule } from '@nestjs/bullmq';
 import { QUERY_NAME } from 'src/constants/queue.constant';
 import { DivisionsModule } from './divisions/divisions.module';
@@ -24,10 +24,6 @@ import { SupervisorService } from './supervisor.service';
     AttendanceModule,
   ],
   controllers: [SupervisorController],
-  providers: [
-    ...BULL_MQ_SUMMARY_SESSION,
-    ...PROFILE_LISTENER,
-    SupervisorService,
-  ],
+  providers: [SummarySessionProcessor, SupervisorService],
 })
 export class SupervisorModule {}

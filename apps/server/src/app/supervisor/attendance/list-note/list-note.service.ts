@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { CreateListNoteDto } from '../../dto/attendance/create-list-note.dto';
+import { CreateListNoteDto } from '../../_dto/attendance/create-list-note.dto';
 import { getAllListNotes } from 'src/helpers/supervisor/attendance/list-note/getAllListNotes.helper';
 import { createListNote } from 'src/helpers/supervisor/attendance/list-note/createListNote.helper';
 import { updateListNote } from 'src/helpers/supervisor/attendance/list-note/updateListNote.helper';

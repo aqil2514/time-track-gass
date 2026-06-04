@@ -1,5 +1,5 @@
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { ProfileWorkConfigsPopulateProfile } from 'src/app/supervisor/interfaces/attendances/profile-work-configs.interface';
+import { ProfileWorkConfigsPopulateProfile } from 'src/app/supervisor/_interfaces/attendances/profile-work-configs.interface';
 
 export async function getAllProfileConfigs(
   prisma: PrismaService,

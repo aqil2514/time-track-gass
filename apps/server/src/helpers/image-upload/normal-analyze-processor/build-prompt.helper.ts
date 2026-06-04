@@ -1,4 +1,4 @@
-import { DivisionsDb } from 'src/app/supervisor/interfaces/divisions.interface';
+import { DivisionsDb } from 'src/app/supervisor/_interfaces/divisions.interface';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 
 const FALLBACK_PROMPT = `

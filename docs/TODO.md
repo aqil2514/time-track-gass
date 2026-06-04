@@ -10,16 +10,16 @@
 - [x] Definisikan semua model di `schema.prisma` sesuai tabel yang ada (`db pull`)
 - [x] Jalankan `npx prisma generate`
 - [x] Setup SSH tunnel ke PostgreSQL aapanel (port 5432)
-- [ ] Ganti `.env`: hapus `SUPABASE_URL` & `SUPABASE_ANON_KEY`, tambah `DATABASE_URL` (PostgreSQL)
-- [ ] Refactor semua Supabase client call → Prisma client
+- [x] Ganti `.env`: hapus `SUPABASE_URL` & `SUPABASE_ANON_KEY`, tambah `DATABASE_URL` (PostgreSQL)
+- [x] Refactor semua Supabase client call → Prisma client
 - [ ] Test koneksi & verifikasi semua fitur
 
 ## 2. Restructure Folder Server
-- [ ] Diskusi & finalisasi struktur folder baru (acuan: retail-multitenant)
-- [ ] Pindahkan file sesuai struktur baru
-- [ ] Pastikan semua import path terupdate
+- [x] Diskusi & finalisasi struktur folder baru (acuan: retail-multitenant)
+- [x] Pindahkan file sesuai struktur baru
+- [x] Pastikan semua import path terupdate
 - [ ] Test semua endpoint
 
 ## 3. Cleanup Branch
-- [ ] Hapus `gitlab/dev` di remote GitLab
-- [ ] Pertimbangkan hapus `origin/main` di GitHub
+- [x] Hapus `gitlab/dev` di remote GitLab
+- [x] Pertimbangkan hapus `origin/main` di GitHub

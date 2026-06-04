@@ -2,7 +2,7 @@ import { ConflictException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { ProfilesWithNoPassword } from 'src/app/auth/interfaces/profiles.interface';
-import { CreateUserDto } from 'src/app/supervisor/dto/create-user.dto';
+import { CreateUserDto } from 'src/app/supervisor/_dto/create-user.dto';
 
 export async function createUser(
   prisma: PrismaService,

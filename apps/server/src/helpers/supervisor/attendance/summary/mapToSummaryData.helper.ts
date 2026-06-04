@@ -1,11 +1,11 @@
-import { AttendanceLogsQueryDto } from 'src/app/supervisor/dto/attendance/attendance-logs-query.dto';
-import { ActivityAdjusmentsDb } from 'src/app/supervisor/interfaces/attendances/activity-adjusments.interface';
+import { AttendanceLogsQueryDto } from 'src/app/supervisor/_dto/attendance/attendance-logs-query.dto';
+import { ActivityAdjusmentsDb } from 'src/app/supervisor/_interfaces/attendances/activity-adjusments.interface';
 import {
   AttendanceLogsDbPopulatedProfile,
   AttendanceLogsRpc,
   AttendanceSummary,
-} from 'src/app/supervisor/interfaces/attendances/attendances-logs.interface';
-import { ProfileWorkConfigsDb } from 'src/app/supervisor/interfaces/attendances/profile-work-configs.interface';
+} from 'src/app/supervisor/_interfaces/attendances/attendances-logs.interface';
+import { ProfileWorkConfigsDb } from 'src/app/supervisor/_interfaces/attendances/profile-work-configs.interface';
 
 function mapFromDb(
   summaryMap: Map<string, AttendanceSummary>,

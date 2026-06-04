@@ -1,5 +1,5 @@
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { UpdateAttendanceAdjustmentDto } from 'src/app/supervisor/dto/attendance/adjustment.dto';
+import { UpdateAttendanceAdjustmentDto } from 'src/app/supervisor/_dto/attendance/adjustment.dto';
 
 export async function updateAdjustment(
   prisma: PrismaService,

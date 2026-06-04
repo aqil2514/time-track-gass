@@ -1,7 +1,7 @@
 import { ConflictException } from '@nestjs/common';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { ProfilesWithNoPassword } from 'src/app/auth/interfaces/profiles.interface';
-import { UpdateUserDto } from 'src/app/supervisor/dto/update-user.dto';
+import { UpdateUserDto } from 'src/app/supervisor/_dto/update-user.dto';
 
 export async function updateUser(
   prisma: PrismaService,

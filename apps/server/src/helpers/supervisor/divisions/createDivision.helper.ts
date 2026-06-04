@@ -1,5 +1,5 @@
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { CreateDivisionDto } from 'src/app/supervisor/dto/create-division.dto';
+import { CreateDivisionDto } from 'src/app/supervisor/_dto/create-division.dto';
 
 export async function createDivision(
   prisma: PrismaService,

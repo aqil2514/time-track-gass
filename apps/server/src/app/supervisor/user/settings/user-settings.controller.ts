@@ -3,7 +3,7 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
 import { RoleGuard } from 'src/guards/role.guard';
 import { UserSettingsService } from './user-settings.service';
-import { UserSettingsDto } from '../../dto/user-settings.dto';
+import { UserSettingsDto } from '../../_dto/user-settings.dto';
 
 @UseGuards(JwtAuthSupervisorGuard, RoleGuard)
 @Roles('supervisor')

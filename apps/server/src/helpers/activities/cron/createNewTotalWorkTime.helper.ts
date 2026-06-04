@@ -2,7 +2,7 @@ import { PrismaService } from 'src/services/prisma/prisma.service';
 import {
   AttendanceLogsDbInsert,
   AttendanceLogsRpc,
-} from 'src/app/supervisor/interfaces/attendances/attendances-logs.interface';
+} from 'src/app/supervisor/_interfaces/attendances/attendances-logs.interface';
 
 export async function getYesterdayScreenReports(
   prisma: PrismaService,

@@ -4,7 +4,7 @@ import {
   TotalWeeklyActivity,
 } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { WorkSessionDb } from 'src/app/activities/interface/work_session.interface';
-import { AdjustmentContent } from 'src/app/supervisor/interfaces/attendances/activity-adjusments.interface';
+import { AdjustmentContent } from 'src/app/supervisor/_interfaces/attendances/activity-adjusments.interface';
 
 export interface MatrixResponse {
   userName: string;

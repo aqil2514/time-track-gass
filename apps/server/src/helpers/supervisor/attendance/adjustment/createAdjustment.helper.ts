@@ -1,5 +1,5 @@
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { ActivityAdjusmentsDbInsert } from 'src/app/supervisor/interfaces/attendances/activity-adjusments.interface';
+import { ActivityAdjusmentsDbInsert } from 'src/app/supervisor/_interfaces/attendances/activity-adjusments.interface';
 
 export async function createAdjustment(
   prisma: PrismaService,

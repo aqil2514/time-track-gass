@@ -5,7 +5,7 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
 import { RoleGuard } from 'src/guards/role.guard';
 import { QUERY_NAME } from 'src/constants/queue.constant';
-import { SupervisorQueryDto } from './dto/query.dto';
+import { SupervisorQueryDto } from './_dto/query.dto';
 import { SupervisorService } from './supervisor.service';
 
 @UseGuards(JwtAuthSupervisorGuard, RoleGuard)

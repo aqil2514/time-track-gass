@@ -12,7 +12,7 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
 import { RoleGuard } from 'src/guards/role.guard';
 import { DivisionsService } from './divisions.service';
-import { CreateDivisionDto } from '../dto/create-division.dto';
+import { CreateDivisionDto } from '../_dto/create-division.dto';
 
 @UseGuards(JwtAuthSupervisorGuard, RoleGuard)
 @Roles('supervisor')

@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
 import { Roles } from 'src/decorators/roles.decorator';
 import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
 import { RoleGuard } from 'src/guards/role.guard';
-import { CreateUserManagementDto } from '../../dto/attendance/profile-config.dto';
+import { CreateUserManagementDto } from '../../_dto/attendance/profile-config.dto';
 import { ProfileConfigService } from './profile-config.service';
 
 @UseGuards(JwtAuthSupervisorGuard, RoleGuard)

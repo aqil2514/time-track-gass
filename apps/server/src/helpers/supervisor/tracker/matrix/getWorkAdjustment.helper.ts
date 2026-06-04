@@ -1,5 +1,5 @@
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { AdjustmentContent } from 'src/app/supervisor/interfaces/attendances/activity-adjusments.interface';
+import { AdjustmentContent } from 'src/app/supervisor/_interfaces/attendances/activity-adjusments.interface';
 import { format, toZonedTime } from 'date-fns-tz';
 import { startOfWeek, endOfWeek } from 'date-fns';
 import { TIMEZONE } from 'src/constants/timezone';

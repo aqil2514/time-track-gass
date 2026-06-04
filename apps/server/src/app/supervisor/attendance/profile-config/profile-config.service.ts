@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { CreateUserManagementDto } from '../../dto/attendance/profile-config.dto';
+import { CreateUserManagementDto } from '../../_dto/attendance/profile-config.dto';
 import { getAllProfileConfigs } from 'src/helpers/supervisor/attendance/profile-config/getAllProfileConfigs.helper';
 import { upsertProfileConfig } from 'src/helpers/supervisor/attendance/profile-config/upsertProfileConfig.helper';
 

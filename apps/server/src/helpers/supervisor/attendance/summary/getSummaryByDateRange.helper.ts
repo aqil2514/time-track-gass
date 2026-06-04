@@ -1,5 +1,5 @@
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { AttendanceLogsDbPopulatedProfile } from 'src/app/supervisor/interfaces/attendances/attendances-logs.interface';
+import { AttendanceLogsDbPopulatedProfile } from 'src/app/supervisor/_interfaces/attendances/attendances-logs.interface';
 
 export async function getSummaryByDateRange(
   prisma: PrismaService,

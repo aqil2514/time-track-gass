@@ -4,8 +4,8 @@ import { PrismaService } from 'src/services/prisma/prisma.service';
 import {
   CreateAttendanceAdjustmentDto,
   UpdateAttendanceAdjustmentDto,
-} from '../../dto/attendance/adjustment.dto';
-import { ActivityAdjusmentListDbInsert } from '../../interfaces/attendances/activity-adjusment-list.interface';
+} from '../../_dto/attendance/adjustment.dto';
+import { ActivityAdjusmentListDbInsert } from '../../_interfaces/attendances/activity-adjusment-list.interface';
 import { uploadAdjustmentToS3 } from 'src/helpers/supervisor/attendance/adjustment/uploadAdjustmentToS3.helper';
 import { getAdjustmentByDateRange } from 'src/helpers/supervisor/attendance/adjustment/getAdjustmentByDateRange.helper';
 import { getAdjustmentById } from 'src/helpers/supervisor/attendance/adjustment/getAdjustmentById.helper';

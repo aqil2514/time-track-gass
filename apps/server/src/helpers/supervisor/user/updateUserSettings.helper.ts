@@ -1,5 +1,5 @@
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { UserSettingsDto } from 'src/app/supervisor/dto/user-settings.dto';
+import { UserSettingsDto } from 'src/app/supervisor/_dto/user-settings.dto';
 
 export async function updateUserSettings(
   prisma: PrismaService,

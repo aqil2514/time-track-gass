@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { UserSettingsDto } from '../../dto/user-settings.dto';
+import { UserSettingsDto } from '../../_dto/user-settings.dto';
 import { getUserSettings } from 'src/helpers/supervisor/user/getUserSettings.helper';
 import { updateUserSettings } from 'src/helpers/supervisor/user/updateUserSettings.helper';
 

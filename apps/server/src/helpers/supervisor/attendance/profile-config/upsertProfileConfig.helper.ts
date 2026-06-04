@@ -1,5 +1,5 @@
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { CreateUserManagementDto } from 'src/app/supervisor/dto/attendance/profile-config.dto';
+import { CreateUserManagementDto } from 'src/app/supervisor/_dto/attendance/profile-config.dto';
 
 export async function upsertProfileConfig(
   prisma: PrismaService,

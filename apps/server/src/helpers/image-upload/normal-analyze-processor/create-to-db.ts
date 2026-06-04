@@ -1,5 +1,11 @@
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { ZImageAnalyzeData } from 'src/services/ai-z/interface/ai-z.interface';
+
+interface ZImageAnalyzeData {
+  app_name: string;
+  category: string;
+  summary: string;
+  window_title: string;
+}
 
 export async function createNewAnalyzeData(
   prisma: PrismaService,

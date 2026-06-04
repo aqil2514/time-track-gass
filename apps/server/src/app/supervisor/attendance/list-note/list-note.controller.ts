@@ -11,7 +11,7 @@ import {
 import { Roles } from 'src/decorators/roles.decorator';
 import { JwtAuthSupervisorGuard } from 'src/guards/jwt-supervisor.guard';
 import { RoleGuard } from 'src/guards/role.guard';
-import { CreateListNoteDto } from '../../dto/attendance/create-list-note.dto';
+import { CreateListNoteDto } from '../../_dto/attendance/create-list-note.dto';
 import { ListNoteService } from './list-note.service';
 
 @UseGuards(JwtAuthSupervisorGuard, RoleGuard)
