@@ -7,6 +7,7 @@ import { JwtAuthGuard } from 'src/guards/jwt.guard';
 @Controller('activities/v2')
 export class ActivitiesV2Controller {
   constructor(private readonly service: ActivitiesService) {}
+
   @Get('')
   async getActivitiesV2(@UserId() userId: string, @Query('date') date: string) {
     const [dailyActivity, activityData, totalWork, workSessions] =

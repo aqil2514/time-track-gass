@@ -1,3 +1,4 @@
+import { format } from 'date-fns';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 
 export async function getAdjustmentById(
@@ -23,7 +24,7 @@ export async function getAdjustmentById(
 
   return {
     s3_key: data.s3_key,
-    date: (data.date as any)?.toISOString?.() ?? data.date,
+    date: data.date ? format(new Date(data.date as any), 'yyyy-MM-dd') : data.date,
     affected_minutes: Number(data.affected_minutes ?? 0),
     profile: data.profiles,
     adjustment: {

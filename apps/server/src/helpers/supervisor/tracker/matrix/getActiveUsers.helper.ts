@@ -9,5 +9,10 @@ export async function getActiveUsers(
     orderBy: { username: 'asc' },
   });
 
-  return data as unknown as ProfilesDb[];
+  return data.map((row) => ({
+    ...row,
+    division_id: row.division_id ? Number(row.division_id) : undefined,
+    created_at: (row.created_at as any)?.toISOString?.() ?? row.created_at,
+    updated_at: row.updated_at ? ((row.updated_at as any)?.toISOString?.() ?? row.updated_at) : undefined,
+  })) as unknown as ProfilesDb[];
 }

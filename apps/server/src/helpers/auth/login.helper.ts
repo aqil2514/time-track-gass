@@ -19,7 +19,12 @@ export async function getLoginUser(
 
   if (!user) throw new NotFoundException('user not found');
 
-  return user as unknown as ProfilesDb;
+  return {
+    ...user,
+    division_id: user.division_id ? Number(user.division_id) : undefined,
+    created_at: (user.created_at as any)?.toISOString?.() ?? user.created_at,
+    updated_at: user.updated_at ? ((user.updated_at as any)?.toISOString?.() ?? user.updated_at) : undefined,
+  } as unknown as ProfilesDb;
 }
 
 export function ensurePasswordNotResetRequired(user: ProfilesDb): void {

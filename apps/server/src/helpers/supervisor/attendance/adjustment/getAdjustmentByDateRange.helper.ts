@@ -1,3 +1,4 @@
+import { format } from 'date-fns';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 
 export async function getAdjustmentByDateRange(
@@ -24,7 +25,7 @@ export async function getAdjustmentByDateRange(
 
   return data.map((row) => ({
     id: Number(row.id),
-    date: (row.date as any)?.toISOString?.() ?? row.date,
+    date: row.date ? format(new Date(row.date as any), 'yyyy-MM-dd') : row.date,
     affected_minutes: Number(row.affected_minutes ?? 0),
     profile: row.profiles,
     adjustment: {

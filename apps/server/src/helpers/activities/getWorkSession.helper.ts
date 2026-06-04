@@ -16,7 +16,7 @@ export async function getWorkSessions(
   const start = startOfDay(zonedTime);
   const end = endOfDay(zonedTime);
 
-  const data = await prisma.work_sessions.findMany({
+  const rows = await prisma.work_sessions.findMany({
     where: {
       user_id: userId,
       start_at: { gte: start, lt: end },
@@ -24,7 +24,11 @@ export async function getWorkSessions(
     select: { id: true, start_at: true, end_at: true },
   });
 
-  return data as unknown as Omit<WorkSessionItem, 'reports'>[];
+  return rows.map((row) => ({
+    id: Number(row.id),
+    start_at: (row.start_at as any)?.toISOString?.() ?? row.start_at,
+    end_at: row.end_at ? ((row.end_at as any)?.toISOString?.() ?? row.end_at) : null,
+  })) as Omit<WorkSessionItem, 'reports'>[];
 }
 
 export async function getWorkReports(
@@ -36,7 +40,7 @@ export async function getWorkReports(
   const start = startOfDay(zonedTime);
   const end = endOfDay(zonedTime);
 
-  const data = await prisma.ai_screen_report.findMany({
+  const rows = await prisma.ai_screen_report.findMany({
     where: {
       user_id: userId,
       created_at: { gte: start, lt: end },
@@ -51,7 +55,14 @@ export async function getWorkReports(
     },
   });
 
-  return data as unknown as WorkSessionReport[];
+  return rows.map((row) => ({
+    id: row.id,
+    created_at: (row.created_at as any)?.toISOString?.() ?? row.created_at,
+    app_name: row.app_name,
+    window_title: row.window_title,
+    summary: row.summary,
+    category: row.category,
+  })) as WorkSessionReport[];
 }
 
 export function mapToWorkSessionReport(

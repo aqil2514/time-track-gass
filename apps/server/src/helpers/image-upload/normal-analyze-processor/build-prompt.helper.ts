@@ -34,20 +34,36 @@ async function getUserDivisionByUserId(
 ): Promise<DivisionsDb | null> {
   const data = await prisma.profiles.findUnique({
     where: { id: userId },
-    select: { division: true },
+    include: { divisions: true },
   });
 
-  return data?.division as unknown as DivisionsDb ?? null;
+  if (!data?.divisions) return null;
+
+  return {
+    id: Number(data.divisions.id),
+    created_at: (data.divisions.created_at as any)?.toISOString?.() ?? data.divisions.created_at,
+    name: data.divisions.name ?? '',
+    description: data.divisions.description ?? '',
+    vision_config: data.divisions.vision_config as unknown as DivisionsDb['vision_config'],
+  };
 }
 
 async function getGeneralDivisionConfig(
   prisma: PrismaService,
-): Promise<DivisionsDb> {
+): Promise<DivisionsDb | null> {
   const data = await prisma.divisions.findUnique({
     where: { id: ALL_DIVISIONS_ID },
   });
 
-  return data as unknown as DivisionsDb;
+  if (!data) return null;
+
+  return {
+    id: Number(data.id),
+    created_at: (data.created_at as any)?.toISOString?.() ?? data.created_at,
+    name: data.name ?? '',
+    description: data.description ?? '',
+    vision_config: data.vision_config as unknown as DivisionsDb['vision_config'],
+  };
 }
 
 export async function buildPrompt(
@@ -61,6 +77,7 @@ export async function buildPrompt(
 
   if (
     !divisionConfig ||
+    !generalConfig ||
     divisionConfig.vision_config.allowed_categories.length === 0
   ) {
     return FALLBACK_PROMPT;

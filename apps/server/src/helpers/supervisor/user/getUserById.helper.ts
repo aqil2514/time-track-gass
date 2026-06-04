@@ -21,5 +21,8 @@ export async function getUserById(
 
   if (!data) throw new NotFoundException(`User with ID ${id} not found`);
 
-  return data as unknown as ProfilesWithNoPassword;
+  return {
+    ...data,
+    division_id: data.division_id ? Number(data.division_id) : undefined,
+  } as unknown as ProfilesWithNoPassword;
 }

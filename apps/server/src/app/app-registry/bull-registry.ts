@@ -42,10 +42,6 @@ export const BULL_QUEUE_REGISTRY = [
     }),
   }),
   BullBoardModule.forFeature({
-    name: 'test-queue',
-    adapter: BullMQAdapter,
-  }),
-  BullBoardModule.forFeature({
     name: QUERY_NAME.DAILY_SUMMARY,
     adapter: BullMQAdapter,
   }),

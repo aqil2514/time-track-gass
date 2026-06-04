@@ -32,7 +32,15 @@ export async function getDailySummaryTime(
     GROUP BY asr.user_id, DATE(asr.created_at AT TIME ZONE 'Asia/Jakarta')
   `;
 
-  return (data?.[0] || { total_work_time_minutes: 0 }) as DailySummaryResponse;
+  const row = data?.[0];
+  if (!row) return { total_work_time_minutes: 0 } as DailySummaryResponse;
+
+  return {
+    user_id: row.user_id,
+    report_date: row.report_date,
+    total_count: Number(row.total_count ?? 0),
+    total_work_time_minutes: Number(row.total_work_time_minutes ?? 0),
+  } as DailySummaryResponse;
 }
 
 export async function getWeeklySummaryTime(
@@ -62,14 +70,15 @@ export async function getWeeklySummaryTime(
     GROUP BY asr.user_id
   `;
 
-  return (
-    data?.[0] || {
-      user_id: userId,
-      total_work_time_minutes: 0,
-      week_start: null,
-      week_end: null,
-    }
-  ) as WeeklySummaryResponse;
+  const row = data?.[0];
+  if (!row) return { user_id: userId, total_work_time_minutes: 0, week_start: null, week_end: null } as WeeklySummaryResponse;
+
+  return {
+    user_id: row.user_id,
+    week_start: row.week_start,
+    week_end: row.week_end,
+    total_work_time_minutes: Number(row.total_work_time_minutes ?? 0),
+  } as WeeklySummaryResponse;
 }
 
 export async function getActivityAdjustment(
@@ -84,7 +93,7 @@ export async function getActivityAdjustment(
   const startDate = format(monday, 'yyyy-MM-dd');
   const endDate = format(sunday, 'yyyy-MM-dd');
 
-  return await prisma.activity_adjustments.findMany({
+  const rows = await prisma.activity_adjustments.findMany({
     where: {
       profile_id: userId,
       date: { gte: new Date(startDate), lte: new Date(endDate) },
@@ -95,4 +104,10 @@ export async function getActivityAdjustment(
       activity_adjustment_lists: { select: { name: true } },
     },
   });
+
+  return rows.map((row) => ({
+    affected_minutes: row.affected_minutes,
+    date: (row.date as any)?.toISOString?.() ?? row.date,
+    activity_adjustment_lists: row.activity_adjustment_lists,
+  }));
 }

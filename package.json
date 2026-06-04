@@ -4,7 +4,7 @@
   "scripts": {
     "dev:server": "npm --prefix apps/server run start:dev",
     "dev:web": "npm --prefix apps/web run dev",
-    "dev:desktop": "npm --prefix apps/desktop run dev",
+    "dev:desktop": "npm --prefix apps/desktop run tauri dev",
     "build:server": "npm --prefix apps/server run build",
     "build:web": "npm --prefix apps/web run build",
     "build": "npm run build:server && npm run build:web"
