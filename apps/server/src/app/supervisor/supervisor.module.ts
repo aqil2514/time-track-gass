@@ -1,18 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ActivitiesModule } from '../activities/activities.module';
-import {
-  ATTENDANCE_CONTROLLER,
-  SUPERVISOR_CONTROLLER,
-} from './registry/controller';
-import {
-  ATTENDANCE_SERVICES,
-  BULL_MQ_SUMMARY_SESSION,
-  MIX_SUPERVISOR_HELPER,
-  MIX_SUPERVISOR_SERVICES,
-  PROFILE_LISTENER,
-} from './registry/providers';
+import { BULL_MQ_SUMMARY_SESSION, PROFILE_LISTENER } from './registry/providers';
 import { BullModule } from '@nestjs/bullmq';
 import { QUERY_NAME } from 'src/constants/queue.constant';
+import { DivisionsModule } from './divisions/divisions.module';
+import { ActivityModule } from './activity/activity.module';
+import { UserModule } from './user/user.module';
+import { TrackerModule } from './tracker/tracker.module';
+import { AttendanceModule } from './attendance/attendance.module';
+import { SupervisorController } from './supervisor.controller';
+import { SupervisorService } from './supervisor.service';
 
 @Module({
   imports: [
@@ -20,16 +17,17 @@ import { QUERY_NAME } from 'src/constants/queue.constant';
     BullModule.registerQueue({
       name: QUERY_NAME.SUMMARY_SESSION,
     }),
+    DivisionsModule,
+    ActivityModule,
+    UserModule,
+    TrackerModule,
+    AttendanceModule,
   ],
-  controllers: [...SUPERVISOR_CONTROLLER, ...ATTENDANCE_CONTROLLER],
+  controllers: [SupervisorController],
   providers: [
-    ...MIX_SUPERVISOR_SERVICES,
-    ...MIX_SUPERVISOR_HELPER,
     ...BULL_MQ_SUMMARY_SESSION,
-
-    ...ATTENDANCE_SERVICES,
-
     ...PROFILE_LISTENER,
+    SupervisorService,
   ],
 })
 export class SupervisorModule {}

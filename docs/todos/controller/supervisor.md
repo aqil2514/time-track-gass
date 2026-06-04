@@ -2,66 +2,66 @@
 
 ## Controller: `SupervisorController` (`/supervisor`)
 
-- [ ] GET /supervisor/user-activity
-- [ ] GET /supervisor/user-profile
-- [ ] GET /supervisor/user-daily-insight
-- [ ] GET /supervisor/user-daily-percategory
-- [ ] POST /supervisor/trigger/session-summary
+- [x] GET /supervisor/user-activity
+- [x] GET /supervisor/user-profile
+- [x] GET /supervisor/user-daily-insight
+- [x] GET /supervisor/user-daily-percategory
+- [x] POST /supervisor/trigger/session-summary
 
 ## Controller: `SupervisorActivityController` (`/supervisor/activity`)
 
-- [ ] PATCH /supervisor/activity/delete
-- [ ] PATCH /supervisor/activity/category
+- [x] PATCH /supervisor/activity/delete
+- [x] PATCH /supervisor/activity/category
 
 ## Controller: `SupervisorDivisionsController` (`/supervisor/division`)
 
-- [ ] GET /supervisor/division
-- [ ] POST /supervisor/division
-- [ ] PATCH /supervisor/division/:id
-- [ ] DELETE /supervisor/division/:id
+- [x] GET /supervisor/division
+- [x] POST /supervisor/division
+- [x] PATCH /supervisor/division/:id
+- [x] DELETE /supervisor/division/:id
 
 ## Controller: `SupervisorUserController` (`/supervisor/user`)
 
-- [ ] POST /supervisor/user
-- [ ] GET /supervisor/user
-- [ ] GET /supervisor/user/:id
-- [ ] PATCH /supervisor/user/:id
-- [ ] PATCH /supervisor/user/:id/reset-password
-- [ ] DELETE /supervisor/user/:id
-- [ ] GET /supervisor/user/:id/settings
-- [ ] PATCH /supervisor/user/:id/settings
+- [x] POST /supervisor/user
+- [x] GET /supervisor/user
+- [x] GET /supervisor/user/:id
+- [x] PATCH /supervisor/user/:id
+- [x] PATCH /supervisor/user/:id/reset-password
+- [x] DELETE /supervisor/user/:id
+- [x] GET /supervisor/user/:id/settings
+- [x] PATCH /supervisor/user/:id/settings
 
 ## Controller: `SupervisorTrackerController` (`/supervisor/tracker`)
 
-- [ ] GET /supervisor/tracker
-- [ ] GET /supervisor/tracker/matrix
-- [ ] GET /supervisor/tracker/id/:id
+- [x] GET /supervisor/tracker
+- [x] GET /supervisor/tracker/matrix
+- [x] GET /supervisor/tracker/id/:id
 
 ## Controller: `AttendanceListnoteController` (`/supervisor/attendance/list-note`)
 
-- [ ] POST /supervisor/attendance/list-note
-- [ ] GET /supervisor/attendance/list-note
-- [ ] PATCH /supervisor/attendance/list-note/:listId
-- [ ] DELETE /supervisor/attendance/list-note/:listId
+- [x] POST /supervisor/attendance/list-note
+- [x] GET /supervisor/attendance/list-note
+- [x] PATCH /supervisor/attendance/list-note/:listId
+- [x] DELETE /supervisor/attendance/list-note/:listId
 
 ## Controller: `AttendanceProfileConfigController` (`/supervisor/attendance/profile-config`)
 
-- [ ] GET /supervisor/attendance/profile-config
-- [ ] PATCH /supervisor/attendance/profile-config/:userId
+- [x] GET /supervisor/attendance/profile-config
+- [x] PATCH /supervisor/attendance/profile-config/:userId
 
 ## Controller: `AttendanceSummaryController` (`/supervisor/attendance/summary`)
 
-- [ ] GET /supervisor/attendance/summary
-- [ ] GET /supervisor/attendance/summary/:userId
+- [x] GET /supervisor/attendance/summary
+- [x] GET /supervisor/attendance/summary/:userId
 
 ## Controller: `AttendanceAdjustmentController` (`/supervisor/attendance/adjustment`)
 
-- [ ] POST /supervisor/attendance/adjustment
-- [ ] GET /supervisor/attendance/adjustment
-- [ ] DELETE /supervisor/attendance/adjustment/:adjustmentId
-- [ ] PATCH /supervisor/attendance/adjustment/:adjustmentId
-- [ ] GET /supervisor/attendance/adjustment/:adjustmentId
+- [x] POST /supervisor/attendance/adjustment
+- [x] GET /supervisor/attendance/adjustment
+- [x] DELETE /supervisor/attendance/adjustment/:adjustmentId
+- [x] PATCH /supervisor/attendance/adjustment/:adjustmentId
+- [x] GET /supervisor/attendance/adjustment/:adjustmentId
 
 ## Processor
 
-- [ ] AttendanceLogsProcessor
+- [x] AttendanceLogsProcessor
