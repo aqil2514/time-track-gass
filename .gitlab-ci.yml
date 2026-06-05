@@ -16,7 +16,7 @@ deploy:
     # Install & build
     - npm --prefix apps/web ci
     - npm --prefix apps/server ci
-    - npm --prefix apps/server exec -- prisma generate
+    - cd apps/server && npx prisma generate && cd ../..
     - NEXT_PUBLIC_SERVER_URL="$NEXT_PUBLIC_SERVER_URL" NEXT_PUBLIC_WEB_URL="$NEXT_PUBLIC_WEB_URL" npm --prefix apps/web run build
     - npm --prefix apps/server run build
     # Deploy web
