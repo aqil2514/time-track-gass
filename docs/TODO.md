@@ -12,13 +12,13 @@
 - [x] Setup SSH tunnel ke PostgreSQL aapanel (port 5432)
 - [x] Ganti `.env`: hapus `SUPABASE_URL` & `SUPABASE_ANON_KEY`, tambah `DATABASE_URL` (PostgreSQL)
 - [x] Refactor semua Supabase client call → Prisma client
-- [ ] Test koneksi & verifikasi semua fitur
+- [x] Test koneksi & verifikasi semua fitur
 
 ## 2. Restructure Folder Server
 - [x] Diskusi & finalisasi struktur folder baru (acuan: retail-multitenant)
 - [x] Pindahkan file sesuai struktur baru
 - [x] Pastikan semua import path terupdate
-- [ ] Test semua endpoint
+- [x] Test semua endpoint
 
 ## 3. Cleanup Branch
 - [x] Hapus `gitlab/dev` di remote GitLab
