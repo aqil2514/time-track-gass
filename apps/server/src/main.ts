@@ -10,6 +10,15 @@ async function bootstrap() {
 
   app.use(json({ limit: '5mb' }));
 
+  app.use((req: any, res: any, next: any) => {
+    res.setHeader('ngrok-skip-browser-warning', 'true');
+    console.log(`[HTTP] ${req.method} ${req.url} | origin: ${req.headers.origin ?? '-'} | auth: ${req.headers.authorization ? req.headers.authorization.substring(0, 20) + '...' : '(none)'} | body: ${JSON.stringify(req.body)}`);
+    res.on('finish', () => {
+      console.log(`[HTTP RESP] ${req.method} ${req.url} → ${res.statusCode} | www-auth: ${res.getHeader('WWW-Authenticate') ?? '(none)'}`);
+    });
+    next();
+  });
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -37,7 +46,8 @@ async function bootstrap() {
         requestOrigin === 'http://tauri.localhost' || // Windows production
         requestOrigin === 'tauri://localhost' || // macOS & Linux production
         requestOrigin.startsWith('tauri://') || // fallback Tauri
-        requestOrigin.startsWith('file://') // fallback file protocol
+        requestOrigin.startsWith('file://') || // fallback file protocol
+        requestOrigin === 'https://claude.ai' // MCP connector
       ) {
         callback(null, true);
       } else {

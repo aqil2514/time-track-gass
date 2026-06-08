@@ -2,6 +2,7 @@ import { ActivitiesModule } from '../activities/activities.module';
 import { AuthModule } from '../auth/auth.module';
 import { ImageUploadModule } from '../image-upload/image-upload.module';
 import { LogModule } from '../log/log.module';
+import { TimeTrackMcpModule } from '../mcp/mcp.module';
 import { SupervisorModule } from '../supervisor/supervisor.module';
 import { WorkSessionModule } from '../work-session/work-session.module';
 
@@ -12,4 +13,5 @@ export const BUILT_IN_REGISTRY = [
   ImageUploadModule,
   LogModule,
   WorkSessionModule,
+  TimeTrackMcpModule
 ];

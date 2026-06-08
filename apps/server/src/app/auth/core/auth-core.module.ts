@@ -7,5 +7,6 @@ import { AuthCoreService } from './auth-core.service';
   imports: [JwtModule],
   controllers: [AuthCoreController],
   providers: [AuthCoreService],
+  exports: [AuthCoreService],
 })
 export class AuthCoreModule {}

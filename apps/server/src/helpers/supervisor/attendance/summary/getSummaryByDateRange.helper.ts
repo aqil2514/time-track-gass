@@ -10,7 +10,17 @@ export async function getSummaryByDateRange(
     where: {
       work_date: { gte: new Date(startDate), lte: new Date(endDate) },
     },
-    include: { profiles: true },
+    include: {
+      profiles: {
+        select: {
+          id: true,
+          full_name: true,
+          username: true,
+          division: true,
+          role: true,
+        },
+      },
+    },
     orderBy: { work_date: 'asc' },
   });
 
