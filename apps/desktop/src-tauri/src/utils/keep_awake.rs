@@ -23,8 +23,9 @@ pub fn start_keep_awake() -> Result<(), String> {
         }
     }
 
+    let pid = std::process::id().to_string();
     let child = Command::new("caffeinate")
-        .args(["-d", "-i", "-u"])
+        .args(["-d", "-i", "-u", "-w", &pid])
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -48,8 +49,8 @@ pub fn stop_keep_awake() -> Result<(), String> {
         .map_err(|_| "Failed to lock keep-awake process state".to_string())?;
 
     if let Some(mut child) = process.take() {
-        child.kill().map_err(|error| error.to_string())?;
-        child.wait().map_err(|error| error.to_string())?;
+        let _ = child.kill();
+        let _ = child.wait();
     }
 
     Ok(())

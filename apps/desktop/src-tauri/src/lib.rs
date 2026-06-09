@@ -180,6 +180,12 @@ pub fn run() {
             stop_native_timer,
             is_native_timer_running,
         ])
+        .on_window_event(|_window, event| {
+            if let tauri::WindowEvent::Destroyed = event {
+                let _ = utils::keep_awake::stop_keep_awake();
+                let _ = utils::native_timer::stop_native_timer();
+            }
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
