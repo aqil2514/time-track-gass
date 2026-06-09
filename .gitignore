@@ -3,3 +3,4 @@ docker-compose.yml
 arc
 .claude
 /generated/prisma
+scripts

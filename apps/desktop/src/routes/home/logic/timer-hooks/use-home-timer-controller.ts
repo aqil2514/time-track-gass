@@ -222,6 +222,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
               { captureCycleId, status: res.status, data: res.data },
               "WARN",
             );
+            isStoppedRef.current = true;
             await bringWindowToFront();
             clearTimers();
             await stopAllNativeTimerSideEffects();
@@ -416,12 +417,13 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
     if (!isStoppedRef.current && result === "success") {
       scheduleNextCapture();
     } else if (!isStoppedRef.current && result === "error") {
+      isStoppedRef.current = true;
       void writeMacTimerLog(
         "mac_timer_stopped_by_error",
         { result, trigger: "native_timer" },
         "ERROR",
       );
-      void stopAllNativeTimerSideEffects();
+      await stopAllNativeTimerSideEffects();
       setIsRunning(false);
     }
   }, [
@@ -461,6 +463,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
     if (!isStoppedRef.current && result === "success") {
       scheduleNextCapture();
     } else if (!isStoppedRef.current && result === "error") {
+      isStoppedRef.current = true;
       await writeMacTimerLog(
         "mac_timer_stopped_by_initial_capture_error",
         { result },
@@ -482,12 +485,12 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
   // ==============================
   // STOP
   // ==============================
-  const stopAutoCapture = useCallback(() => {
+  const stopAutoCapture = useCallback(async () => {
     void writeMacTimerLog("mac_timer_stop", { status: statusRef.current });
     isStoppedRef.current = true;
     setIsRunning(false);
     clearTimers();
-    void stopAllNativeTimerSideEffects();
+    await stopAllNativeTimerSideEffects();
     setCountdown(TIME_TO_SCREENSHOT);
     setTimerStatus("idle");
   }, [setIsRunning, setTimerStatus, stopAllNativeTimerSideEffects]);
