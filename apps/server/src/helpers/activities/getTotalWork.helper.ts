@@ -29,6 +29,7 @@ export async function getDailySummaryTime(
       asr.user_id = ${userId}::uuid
       AND DATE(asr.created_at AT TIME ZONE 'Asia/Jakarta') = ${formattedDate}::date
       AND asr.category <> 'unclassified'
+      AND asr.deleted_at IS NULL
     GROUP BY asr.user_id, DATE(asr.created_at AT TIME ZONE 'Asia/Jakarta')
   `;
 
@@ -67,6 +68,7 @@ export async function getWeeklySummaryTime(
         date_trunc('week', ${formattedDate}::date)::date
         AND (date_trunc('week', ${formattedDate}::date)::date + 6)
       AND asr.category <> 'unclassified'
+      AND asr.deleted_at IS NULL
     GROUP BY asr.user_id
   `;
 
@@ -106,7 +108,7 @@ export async function getActivityAdjustment(
   });
 
   return rows.map((row) => ({
-    affected_minutes: row.affected_minutes,
+    affected_minutes: Number(row.affected_minutes),
     date: (row.date as any)?.toISOString?.() ?? row.date,
     activity_adjustment_lists: row.activity_adjustment_lists,
   }));
