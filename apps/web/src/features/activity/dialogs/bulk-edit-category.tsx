@@ -61,12 +61,15 @@ export function BulkEditCategoryDialog() {
     const selectedDivision = divisionData.find(
       (division) => division.name === selectedUser.division,
     );
-    if (!selectedDivision) return [];
 
-    return [
-      "unclassified",
-      ...selectedDivision.vision_config.allowed_categories,
-    ];
+    const generalDivision = divisionData.find((division) => division.id === 8);
+
+    const generalCategories = generalDivision?.vision_config.allowed_categories ?? [];
+    const divisionCategories = selectedDivision?.vision_config.allowed_categories ?? [];
+
+    const merged = [...new Set([...generalCategories, ...divisionCategories])];
+
+    return ["unclassified", ...merged];
   }, [divisionData, userData, selectedData]);
 
   if (!items) return null;
