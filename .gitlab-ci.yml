@@ -24,5 +24,5 @@ deploy:
     - ssh -i ~/.ssh/deploy_key "$VPS_USER@$VPS_HOST" "cd /www/wwwroot/time-track-gass/web && npm ci --omit=dev && pm2 restart timetrack-web"
     # Deploy server
     - ssh -i ~/.ssh/deploy_key "$VPS_USER@$VPS_HOST" "rm -rf /www/wwwroot/time-track-gass/server/dist"
-    - rsync -az -e "ssh -i ~/.ssh/deploy_key" apps/server/dist apps/server/package.json apps/server/package-lock.json apps/server/prisma "$VPS_USER@$VPS_HOST:/www/wwwroot/time-track-gass/server/"
-    - ssh -i ~/.ssh/deploy_key "$VPS_USER@$VPS_HOST" "cd /www/wwwroot/time-track-gass/server && npm ci --omit=dev && DATABASE_URL='$DATABASE_URL' npx prisma migrate resolve --applied '20260624000000_baseline' && DATABASE_URL='$DATABASE_URL' npx prisma migrate deploy && pm2 restart timetrack"
+    - rsync -az -e "ssh -i ~/.ssh/deploy_key" apps/server/dist apps/server/package.json apps/server/package-lock.json apps/server/prisma apps/server/prisma.config.ts "$VPS_USER@$VPS_HOST:/www/wwwroot/time-track-gass/server/"
+    - ssh -i ~/.ssh/deploy_key "$VPS_USER@$VPS_HOST" "cd /www/wwwroot/time-track-gass/server && npm ci --omit=dev && npx prisma migrate resolve --applied '20260624000000_baseline' && npx prisma migrate deploy && pm2 restart timetrack"
