@@ -25,4 +25,4 @@ deploy:
     # Deploy server
     - ssh -i ~/.ssh/deploy_key "$VPS_USER@$VPS_HOST" "rm -rf /www/wwwroot/time-track-gass/server/dist"
     - rsync -az -e "ssh -i ~/.ssh/deploy_key" apps/server/dist apps/server/package.json apps/server/package-lock.json apps/server/prisma "$VPS_USER@$VPS_HOST:/www/wwwroot/time-track-gass/server/"
-    - ssh -i ~/.ssh/deploy_key "$VPS_USER@$VPS_HOST" "cd /www/wwwroot/time-track-gass/server && npm ci --omit=dev && npx prisma migrate resolve --applied '20260624000000_baseline' && npx prisma migrate deploy && pm2 restart timetrack"
+    - ssh -i ~/.ssh/deploy_key "$VPS_USER@$VPS_HOST" "cd /www/wwwroot/time-track-gass/server && npm ci --omit=dev && export \$(grep -v '^#' .env | xargs) && npx prisma migrate resolve --applied '20260624000000_baseline' && npx prisma migrate deploy && pm2 restart timetrack"
