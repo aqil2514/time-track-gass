@@ -45,6 +45,7 @@ model ai_screen_report {
   interval        Decimal?       @default(5) @db.Decimal
   deleted_at      DateTime?      @db.Timestamptz(6)
   work_session_id BigInt?
+  image_hash      String?
   profiles        profiles?      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   work_sessions   work_sessions? @relation(fields: [work_session_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

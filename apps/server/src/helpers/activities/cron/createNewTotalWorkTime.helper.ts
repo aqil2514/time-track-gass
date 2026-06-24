@@ -16,7 +16,7 @@ export async function getYesterdayScreenReports(
     FROM ai_screen_report asr
     WHERE
       DATE(asr.created_at AT TIME ZONE 'Asia/Jakarta') = (NOW() AT TIME ZONE 'Asia/Jakarta')::DATE - 1
-      AND asr.category <> 'unclassified'
+      AND asr.category NOT IN ('unclassified', 'idle')
     GROUP BY asr.user_id, DATE(asr.created_at AT TIME ZONE 'Asia/Jakarta')
   `;
 }

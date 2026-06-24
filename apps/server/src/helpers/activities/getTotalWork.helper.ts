@@ -28,7 +28,7 @@ export async function getDailySummaryTime(
     WHERE
       asr.user_id = ${userId}::uuid
       AND DATE(asr.created_at AT TIME ZONE 'Asia/Jakarta') = ${formattedDate}::date
-      AND asr.category <> 'unclassified'
+      AND asr.category NOT IN ('unclassified', 'idle')
       AND asr.deleted_at IS NULL
     GROUP BY asr.user_id, DATE(asr.created_at AT TIME ZONE 'Asia/Jakarta')
   `;
@@ -67,7 +67,7 @@ export async function getWeeklySummaryTime(
       AND DATE(asr.created_at AT TIME ZONE 'Asia/Jakarta') BETWEEN
         date_trunc('week', ${formattedDate}::date)::date
         AND (date_trunc('week', ${formattedDate}::date)::date + 6)
-      AND asr.category <> 'unclassified'
+      AND asr.category NOT IN ('unclassified', 'idle')
       AND asr.deleted_at IS NULL
     GROUP BY asr.user_id
   `;

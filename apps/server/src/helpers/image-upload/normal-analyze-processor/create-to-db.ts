@@ -1,10 +1,15 @@
 import { PrismaService } from 'src/services/prisma/prisma.service';
 
-interface ZImageAnalyzeData {
-  app_name: string;
+export interface ZImageAnalyzeData {
+  user_id: string;
+  s3_key: string;
+  work_session_id?: string | null;
+  created_at: string;
   category: string;
-  summary: string;
-  window_title: string;
+  app_name?: string;
+  window_title?: string;
+  summary?: string;
+  image_hash?: string;
 }
 
 export async function createNewAnalyzeData(

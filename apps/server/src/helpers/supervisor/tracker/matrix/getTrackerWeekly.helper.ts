@@ -24,7 +24,7 @@ export async function getTrackerWeekly(
     WHERE
       report.created_at >= DATE_TRUNC('week', ${clientDate} AT TIME ZONE 'Asia/Jakarta') AT TIME ZONE 'Asia/Jakarta'
       AND report.created_at <= ${clientDate}
-      AND report.category <> 'unclassified'
+      AND report.category NOT IN ('unclassified', 'idle')
     GROUP BY report.user_id
   `;
 

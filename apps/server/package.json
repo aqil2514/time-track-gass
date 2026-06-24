@@ -59,6 +59,7 @@
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "sharp": "^0.34.5",
+    "sharp-phash": "^2.2.0",
     "tesseract.js": "^7.0.0"
   },
   "devDependencies": {

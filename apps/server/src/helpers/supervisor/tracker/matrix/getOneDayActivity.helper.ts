@@ -22,7 +22,7 @@ export async function getOneDayActivity(
         user_id: { in: userIds },
         created_at: { gte: start, lte: end },
         deleted_at: null,
-        NOT: { category: 'unclassified' },
+        NOT: { category: { in: ['unclassified', 'idle'] } },
       },
       select: {
         id: true,

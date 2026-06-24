@@ -17,7 +17,7 @@ export async function getSummaryToday(
     JOIN profiles p ON p.id = asr.user_id
     WHERE
       DATE(asr.created_at AT TIME ZONE 'Asia/Jakarta') = (NOW() AT TIME ZONE 'Asia/Jakarta')::DATE
-      AND asr.category <> 'unclassified'
+      AND asr.category NOT IN ('unclassified', 'idle')
       AND p.deleted_at IS NULL
     GROUP BY p.id, p.full_name, p.username, p.division, DATE(asr.created_at AT TIME ZONE 'Asia/Jakarta')
   `;
