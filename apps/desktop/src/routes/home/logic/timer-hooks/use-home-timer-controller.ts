@@ -95,7 +95,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
 
     const result = await captureHandler();
 
-    if (!isStoppedRef.current && result === "success") {
+    if (!isStoppedRef.current && (result === "success" || result === "cooldown")) {
       scheduleNextCapture();
     } else if (!isStoppedRef.current && result === "error") {
       isStoppedRef.current = true;
@@ -122,7 +122,7 @@ export function useHomeTimerController(mutate: KeyedMutator<HomeData>) {
 
     const result = await captureHandler();
 
-    if (!isStoppedRef.current && result === "success") {
+    if (!isStoppedRef.current && (result === "success" || result === "cooldown")) {
       scheduleNextCapture();
     } else if (!isStoppedRef.current && result === "error") {
       isStoppedRef.current = true;
