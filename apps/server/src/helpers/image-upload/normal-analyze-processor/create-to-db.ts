@@ -10,6 +10,7 @@ export interface ZImageAnalyzeData {
   window_title?: string;
   summary?: string;
   image_hash?: string;
+  interval?: number;
 }
 
 export async function createNewAnalyzeData(

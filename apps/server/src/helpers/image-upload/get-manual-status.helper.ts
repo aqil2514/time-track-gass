@@ -1,9 +1,11 @@
 import { format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { FlowProducer } from 'bullmq';
+import Redis from 'ioredis';
 import { QUERY_NAME } from 'src/constants/queue.constant';
 import { TIMEZONE } from 'src/constants/timezone';
 import { PrismaService } from 'src/services/prisma/prisma.service';
+import { getSlotInvalid, SlotInvalidStatus } from 'src/helpers/image-upload/manual-slot-status/slot-status-redis.helper';
 
 export async function checkIsHaveInDb(
   prisma: PrismaService,
@@ -36,6 +38,15 @@ export async function checkIsHaveInDb(
   });
 
   return !!data;
+}
+
+export async function checkIsInvalid(
+  redis: Redis,
+  slotId: number,
+  userId: string,
+  date: string,
+): Promise<SlotInvalidStatus[] | null> {
+  return getSlotInvalid(redis, userId, slotId, date);
 }
 
 export async function checkIsHaveInBullMq(

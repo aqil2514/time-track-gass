@@ -39,6 +39,16 @@ export function FormHeaderInfo({ form }: Props) {
           Wajib minimal 8 screenshot yang memperlihatkan jam/tanggal sistem pada
           taskbar sebagai bukti otentik.
         </p>
+        {!isMinReached && (
+          <p className="text-[10px] text-slate-500 leading-tight mt-1">
+            Tips: Beri nama file dengan format{" "}
+            <span className="font-mono text-slate-400">
+              YYYY-MM-DD_HH-mm-ss
+            </span>{" "}
+            (contoh: <span className="font-mono text-slate-400">2025-06-26_08-30-00.jpg</span>)
+            sebagai cadangan jika sistem gagal membaca jam dari gambar.
+          </p>
+        )}
       </div>
     </div>
   );

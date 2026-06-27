@@ -126,6 +126,7 @@ export class ImageValidationService {
           });
         }
       } catch (e) {
+        console.log(e)
         invalidImages.push({
           file: image,
           date: localDate,

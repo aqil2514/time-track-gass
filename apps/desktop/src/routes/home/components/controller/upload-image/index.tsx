@@ -22,6 +22,7 @@ import { RightNoSlotId } from "./right-no-slot-id";
 import { RightLoadingState } from "./right-loading-state";
 import { RightErrorState } from "./right-error-state";
 import { RightSideProgress } from "./right-side-progress-state";
+import { RightInvalidState } from "./right-invalid-state";
 import { useHomeContext } from "@/routes/home/store/home.provider";
 import { isAxiosError } from "axios";
 
@@ -30,7 +31,13 @@ export interface ErrorDataMap {
   reason: string;
 }
 
-type ProgressStatus = "verified" | "progress" | "not-found";
+type ProgressStatus = "verified" | "progress" | "invalid" | "not-found";
+
+interface InvalidImage {
+  s3Key: string;
+  reason: string;
+  originalFilename?: string;
+}
 
 export function UploadImage() {
   const {
@@ -38,6 +45,7 @@ export function UploadImage() {
   } = useHomeContext();
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [errorData, setErrorData] = useState<ErrorDataMap[]>([]);
+  const [forceShowForm, setForceShowForm] = useState(false);
 
   const isCanFetch = useMemo(
     () => !!date && selectedSlot !== null,
@@ -56,10 +64,16 @@ export function UploadImage() {
 
   const { data, isLoading, isValidating, error, mutate } = useFetch<{
     status: ProgressStatus;
+    invalidImages?: InvalidImage[];
   }>(url);
 
   const status: ProgressStatus = useMemo(
     () => (data?.status ? data.status : "not-found"),
+    [data],
+  );
+
+  const invalidImages: InvalidImage[] = useMemo(
+    () => data?.invalidImages ?? [],
     [data],
   );
 
@@ -71,6 +85,15 @@ export function UploadImage() {
 
     if (!token) {
       throw new Error("Access token not found");
+    }
+
+    if (status === "invalid") {
+      await api.delete(
+        buildUrl(
+          `image-upload/manual/invalid?slotId=${selectedSlot}&date=${date?.toISOString()}`,
+        ),
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
     }
 
     const valuesWithOsAndDate = {
@@ -92,6 +115,7 @@ export function UploadImage() {
 
       if (res.status === 422) return setErrorData(res.data.invalidImages);
       if (res.status === 200 || res.status === 201) {
+        setForceShowForm(false);
         await mutate();
       }
     } catch (error) {
@@ -124,14 +148,20 @@ export function UploadImage() {
         <div className="grid grid-cols-[25%_auto] gap-4 flex-1 min-h-0">
           <HourSlot
             selectedSlot={selectedSlot}
-            setSelectedSlot={setSelectedSlot}
+            setSelectedSlot={(slot) => {
+              setSelectedSlot(slot);
+              setForceShowForm(false);
+            }}
           />
           <FlexSideContent
             status={status}
             selectedSlot={selectedSlot}
             errorData={errorData}
+            invalidImages={invalidImages}
+            forceShowForm={forceShowForm}
             onSubmit={handleUpload}
             setErrorData={setErrorData}
+            onReupload={() => setForceShowForm(true)}
             error={error}
             isLoading={isLoading}
             isValidating={isValidating}
@@ -149,6 +179,9 @@ const FlexSideContent: React.FC<
     isLoading: boolean;
     isValidating: boolean;
     error: any;
+    invalidImages: InvalidImage[];
+    forceShowForm: boolean;
+    onReupload: () => void;
   } & UploadImageFormProps
 > = ({
   selectedSlot,
@@ -156,6 +189,9 @@ const FlexSideContent: React.FC<
   error,
   isLoading,
   isValidating,
+  invalidImages,
+  forceShowForm,
+  onReupload,
   ...formProps
 }) => {
   if (isLoading || isValidating) return <RightLoadingState />;
@@ -163,8 +199,16 @@ const FlexSideContent: React.FC<
   if (selectedSlot !== null) {
     if (status === "verified")
       return <RightSideHaveData slotId={selectedSlot} />;
-    else if (status === "progress")
+    if (status === "progress")
       return <RightSideProgress slotId={selectedSlot} />;
+    if (status === "invalid" && !forceShowForm)
+      return (
+        <RightInvalidState
+          slotId={selectedSlot}
+          invalidImages={invalidImages}
+          onReupload={onReupload}
+        />
+      );
 
     return <UploadImageForm selectedSlot={selectedSlot} {...formProps} />;
   }
