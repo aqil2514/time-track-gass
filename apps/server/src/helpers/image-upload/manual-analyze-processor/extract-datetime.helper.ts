@@ -50,10 +50,11 @@ async function tryGemini(
           role: 'user',
           parts: [
             {
-              text: `Extract the date and time shown in this screenshot image.
+              text: `Extract the current system date and time from the taskbar or system clock visible in this screenshot.
+Do NOT use dates or times shown in the page content, data tables, or documents.
 Return ONLY a raw JSON object, no markdown, no explanation:
 {"date": "YYYY-MM-DD", "time": "HH:mm"}
-If date or time not found, use null for that field.`,
+If the system clock is not visible, use null for both fields.`,
             },
             { inlineData: { mimeType, data: base64Data } },
           ],

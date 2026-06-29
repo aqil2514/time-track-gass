@@ -1,5 +1,4 @@
 import { Queue } from 'bullmq';
-import { QUERY_NAME } from 'src/constants/queue.constant';
 import { S3UploadResult } from './upload-s3.helper';
 
 export async function enqueueManualAnalyzeJobs(
@@ -9,6 +8,16 @@ export async function enqueueManualAnalyzeJobs(
   slotId: number,
   date: string,
 ): Promise<void> {
+  const jobId = `manual-analyze-${userId}-${slotId}-${date}`;
+
+  const existing = await manualAnalyzeQueue.getJob(jobId);
+  if (existing) {
+    const state = await existing.getState();
+    if (state === 'completed' || state === 'failed') {
+      await existing.remove();
+    }
+  }
+
   await manualAnalyzeQueue.add(
     'analyze-manual-upload',
     {
@@ -18,7 +27,7 @@ export async function enqueueManualAnalyzeJobs(
       images: uploads.map(({ s3Key, originalFilename }) => ({ s3Key, originalFilename })),
     },
     {
-      jobId: `manual-analyze-${userId}-${slotId}-${date}`,
+      jobId,
       attempts: 3,
       backoff: { type: 'exponential', delay: 5000 },
       removeOnComplete: 100,
