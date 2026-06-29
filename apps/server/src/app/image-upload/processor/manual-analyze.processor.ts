@@ -12,6 +12,7 @@ import { analyzeManualImage } from 'src/helpers/image-upload/manual-analyze-proc
 import { createNewAnalyzeData, ZImageAnalyzeData } from 'src/helpers/image-upload/normal-analyze-processor/create-to-db';
 import { extractDateTimeFromImage } from 'src/helpers/image-upload/manual-analyze-processor/extract-datetime.helper';
 import { validateDateTimeAgainstSlot } from 'src/helpers/image-upload/manual-analyze-processor/validate-datetime.helper';
+import { cropTaskbar } from 'src/helpers/image-upload/manual-analyze-processor/crop-taskbar.helper';
 import { appendSlotInvalid, SlotInvalidStatus } from 'src/helpers/image-upload/manual-slot-status/slot-status-redis.helper';
 
 const models = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'];
@@ -68,12 +69,13 @@ export class ManualAnalyzeProcessor extends WorkerHost {
       }
       const { base64Data, mimeType } = s3Result;
 
-      // Step 2: Extract datetime
+      // Step 2: Crop taskbar lalu extract datetime
+      const taskbar = await cropTaskbar(base64Data, mimeType);
       const datetimeResult = await extractDateTimeFromImage(
         this.gemini,
         model,
-        base64Data,
-        mimeType,
+        taskbar.base64Data,
+        taskbar.mimeType,
         originalFilename,
       );
 
