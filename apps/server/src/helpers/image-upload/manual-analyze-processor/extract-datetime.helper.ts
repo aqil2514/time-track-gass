@@ -77,7 +77,7 @@ If date or time not found, use null for that field.`,
       return null;
     }
 
-    const combined = new Date(`${parsed.date}T${parsed.time}:00`);
+    const combined = fromZonedTime(`${parsed.date}T${parsed.time}:00`, TIMEZONE);
     if (isNaN(combined.getTime())) {
       logger.warn(`[gemini] datetime tidak valid: "${parsed.date}T${parsed.time}:00"`);
       return null;
