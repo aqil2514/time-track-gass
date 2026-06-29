@@ -58,10 +58,6 @@ export const BULL_QUEUE_REGISTRY = [
     adapter: BullMQAdapter,
   }),
   BullBoardModule.forFeature({
-    name: QUERY_NAME.MANUAL_SLOT_STATUS,
-    adapter: BullMQAdapter,
-  }),
-  BullBoardModule.forFeature({
     name: QUERY_NAME.NORMAL_ANALYZE,
     adapter: BullMQAdapter,
   }),

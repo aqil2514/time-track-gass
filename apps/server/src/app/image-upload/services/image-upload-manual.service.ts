@@ -4,11 +4,11 @@ import {
   Logger,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { InjectFlowProducer } from '@nestjs/bullmq';
-import { FlowProducer } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { S3Client } from '@aws-sdk/client-s3';
 import Redis from 'ioredis';
-import { FLOW_NAME } from 'src/constants/queue.constant';
+import { QUERY_NAME } from 'src/constants/queue.constant';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { validateLocalImages } from 'src/helpers/image-upload/manual-analyze-post/validate-local.helper';
 import { uploadImagesToS3 } from 'src/helpers/image-upload/manual-analyze-post/upload-s3.helper';
@@ -33,8 +33,8 @@ export class ImageUploadManualService {
     private readonly s3Client: S3Client,
     @Inject('REDIS_CLIENT')
     private readonly redis: Redis,
-    @InjectFlowProducer(FLOW_NAME.MANUAL_ANALYZE_FLOW)
-    private readonly manualAnalyzeFlow: FlowProducer,
+    @InjectQueue(QUERY_NAME.MANUAL_ANALYZE)
+    private readonly manualAnalyzeQueue: Queue,
   ) {}
 
   onModuleInit() {
@@ -69,19 +69,18 @@ export class ImageUploadManualService {
 
     const uploads = await uploadImagesToS3(this.s3Client, validImages, userId);
     this.logger.log(
-      `S3 upload selesai - user=${userId} slot=${slotId}: ${uploads.length} file, keys=[${uploads.map((u) => u.s3Key).join(', ')}]`,
+      `S3 upload selesai - user=${userId} slot=${slotId}: ${uploads.length} file`,
     );
 
     await enqueueManualAnalyzeJobs(
-      this.manualAnalyzeFlow,
-      this.redis,
+      this.manualAnalyzeQueue,
       uploads,
       userId,
       slotId,
       date,
     );
     this.logger.log(
-      `BullMQ job enqueued - user=${userId} slot=${slotId} date=${date}: ${uploads.length} child jobs`,
+      `BullMQ job enqueued - user=${userId} slot=${slotId} date=${date}`,
     );
   }
 
@@ -98,12 +97,7 @@ export class ImageUploadManualService {
     const isInDb = await checkIsHaveInDb(this.prisma, slotId, userId, date);
     if (isInDb) return { status: 'verified' };
 
-    const invalidImages = await checkIsInvalid(
-      this.redis,
-      slotId,
-      userId,
-      date,
-    );
+    const invalidImages = await checkIsInvalid(this.redis, slotId, userId, date);
     if (invalidImages) {
       this.logger.warn(
         `Status invalid - user=${userId} slot=${slotId} date=${date}: ${invalidImages.length} gambar invalid`,
@@ -112,7 +106,7 @@ export class ImageUploadManualService {
     }
 
     const isInQueue = await checkIsHaveInBullMq(
-      this.manualAnalyzeFlow,
+      this.manualAnalyzeQueue,
       slotId,
       userId,
       date,

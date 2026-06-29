@@ -1,8 +1,7 @@
 import { format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
-import { FlowProducer } from 'bullmq';
+import { Queue } from 'bullmq';
 import Redis from 'ioredis';
-import { QUERY_NAME } from 'src/constants/queue.constant';
 import { TIMEZONE } from 'src/constants/timezone';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { getSlotInvalid, SlotInvalidStatus } from 'src/helpers/image-upload/manual-slot-status/slot-status-redis.helper';
@@ -16,7 +15,6 @@ export async function checkIsHaveInDb(
   const localDate = toZonedTime(new Date(date), TIMEZONE);
   const dateString = format(localDate, 'yyyy-MM-dd');
 
-  // Konversi slotId (jam WIB) ke UTC
   const utcHour = slotId - 7;
 
   const startOfHour = new Date(`${dateString}T00:00:00.000Z`);
@@ -50,18 +48,14 @@ export async function checkIsInvalid(
 }
 
 export async function checkIsHaveInBullMq(
-  manualAnalyzeFlow: FlowProducer,
+  manualAnalyzeQueue: Queue,
   slotId: number,
   userId: string,
   date: string,
 ): Promise<boolean> {
-  const localDate = toZonedTime(new Date(date), TIMEZONE);
-  const formattedDate = format(localDate, 'dd-MM-yyyy');
+  const job = await manualAnalyzeQueue.getJob(`manual-analyze-${userId}-${slotId}-${date}`);
+  if (!job) return false;
 
-  const flows = await manualAnalyzeFlow.getFlow({
-    id: `manual-analyze-${userId}-${slotId}-${formattedDate}`,
-    queueName: QUERY_NAME.MANUAL_SLOT_STATUS,
-  });
-
-  return !!flows;
+  const state = await job.getState();
+  return state === 'waiting' || state === 'active' || state === 'delayed';
 }
