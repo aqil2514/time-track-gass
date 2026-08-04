@@ -1,14 +1,11 @@
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { WorkSessionDb } from 'src/app/activities/interface/work_session.interface';
-import { format, toZonedTime } from 'date-fns-tz';
-import { TIMEZONE } from 'src/constants/timezone';
 
 export async function getWorkSession(
   prisma: PrismaService,
   date: string,
 ): Promise<WorkSessionDb[]> {
-  const zonedTime = toZonedTime(date, TIMEZONE);
-  const dateOnly = format(zonedTime, 'yyyy-MM-dd', { timeZone: TIMEZONE });
+  const dateOnly = date.slice(0, 10);
 
   const start = new Date(`${dateOnly}T00:00:00+07:00`);
   const end = new Date(`${dateOnly}T23:59:59.999+07:00`);

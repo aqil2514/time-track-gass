@@ -6,9 +6,7 @@ export async function getOneDayActivity(
   userIds: string[],
   date: string,
 ): Promise<AIScreenReportPopulateUser[]> {
-  const dateOnly = new Date(new Date(date).getTime() + 7 * 60 * 60 * 1000)
-    .toISOString()
-    .split('T')[0];
+  const dateOnly = date.slice(0, 10);
   const start = new Date(`${dateOnly}T00:00:00+07:00`);
   const end = new Date(`${dateOnly}T23:59:59+07:00`);
 
