@@ -21,13 +21,16 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const { get } = useQueryParams();
 
   const date = get("date");
+  const from = get("from");
+  const to = get("to");
   const user = get("user");
 
-  const isCanFetch = !!date && !!user;
+  const hasDate = !!date || (!!from && !!to);
+  const isCanFetch = hasDate && !!user;
 
   const url = isCanFetch
     ? buildUrl("api/user-activity", webUrl, {
-        date,
+        ...(date ? { date } : { from, to }),
         user,
       })
     : null;

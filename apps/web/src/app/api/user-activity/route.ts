@@ -5,11 +5,13 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date");
+  const from = searchParams.get("from");
+  const to = searchParams.get("to");
   const user = searchParams.get("user");
 
   try {
     const { data } = await apiServer.get(`/supervisor/user-activity`, {
-      params: { date, user },
+      params: { date, from, to, user },
     });
 
     return NextResponse.json(data);

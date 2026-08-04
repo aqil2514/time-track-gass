@@ -1,19 +1,19 @@
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { SessionSummaryDb } from 'src/app/activities/interface/session_summary.interface';
+import { DateFilterDto } from 'src/shared/dto/date-filter.dto';
+import { buildDateRange } from 'src/shared/helpers/build-date-range.helper';
 
 export async function getSessionActivity(
   prisma: PrismaService,
   userId: string,
-  date: string,
+  filter: DateFilterDto,
 ): Promise<SessionSummaryDb[]> {
-  const start = new Date(date);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 1);
+  const { start, end } = buildDateRange(filter);
 
   const rows = await prisma.session_summary.findMany({
     where: {
       user_id: userId,
-      session_start: { gte: start, lt: end },
+      session_start: { gte: start, lte: end },
     },
     orderBy: { session_start: 'desc' },
   });

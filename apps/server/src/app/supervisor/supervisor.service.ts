@@ -9,6 +9,7 @@ import { getDailyActivityPerCategory } from 'src/helpers/supervisor/user-activit
 import { ActivityData } from 'src/app/activities/interface/activities_data.interface';
 import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { SessionSummaryDb } from 'src/app/activities/interface/session_summary.interface';
+import { DateFilterDto } from 'src/shared/dto/date-filter.dto';
 
 @Injectable()
 export class SupervisorService {
@@ -19,37 +20,22 @@ export class SupervisorService {
     return getAllUserProfiles(this.prisma);
   }
 
-  async getActivityData(username: string, date: string): Promise<ActivityData[]> {
-    // Step 1: Dapatkan userId dari username
+  async getActivityData(username: string, filter: DateFilterDto): Promise<ActivityData[]> {
     const userId = await getUserIdByUsername(this.prisma, username);
-
-    // Step 2: Ambil session activity berdasarkan userId dan tanggal
-    const summariesData = await getSessionActivity(this.prisma, userId, date);
-
-    // Step 3: Kumpulkan semua raw_ids dari session
+    const summariesData = await getSessionActivity(this.prisma, userId, filter);
     const allRawIds = summariesData.flatMap((s) => s.raw_ids);
-
-    // Step 4: Ambil raw activity berdasarkan raw_ids
     const allReports = await getRawActivities(this.prisma, allRawIds);
-
-    // Step 5: Map ke ActivityData
     return mapToActivityData(allReports, summariesData);
   }
 
-  async getDailyActivity(username: string, date: string) {
-    // Step 1: Dapatkan userId dari username
+  async getDailyActivity(username: string, filter: DateFilterDto) {
     const userId = await getUserIdByUsername(this.prisma, username);
-
-    // Step 2: Ambil daily activity
-    return getDailyActivity(this.prisma, userId, date);
+    return getDailyActivity(this.prisma, userId, filter);
   }
 
-  async getDailyActivityPerCategory(username: string, date: string) {
-    // Step 1: Dapatkan userId dari username
+  async getDailyActivityPerCategory(username: string, filter: DateFilterDto) {
     const userId = await getUserIdByUsername(this.prisma, username);
-
-    // Step 2: Ambil daily activity per kategori
-    return getDailyActivityPerCategory(this.prisma, userId, date);
+    return getDailyActivityPerCategory(this.prisma, userId, filter);
   }
 }
 

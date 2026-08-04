@@ -19,7 +19,7 @@ export class SupervisorController {
 
   @Get('user-activity')
   async getUserActivity(@Query() query: SupervisorQueryDto) {
-    return this.service.getActivityData(query.user, query.date);
+    return this.service.getActivityData(query.user, query);
   }
 
   @Get('user-profile')
@@ -29,12 +29,12 @@ export class SupervisorController {
 
   @Get('user-daily-insight')
   async getUserDailyInsight(@Query() query: SupervisorQueryDto) {
-    return this.service.getDailyActivity(query.user, query.date);
+    return this.service.getDailyActivity(query.user, query);
   }
 
   @Get('user-daily-percategory')
   async getUserDailyActivityPerCategory(@Query() query: SupervisorQueryDto) {
-    return this.service.getDailyActivityPerCategory(query.user, query.date);
+    return this.service.getDailyActivityPerCategory(query.user, query);
   }
 
   @Post('trigger/session-summary')

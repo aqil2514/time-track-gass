@@ -5,19 +5,24 @@ import { useFetch } from "@/hooks/use-fetch";
 import { useQueryParams } from "@/hooks/use-query-params";
 import { buildUrl } from "@/utils/build-url";
 
-export function useSummaryMode() {
+function useDateParams() {
   const { get } = useQueryParams();
-
   const date = get("date");
+  const from = get("from");
+  const to = get("to");
   const user = get("user");
+  const hasDate = !!date || (!!from && !!to);
+  const dateParams = date ? { date } : { from, to };
+  return { user, hasDate, dateParams };
+}
 
-  const isCanFetch = !!date && !!user;
+export function useSummaryMode() {
+  const { user, hasDate, dateParams } = useDateParams();
+
+  const isCanFetch = hasDate && !!user;
 
   const url = isCanFetch
-    ? buildUrl("api/user-daily-insight", webUrl, {
-        date,
-        user,
-      })
+    ? buildUrl("api/user-daily-insight", webUrl, { ...dateParams, user })
     : null;
 
   const { data, isLoading } = useFetch<DailySummaryDb>(url, {
@@ -28,18 +33,12 @@ export function useSummaryMode() {
 }
 
 export function useDetailMode() {
-  const { get } = useQueryParams();
+  const { user, hasDate, dateParams } = useDateParams();
 
-  const date = get("date");
-  const user = get("user");
-
-  const isCanFetch = !!date && !!user;
+  const isCanFetch = hasDate && !!user;
 
   const url = isCanFetch
-    ? buildUrl("api/user-daily-percategory", webUrl, {
-        date,
-        user,
-      })
+    ? buildUrl("api/user-daily-percategory", webUrl, { ...dateParams, user })
     : null;
 
   const { data, isLoading } = useFetch<DailySummaryPerCategory[]>(url, {

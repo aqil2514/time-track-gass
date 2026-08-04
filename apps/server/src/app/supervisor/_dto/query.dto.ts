@@ -1,10 +1,8 @@
-import { IsDateString, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
+import { DateFilterDto } from 'src/shared/dto/date-filter.dto';
 
-export class SupervisorQueryDto {
+export class SupervisorQueryDto extends DateFilterDto {
   @IsString()
   @IsOptional()
   user?: string;
-
-  @IsDateString()
-  date: string;
 }

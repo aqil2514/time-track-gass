@@ -2,13 +2,14 @@
   "name": "time-track-gass",
   "private": true,
   "scripts": {
-    "dev:server": "npm --prefix apps/server run start:dev",
+    "dev:api": "npm --prefix apps/server run start:dev",
     "dev:web": "npm --prefix apps/web run dev",
     "dev:desktop": "npm --prefix apps/desktop run tauri dev",
     "build:server": "npm --prefix apps/server run build",
     "build:web": "npm --prefix apps/web run build",
     "build": "npm run build:server && npm run build:web",
     "prisma:studio":"cd apps/server && npx prisma studio",
-    "listen:ssh":"pwsh scripts/listen-ssh.ps1"
+    "listen:ssh":"pwsh scripts/listen-ssh.ps1",
+    "backup":"pwsh scripts/backup.ps1"
   }
 }
