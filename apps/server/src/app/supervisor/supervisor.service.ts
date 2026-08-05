@@ -20,12 +20,15 @@ export class SupervisorService {
     return getAllUserProfiles(this.prisma);
   }
 
-  async getActivityData(username: string, filter: DateFilterDto): Promise<ActivityData[]> {
+  async getActivityData(username: string, filter: DateFilterDto, page: number, limit: number) {
     const userId = await getUserIdByUsername(this.prisma, username);
-    const summariesData = await getSessionActivity(this.prisma, userId, filter);
-    const allRawIds = summariesData.flatMap((s) => s.raw_ids);
+    const paginated = await getSessionActivity(this.prisma, userId, filter, page, limit);
+    const allRawIds = paginated.data.flatMap((s) => s.raw_ids);
     const allReports = await getRawActivities(this.prisma, allRawIds);
-    return mapToActivityData(allReports, summariesData);
+    return {
+      ...paginated,
+      data: mapToActivityData(allReports, paginated.data),
+    };
   }
 
   async getDailyActivity(username: string, filter: DateFilterDto) {

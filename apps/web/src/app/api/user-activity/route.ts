@@ -8,10 +8,12 @@ export async function GET(req: NextRequest) {
   const from = searchParams.get("from");
   const to = searchParams.get("to");
   const user = searchParams.get("user");
+  const page = searchParams.get("page");
+  const limit = searchParams.get("limit");
 
   try {
     const { data } = await apiServer.get(`/supervisor/user-activity`, {
-      params: { date, from, to, user },
+      params: { date, from, to, user, page, limit },
     });
 
     return NextResponse.json(data);

@@ -91,7 +91,7 @@ function SessionItem({
 }
 
 export function TimelineItems() {
-  const { data, isLoading } = useDashboardContext();
+  const { data, isLoading, isLoadingMore, hasMore, loadMore } = useDashboardContext();
   const [accordionValue, setAccordionValue] = useState("");
 
   if (isLoading) return <LoadingSpinner />;
@@ -106,6 +106,20 @@ export function TimelineItems() {
   const isMultiDay =
     data.length > 1 &&
     !isSameDay(new Date(data[0].session_start), new Date(data[data.length - 1].session_start));
+
+  const loadMoreButton = hasMore && (
+    <div className="flex justify-center pt-4 pb-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-slate-400 hover:text-slate-200 hover:bg-slate-800 text-xs"
+        onClick={loadMore}
+        disabled={isLoadingMore}
+      >
+        {isLoadingMore ? "Memuat..." : "Muat lebih banyak"}
+      </Button>
+    </div>
+  );
 
   if (isMultiDay) {
     const groups = groupByDate(data);
@@ -142,6 +156,7 @@ export function TimelineItems() {
             </div>
           ))}
         </div>
+        {loadMoreButton}
       </ScrollArea>
     );
   }
@@ -167,6 +182,7 @@ export function TimelineItems() {
           ))}
         </Accordion>
       </div>
+      {loadMoreButton}
     </ScrollArea>
   );
 }

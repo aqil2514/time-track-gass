@@ -19,7 +19,9 @@ export class SupervisorController {
 
   @Get('user-activity')
   async getUserActivity(@Query() query: SupervisorQueryDto) {
-    return this.service.getActivityData(query.user, query);
+    const page = query.page ? parseInt(query.page, 10) : 1;
+    const limit = query.limit ? parseInt(query.limit, 10) : 20;
+    return this.service.getActivityData(query.user, query, page, limit);
   }
 
   @Get('user-profile')
