@@ -9,16 +9,20 @@ export interface WorkSessionDb {
   stop_mode: string;
 }
 
+export interface HourlyActivityBreakdown {
+  totalActivity: number;
+  totalMinutes: number;
+  unclassified: { count: number; minutes: number };
+  idle: { count: number; minutes: number };
+}
+
 export interface MatrixResponse {
   userName: string;
   userId: string;
   fullName: string;
   division: string;
   activity: number[];
-  newActivity?: {
-    totalActivity: number;
-    totalMinutes: number;
-  }[];
+  newActivity?: HourlyActivityBreakdown[];
   totalWeeklyActivity: number;
   workSession?: WorkSessionDb[];
   workAdjustment?: AdjustmentContent[];

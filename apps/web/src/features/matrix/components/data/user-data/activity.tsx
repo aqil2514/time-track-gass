@@ -112,11 +112,35 @@ export function MatrixDataUserActivity({ user, selectedDate }: Props) {
                 </div>
 
                 {/* Info Aktivitas */}
-                <div className="flex items-center gap-2">
-                  <div className="size-1.5 rounded-full bg-purple-500" />
-                  <span>
-                    {intensity.totalActivity} Laporan (~{minutes} Menit)
-                  </span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2 pb-1 border-b border-white/5">
+                    <div className="size-1.5 rounded-full bg-slate-400 shrink-0" />
+                    <span className="text-slate-300 font-semibold">
+                      {intensity.totalActivity + (intensity.unclassified?.count ?? 0) + (intensity.idle?.count ?? 0)} total laporan
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="size-1.5 rounded-full bg-purple-500 shrink-0" />
+                    <span className="text-slate-200">
+                      <span className="text-purple-400 font-semibold">{intensity.totalActivity}</span> valid (~{minutes} mnt)
+                    </span>
+                  </div>
+                  {intensity.unclassified?.count > 0 && (
+                    <div className="flex items-center gap-2">
+                      <div className="size-1.5 rounded-full bg-amber-500 shrink-0" />
+                      <span className="text-slate-400">
+                        <span className="text-amber-400 font-semibold">{intensity.unclassified.count}</span> unclassified (~{intensity.unclassified.minutes} mnt)
+                      </span>
+                    </div>
+                  )}
+                  {intensity.idle?.count > 0 && (
+                    <div className="flex items-center gap-2">
+                      <div className="size-1.5 rounded-full bg-slate-500 shrink-0" />
+                      <span className="text-slate-400">
+                        <span className="text-slate-300 font-semibold">{intensity.idle.count}</span> idle (~{intensity.idle.minutes} mnt)
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Work Session Events */}

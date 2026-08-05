@@ -13,8 +13,8 @@ Saat ini tooltip box matrix hanya menampilkan total laporan valid (idle & unclas
 ## Yang Perlu Dilakukan
 
 ### Backend
-- [ ] `getOneDayActivity.helper.ts` — hapus filter `NOT: { category: { in: ['unclassified', 'idle'] } }` atau buat query terpisah yang include semua kategori
-- [ ] `mapToMatrixData.helper.ts` — ubah struktur `newActivity` untuk include breakdown per kategori:
+- [x] `getOneDayActivity.helper.ts` — hapus filter `NOT: { category: { in: ['unclassified', 'idle'] } }` atau buat query terpisah yang include semua kategori
+- [x] `mapToMatrixData.helper.ts` — ubah struktur `newActivity` untuk include breakdown per kategori:
   ```ts
   newActivity: {
     totalActivity: number;   // hanya valid
@@ -25,9 +25,9 @@ Saat ini tooltip box matrix hanya menampilkan total laporan valid (idle & unclas
   ```
 
 ### Frontend
-- [ ] `matrix.types.ts` — update interface `MatrixResponse` sesuai struktur baru
-- [ ] `activity.tsx` — update tooltip section "Info Aktivitas" untuk tampilkan tiga baris breakdown
-- [ ] Pastikan intensity (warna box) tetap hanya dihitung dari aktivitas valid, bukan unclassified/idle
+- [x] `matrix.types.ts` — update interface `MatrixResponse` sesuai struktur baru
+- [x] `activity.tsx` — update tooltip section "Info Aktivitas" untuk tampilkan tiga baris breakdown
+- [x] Pastikan intensity (warna box) tetap hanya dihitung dari aktivitas valid, bukan unclassified/idle
 
 ## Referensi
 - Query saat ini: `apps/server/src/helpers/supervisor/tracker/matrix/getOneDayActivity.helper.ts`
