@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { S3Client } from '@aws-sdk/client-s3';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { getTrackerActivity } from 'src/helpers/supervisor/tracker/getTrackerActivity.helper';
@@ -10,6 +10,8 @@ import { getTrackerWeekly } from 'src/helpers/supervisor/tracker/matrix/getTrack
 import { getWorkSession } from 'src/helpers/supervisor/tracker/matrix/getWorkSession.helper';
 import { getWorkAdjustment } from 'src/helpers/supervisor/tracker/matrix/getWorkAdjustment.helper';
 import { mapToMatrixData } from 'src/helpers/supervisor/tracker/matrix/mapToMatrixData.helper';
+import { getDateRangeActivity } from 'src/helpers/supervisor/tracker/matrix/getDateRangeActivity.helper';
+import { mapToMultiDayMatrix } from 'src/helpers/supervisor/tracker/matrix/mapToMultiDayMatrix.helper';
 
 @Injectable()
 export class TrackerService {
@@ -44,5 +46,20 @@ export class TrackerService {
     const rawData = await getOneDayActivity(this.prisma, userIds, date);
     // Step 3: Map ke format matrix
     return mapToMatrixData(rawData, users, trackerWeekly, workSession, workAdjustment);
+  }
+
+  async getTrackerMatrixRange(from: string, to: string) {
+    const fromDate = new Date(from.slice(0, 10));
+    const toDate = new Date(to.slice(0, 10));
+    const diffDays = Math.round((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) throw new BadRequestException('Tanggal from tidak boleh lebih besar dari to');
+    if (diffDays > 365) throw new BadRequestException('Rentang maksimal adalah 365 hari');
+
+    const users = await getActiveUsers(this.prisma);
+    const userIds = users.map((u) => u.id);
+    const rawData = await getDateRangeActivity(this.prisma, userIds, from, to);
+
+    return mapToMultiDayMatrix(users, rawData);
   }
 }

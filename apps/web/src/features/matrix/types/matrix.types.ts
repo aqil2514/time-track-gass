@@ -23,3 +23,17 @@ export interface MatrixResponse {
   workSession?: WorkSessionDb[];
   workAdjustment?: AdjustmentContent[];
 }
+
+export interface MultiDayMatrixEntry {
+  date: string;
+  totalActivity: number;
+  totalMinutes: number;
+}
+
+export interface MultiDayMatrixResponse {
+  userId: string;
+  userName: string;
+  fullName: string;
+  division: string;
+  dailyActivity: MultiDayMatrixEntry[];
+}

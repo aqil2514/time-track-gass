@@ -21,6 +21,11 @@ export class TrackerController {
     return this.service.getTrackerMatrix(query.date);
   }
 
+  @Get('matrix/range')
+  async getTrackerMatrixRange(@Query() query: SupervisorQueryDto) {
+    return this.service.getTrackerMatrixRange(query.from, query.to);
+  }
+
   @Get('id/:id')
   async getTrackerById(@Param('id') id: string) {
     return this.service.getTrackerByActivityId(id);

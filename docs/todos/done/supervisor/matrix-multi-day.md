@@ -33,10 +33,10 @@ Matrix saat ini hanya support single date (grid 24 jam × user). Ingin ditambahk
 ## Yang Perlu Dilakukan
 
 ### Backend
-- [ ] Buat helper `getDateRangeActivity.helper.ts` — query `ai_screen_report` dari `from` ke `to`, agregat per user per hari (count + total minutes), exclude unclassified/idle
-- [ ] Buat helper `mapToMultiDayMatrix.helper.ts` — map hasil query ke struktur `dailyActivity[]`
-- [ ] Tambah endpoint baru di `tracker.controller.ts`: `GET /supervisor/tracker/matrix/range?from=...&to=...`
-- [ ] Tambah method di `tracker.service.ts` untuk handle endpoint baru
+- [x] Buat helper `getDateRangeActivity.helper.ts` — query `ai_screen_report` dari `from` ke `to`, agregat per user per hari (count + total minutes), exclude unclassified/idle
+- [x] Buat helper `mapToMultiDayMatrix.helper.ts` — map hasil query ke struktur `dailyActivity[]`
+- [x] Tambah endpoint baru di `tracker.controller.ts`: `GET /supervisor/tracker/matrix/range?from=...&to=...`
+- [x] Tambah method di `tracker.service.ts` untuk handle endpoint baru
 
 **Response structure multi-day (per user):**
 ```ts
@@ -54,13 +54,13 @@ Matrix saat ini hanya support single date (grid 24 jam × user). Ingin ditambahk
 ```
 
 ### Frontend
-- [ ] Buat API route baru `apps/web/src/app/api/user-activity-matrix-range/route.ts` — forward `from` & `to` ke BE
-- [ ] Tambah type `MatrixRangeResponse` di `matrix.types.ts`
-- [ ] Update `MatrixProvider` — detect mode: jika ada `from` & `to` → fetch endpoint range, jika ada `date` → fetch endpoint single
-- [ ] Buat komponen grid multi-day (kolom dinamis berdasarkan jumlah hari)
-- [ ] Tooltip cell dengan 2 deep link (Lihat Aktivitas, Lihat Matrix)
-- [ ] Filter UI — tambah opsi range date picker (sudah ada `DashboardDateFilter` yang support range)
-- [ ] Intensity warna tetap hanya dari aktivitas valid (bukan unclassified/idle)
+- [x] Buat API route baru `apps/web/src/app/api/user-activity-matrix-range/route.ts` — forward `from` & `to` ke BE
+- [x] Tambah type `MatrixRangeResponse` di `matrix.types.ts`
+- [x] Update `MatrixProvider` — detect mode: jika ada `from` & `to` → fetch endpoint range, jika ada `date` → fetch endpoint single
+- [x] Buat komponen grid multi-day (kolom dinamis berdasarkan jumlah hari)
+- [x] Tooltip cell dengan 2 deep link (Lihat Aktivitas, Lihat Matrix)
+- [x] Filter UI — tambah opsi range date picker (sudah ada `DashboardDateFilter` yang support range)
+- [x] Intensity warna tetap hanya dari aktivitas valid (bukan unclassified/idle)
 
 ## Referensi
 - Endpoint single: `GET /supervisor/tracker/matrix?date=...`
