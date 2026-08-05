@@ -1,10 +1,9 @@
 import { Expose, Transform } from 'class-transformer';
 import { IsEnum, IsOptional } from 'class-validator';
 import {
-  startOfWeek,
-  endOfWeek,
   startOfMonth,
   endOfMonth,
+  addDays,
   parseISO,
   format,
   startOfDay,
@@ -31,10 +30,7 @@ export class AttendanceLogsQueryDto {
   @IsOptional()
   @Transform(({ obj }) => {
     if (obj.mode === 'weekly' && obj.date) {
-      // parseISO dan startOfDay memastikan kita mulai dari jam 00:00:00
-      const current = startOfDay(toZonedTime(parseISO(obj.date), TIMEZONE));
-      const result = startOfWeek(current, { weekStartsOn: 1 });
-      return format(result, 'yyyy-MM-dd');
+      return obj.date.slice(0, 10);
     }
 
     if (obj.mode === 'monthly' && obj.month && obj.year) {
@@ -51,9 +47,7 @@ export class AttendanceLogsQueryDto {
   @IsOptional()
   @Transform(({ obj }) => {
     if (obj.mode === 'weekly' && obj.date) {
-      const current = startOfDay(toZonedTime(parseISO(obj.date), TIMEZONE));
-      const result = endOfWeek(current, { weekStartsOn: 1 });
-      return format(result, 'yyyy-MM-dd');
+      return format(addDays(parseISO(obj.date.slice(0, 10)), 6), 'yyyy-MM-dd');
     }
 
     if (obj.mode === 'monthly' && obj.month && obj.year) {
@@ -74,9 +68,8 @@ export class AttendanceLogsQueryDto {
     let endDate: Date;
 
     if (obj.mode === 'weekly' && obj.date) {
-      const current = startOfDay(toZonedTime(parseISO(obj.date), TIMEZONE));
-      startDate = startOfWeek(current, { weekStartsOn: 1 });
-      endDate = endOfWeek(current, { weekStartsOn: 1 });
+      startDate = parseISO(obj.date.slice(0, 10));
+      endDate = addDays(startDate, 6);
     } else if (obj.mode === 'monthly' && obj.month && obj.year) {
       startDate = new Date(parseInt(obj.year), parseInt(obj.month) - 1, 1);
       endDate = endOfMonth(startDate);

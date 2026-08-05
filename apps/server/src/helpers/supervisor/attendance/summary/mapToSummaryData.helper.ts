@@ -82,10 +82,14 @@ function mapUpdateStatus(
 
   summaryMap.forEach((item, userId) => {
     const config = configMap.get(userId);
-    if (!config) { item.status = 'Incomplete'; return; }
+    if (!config) { item.status = 'Incomplete'; item.targetMinutes = 0; item.diffMinutes = 0; item.isOngoing = false; return; }
 
     const targetInMinutes =
       (query.mode === 'weekly' ? config.min_hours_weekly : config.min_hours_monthly) * 60;
+
+    item.targetMinutes = targetInMinutes;
+    item.diffMinutes = item.totalWorkTime - targetInMinutes;
+    item.isOngoing = query.isIncludeToday;
 
     if (item.totalWorkTime >= targetInMinutes) {
       item.status = 'Complete';

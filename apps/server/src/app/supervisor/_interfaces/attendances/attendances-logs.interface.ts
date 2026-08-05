@@ -36,6 +36,9 @@ export interface AttendanceSummary {
   division: string;
   period: string;
   totalWorkTime: number;
+  targetMinutes: number;
+  diffMinutes: number;
+  isOngoing: boolean;
   status: 'Complete' | 'Incomplete' | 'Process';
   penalty: string;
 }

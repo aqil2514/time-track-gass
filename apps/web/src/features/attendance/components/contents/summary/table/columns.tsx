@@ -50,6 +50,22 @@ const columns: ColumnDef<AttendanceSummary>[] = [
     },
   },
   {
+    accessorKey: "diffMinutes",
+    header: "Selisih",
+    cell: ({ row }) => {
+      const { diffMinutes, isOngoing } = row.original;
+      if (isOngoing && diffMinutes < 0) {
+        return <div className="text-sm text-amber-400 font-medium italic">Sedang Berjalan</div>;
+      }
+      const isPositive = diffMinutes >= 0;
+      return (
+        <div className={cn("font-mono text-sm font-semibold", isPositive ? "text-emerald-400" : "text-red-400")}>
+          {isPositive ? "+" : "-"}{formatToTime(Math.abs(diffMinutes), "minutes")}
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
