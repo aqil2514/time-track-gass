@@ -16,3 +16,11 @@ export interface ErrorServerMapper<T extends FieldValues> {
 }
 
 export type BaseModalOpen = "detail" | "edit" | "delete" | "add" | null
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}

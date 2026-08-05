@@ -13,7 +13,9 @@ export class TrackerController {
 
   @Get()
   async getTrackerActivity(@Query() query: SupervisorQueryDto) {
-    return this.service.getTrackerActivityData(query.user, query.date);
+    const page = query.page ? parseInt(query.page, 10) : 1;
+    const limit = query.limit ? parseInt(query.limit, 10) : 50;
+    return this.service.getTrackerActivityData(query.user, query.date, page, limit, query.from, query.to);
   }
 
   @Get('matrix')

@@ -20,9 +20,8 @@ export class TrackerService {
     @Inject('AWS_S3_CLIENT') private readonly s3Client: S3Client,
   ) {}
 
-  async getTrackerActivityData(username: string, date: string) {
-    // Step 1: Ambil aktivitas tracker berdasarkan username dan tanggal
-    return getTrackerActivity(this.prisma, username, date);
+  async getTrackerActivityData(username: string, date: string | undefined, page: number, limit: number, from?: string, to?: string) {
+    return getTrackerActivity(this.prisma, username, date, page, limit, from, to);
   }
 
   async getTrackerByActivityId(activityId: string) {
