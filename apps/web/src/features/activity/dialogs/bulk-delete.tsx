@@ -25,7 +25,7 @@ export function BulkDeleteDialog() {
   const deletedData = useMemo<AIScreenReportDb[]>(() => {
     if (!items) return [];
 
-    const dbData = data.data;
+    const dbData = data.data.data;
     const deletedItems: AIScreenReportDb[] = [];
 
     for (const id of items) {
@@ -34,7 +34,7 @@ export function BulkDeleteDialog() {
     }
 
     return deletedItems;
-  }, [data.data, items]);
+  }, [data.data.data, items]);
 
   if (!items) return null;
 

@@ -38,7 +38,7 @@ export function BulkEditCategoryDialog() {
   const selectedData = useMemo<AIScreenReportDb[]>(() => {
     if (!items) return [];
 
-    const dbData = data.data;
+    const dbData = data.data.data;
     const result: AIScreenReportDb[] = [];
 
     for (const id of items) {
@@ -47,7 +47,7 @@ export function BulkEditCategoryDialog() {
     }
 
     return result;
-  }, [data.data, items]);
+  }, [data.data.data, items]);
 
   const categoryList = useMemo(() => {
     if (!selectedData[0]) return [];
