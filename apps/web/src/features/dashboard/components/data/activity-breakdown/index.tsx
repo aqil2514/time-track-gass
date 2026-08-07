@@ -38,8 +38,7 @@ export function ActivityBreakdown() {
       count,
       percentage: Math.round((count / total) * 100),
     }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 3); // Take top 3 categories
+    .sort((a, b) => b.count - a.count);
 
   return (
     <div className="space-y-5">
@@ -66,10 +65,6 @@ export function ActivityBreakdown() {
           </div>
         ))}
 
-        {/* Optional: Show message if less than 3 categories */}
-        {breakdown.length < 3 && (
-          <p className="text-slate-400 text-sm">No more activity categories</p>
-        )}
       </div>
     </div>
   );
