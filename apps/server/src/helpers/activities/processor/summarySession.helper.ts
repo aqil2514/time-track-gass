@@ -124,7 +124,7 @@ Expected format:
 
   const response = (await analyzer.callAnalyzerProvider({
     provider: 'gemini-ai',
-    model: 'gemini-3.1-flash-lite',
+    model: 'gemini-flash-latest',
     contents,
     config: {
       responseMimeType: 'application/json',
