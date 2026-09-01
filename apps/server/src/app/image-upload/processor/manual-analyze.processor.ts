@@ -15,7 +15,7 @@ import { validateDateTimeAgainstSlot } from 'src/helpers/image-upload/manual-ana
 import { cropTaskbar } from 'src/helpers/image-upload/manual-analyze-processor/crop-taskbar.helper';
 import { appendSlotInvalid, SlotInvalidStatus } from 'src/helpers/image-upload/manual-slot-status/slot-status-redis.helper';
 
-const models = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+const models = ['gemini-3.1-flash-lite', 'gemini-3-flash', 'gemini-3.1-pro'];
 
 interface ImageJobItem {
   s3Key: string;

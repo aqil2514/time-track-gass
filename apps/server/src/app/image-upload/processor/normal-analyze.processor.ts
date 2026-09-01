@@ -23,7 +23,7 @@ interface ProcessData {
   createdAt: string;
 }
 
-const models = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+const models = ['gemini-3.1-flash-lite', 'gemini-3-flash', 'gemini-3.1-pro'];
 
 @Processor(QUERY_NAME.NORMAL_ANALYZE)
 export class NormalAnalyzeProcessor extends WorkerHost {

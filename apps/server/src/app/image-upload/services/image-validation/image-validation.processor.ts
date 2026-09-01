@@ -49,7 +49,7 @@ export async function extractDateTime(
 ): Promise<AIResult> {
   const result = (await analyzerService.callAnalyzerProvider({
     provider: 'gemini-ai',
-    model: 'gemini-2.5-flash-lite',
+    model: 'gemini-3.1-flash-lite',
     contents: [
       {
         text: `Extract the date and time shown in this taskbar/screenshot image.
