@@ -87,7 +87,7 @@ export async function getDailyAiSummary(
   `;
 
   const res = await gemini.models.generateContent({
-    model: 'gemini-3-flash',
+    model: 'gemini-3.7-flash',
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     config: {
       responseMimeType: 'application/json',
