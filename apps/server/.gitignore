@@ -43,6 +43,7 @@ test/token-usage
 .env.test.local
 .env.production.local
 .env.local
+.env.proxy
 
 # temp directory
 .temp
