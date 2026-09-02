@@ -39,6 +39,7 @@ test/token-usage
 # dotenv environment variable files
 .env
 .env.development.local
+.env.vps
 .env.test.local
 .env.production.local
 .env.local
