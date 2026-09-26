@@ -5,6 +5,8 @@ export interface MultiDayMatrixEntry {
   date: string;
   totalActivity: number;
   totalMinutes: number;
+  unclassified: { count: number; minutes: number };
+  idle: { count: number; minutes: number };
 }
 
 export interface MultiDayMatrixResponse {
@@ -26,6 +28,8 @@ export function mapToMultiDayMatrix(
       date: r.date,
       totalActivity: r.total_activity,
       totalMinutes: r.total_minutes,
+      unclassified: { count: r.unclassified_count, minutes: r.unclassified_minutes },
+      idle: { count: r.idle_count, minutes: r.idle_minutes },
     }));
 
     return {

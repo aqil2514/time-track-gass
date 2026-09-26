@@ -8,6 +8,8 @@ import { useUsername } from "@/hooks/resources/use-username";
 import { eachDayOfInterval, format, parseISO } from "date-fns";
 import { id } from "date-fns/locale";
 import { MultiDayBox } from "./multi-day-box";
+import { MatrixLegend } from "../legend";
+import { formatToTime } from "@/utils/format-to-time";
 
 function getMonthLabels(dates: string[]): { label: string; span: number }[] {
   const labels: { label: string; span: number }[] = [];
@@ -100,8 +102,7 @@ export function MultiDayGrid() {
                       <p className="text-[10px] truncate">
                         <span className="text-emerald-400 font-semibold">{totalActivity}</span>
                         <span className="text-slate-600"> laporan · </span>
-                        <span className="text-sky-400 font-semibold">{totalMinutes}</span>
-                        <span className="text-slate-600"> mnt</span>
+                        <span className="text-sky-400 font-semibold">{formatToTime(totalMinutes, "minutes")}</span>
                       </p>
                     </div>
                   );
@@ -138,6 +139,8 @@ export function MultiDayGrid() {
                           date,
                           totalActivity: 0,
                           totalMinutes: 0,
+                          unclassified: { count: 0, minutes: 0 },
+                          idle: { count: 0, minutes: 0 },
                         };
                         return (
                           <div key={date} style={{ width: `${cellWidth}px`, flexShrink: 0 }}>
@@ -157,6 +160,8 @@ export function MultiDayGrid() {
           </div>
         </CardContent>
       </Card>
+
+      <MatrixLegend />
     </div>
   );
 }

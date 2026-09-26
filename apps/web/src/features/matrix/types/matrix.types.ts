@@ -32,6 +32,8 @@ export interface MultiDayMatrixEntry {
   date: string;
   totalActivity: number;
   totalMinutes: number;
+  unclassified: { count: number; minutes: number };
+  idle: { count: number; minutes: number };
 }
 
 export interface MultiDayMatrixResponse {

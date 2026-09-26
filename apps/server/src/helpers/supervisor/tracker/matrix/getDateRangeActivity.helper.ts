@@ -5,6 +5,10 @@ export interface DailyActivityRaw {
   date: string;
   total_activity: number;
   total_minutes: number;
+  unclassified_count: number;
+  unclassified_minutes: number;
+  idle_count: number;
+  idle_minutes: number;
 }
 
 export async function getDateRangeActivity(
@@ -17,20 +21,32 @@ export async function getDateRangeActivity(
   const toDate = new Date(`${to.slice(0, 10)}T23:59:59+07:00`);
 
   const rows = await prisma.$queryRaw<
-    { user_id: string; date: Date; total_activity: bigint; total_minutes: bigint }[]
+    {
+      user_id: string;
+      date: Date;
+      total_activity: bigint;
+      total_minutes: bigint;
+      unclassified_count: bigint;
+      unclassified_minutes: bigint;
+      idle_count: bigint;
+      idle_minutes: bigint;
+    }[]
   >`
     SELECT
       user_id,
       DATE(created_at AT TIME ZONE 'Asia/Jakarta') AS date,
-      COUNT(*)::bigint AS total_activity,
-      SUM(interval)::bigint AS total_minutes
+      COUNT(*) FILTER (WHERE category NOT IN ('unclassified', 'idle'))::bigint AS total_activity,
+      COALESCE(SUM(interval) FILTER (WHERE category NOT IN ('unclassified', 'idle')), 0)::bigint AS total_minutes,
+      COUNT(*) FILTER (WHERE category = 'unclassified')::bigint AS unclassified_count,
+      COALESCE(SUM(interval) FILTER (WHERE category = 'unclassified'), 0)::bigint AS unclassified_minutes,
+      COUNT(*) FILTER (WHERE category = 'idle')::bigint AS idle_count,
+      COALESCE(SUM(interval) FILTER (WHERE category = 'idle'), 0)::bigint AS idle_minutes
     FROM ai_screen_report
     WHERE
       user_id = ANY(${userIds}::uuid[])
       AND created_at >= ${fromDate}
       AND created_at <= ${toDate}
       AND deleted_at IS NULL
-      AND category NOT IN ('unclassified', 'idle')
     GROUP BY user_id, DATE(created_at AT TIME ZONE 'Asia/Jakarta')
     ORDER BY user_id, date ASC
   `;
@@ -40,5 +56,9 @@ export async function getDateRangeActivity(
     date: row.date.toISOString().slice(0, 10),
     total_activity: Number(row.total_activity),
     total_minutes: Number(row.total_minutes),
+    unclassified_count: Number(row.unclassified_count),
+    unclassified_minutes: Number(row.unclassified_minutes),
+    idle_count: Number(row.idle_count),
+    idle_minutes: Number(row.idle_minutes),
   }));
 }

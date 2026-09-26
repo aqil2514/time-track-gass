@@ -5,6 +5,7 @@ import { MultiDayMatrixEntry, MultiDayMatrixResponse } from "@/features/matrix/t
 import { format, parseISO } from "date-fns";
 import { id } from "date-fns/locale";
 import { useRouter } from "next/navigation";
+import { formatToTime } from "@/utils/format-to-time";
 
 interface Props {
   user: MultiDayMatrixResponse;
@@ -55,9 +56,35 @@ export function MultiDayBox({ user, entry, maxActivity }: Props) {
             <p className="text-slate-400 font-medium">{dateLabel}</p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="size-1.5 rounded-full bg-purple-500" />
-            <span>{entry.totalActivity} laporan · {entry.totalMinutes} menit</span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 pb-1 border-b border-white/5">
+              <div className="size-1.5 rounded-full bg-slate-400 shrink-0" />
+              <span className="text-slate-300 font-semibold">
+                {entry.totalActivity + entry.unclassified.count + entry.idle.count} total laporan
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="size-1.5 rounded-full bg-purple-500 shrink-0" />
+              <span className="text-slate-200">
+                <span className="text-purple-400 font-semibold">{entry.totalActivity}</span> valid ({formatToTime(entry.totalMinutes, "minutes")})
+              </span>
+            </div>
+            {entry.unclassified.count > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="size-1.5 rounded-full bg-amber-500 shrink-0" />
+                <span className="text-slate-400">
+                  <span className="text-amber-400 font-semibold">{entry.unclassified.count}</span> unclassified ({formatToTime(entry.unclassified.minutes, "minutes")})
+                </span>
+              </div>
+            )}
+            {entry.idle.count > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="size-1.5 rounded-full bg-slate-500 shrink-0" />
+                <span className="text-slate-400">
+                  <span className="text-slate-300 font-semibold">{entry.idle.count}</span> idle ({formatToTime(entry.idle.minutes, "minutes")})
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-1 pt-1 border-t border-white/5">
