@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   title: "Login",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function LoginPage() {
   const user = await getMe();
   if (user) redirect("dashboard");
