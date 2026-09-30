@@ -28,9 +28,11 @@ export async function getUserDailyActivity(
   userIds: string[],
 ): Promise<AIScreenReportDb[]> {
   const startOfDay = new Date();
+  startOfDay.setDate(startOfDay.getDate() - 1);
   startOfDay.setHours(0, 0, 0, 0);
 
   const endOfDay = new Date();
+  endOfDay.setDate(endOfDay.getDate() - 1);
   endOfDay.setHours(23, 59, 59, 999);
 
   const data = await prisma.ai_screen_report.findMany({
@@ -113,13 +115,15 @@ export async function getDailyAiSummary(
   });
 
   const content = JSON.parse(res.text);
-  const today = new Date().toISOString().split('T')[0];
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const dateKey = yesterday.toISOString().split('T')[0];
   const aiData = content.summaries || [];
 
   return aiData.map((item: any) => ({
     ...item,
     user_id: userId,
-    date: today,
+    date: dateKey,
     created_at: new Date(),
   }));
 }

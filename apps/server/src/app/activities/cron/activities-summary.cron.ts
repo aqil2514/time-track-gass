@@ -47,7 +47,7 @@ export class ActivitiesSummaryCronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_10PM, {
+  @Cron('0 3 * * *', {
     timeZone: 'Asia/Jakarta',
   })
   async createDailySummary() {
@@ -67,7 +67,7 @@ export class ActivitiesSummaryCronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_11PM, {
+  @Cron('0 3 * * *', {
     timeZone: 'Asia/Jakarta',
   })
   async createDailySummaryPerCategory() {

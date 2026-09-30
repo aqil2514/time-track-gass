@@ -16,6 +16,7 @@ export async function getSessionActivityByUserId(
   userIds: string[],
 ): Promise<SessionSummaryDb[]> {
   const start = new Date();
+  start.setDate(start.getDate() - 1);
   start.setHours(0, 0, 0, 0);
 
   const end = new Date(start);
@@ -140,9 +141,10 @@ export async function mapToDailySummaryDbInsert(
 ): Promise<DailySummaryDbInsert[]> {
   const userIds = Array.from(new Set(raw.map((r) => r.user_id)));
 
-  const now = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
   const startOfDayJakarta = formatInTimeZone(
-    now,
+    yesterday,
     'Asia/Jakarta',
     'yyyy-MM-dd 00:00:00XXX',
   );
