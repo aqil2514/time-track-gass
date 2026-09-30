@@ -32,7 +32,7 @@ export class DailySummaryCategoryProcessor extends WorkerHost {
       await job.updateProgress(100);
       return;
     }
-
+    // trigger ci/cd
     // Step 2: Cari tanggal-tanggal yang belum punya summary (termasuk
     // backfill kalau ada hari yang bolong karena error/downtime sebelumnya)
     const pendingDates = await getPendingCategoryDates(this.prisma, userId);
@@ -65,7 +65,9 @@ export class DailySummaryCategoryProcessor extends WorkerHost {
         results.push({ date: dateKey, summary });
       }
 
-      await job.updateProgress(Math.round(((i + 1) / pendingDates.length) * 100));
+      await job.updateProgress(
+        Math.round(((i + 1) / pendingDates.length) * 100),
+      );
     }
 
     return { results };
