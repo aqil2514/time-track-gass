@@ -11,21 +11,66 @@ interface AiDailySummaryResult {
   productivity_description: string;
 }
 
+const APP_TIMEZONE = 'Asia/Jakarta';
+
+function toDateKey(date: Date): string {
+  return date.toLocaleDateString('en-CA', { timeZone: APP_TIMEZONE });
+}
+
+/**
+ * Returns the list of calendar days (Asia/Jakarta, oldest first) that still
+ * need a daily-summary run for this user: every day after the last one
+ * already saved, up to (and including) yesterday. If nothing was ever
+ * saved, only yesterday is returned so we don't try to backfill forever.
+ * Capped at `maxBackfillDays` (most recent days kept) so a very old gap
+ * doesn't trigger an unbounded number of AI calls in one run.
+ */
+export async function getPendingSummaryDates(
+  prisma: PrismaService,
+  userId: string,
+  maxBackfillDays = 14,
+): Promise<string[]> {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayKey = toDateKey(yesterday);
+
+  const lastRow = await prisma.daily_summary.findFirst({
+    where: { user_id: userId },
+    orderBy: { date: 'desc' },
+    select: { date: true },
+  });
+
+  if (!lastRow?.date) return [yesterdayKey];
+
+  const lastKey = toDateKey(new Date(lastRow.date));
+  if (lastKey >= yesterdayKey) return [];
+
+  const pending: string[] = [];
+  const cursor = new Date(`${yesterdayKey}T00:00:00.000+07:00`);
+
+  while (true) {
+    const cursorKey = toDateKey(cursor);
+    if (cursorKey <= lastKey) break;
+
+    pending.unshift(cursorKey);
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return pending.slice(-maxBackfillDays);
+}
+
 export async function getSessionActivityByUserId(
   prisma: PrismaService,
   userIds: string[],
+  dateKey: string,
 ): Promise<SessionSummaryDb[]> {
-  const start = new Date();
-  start.setDate(start.getDate() - 1);
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date(start);
-  end.setDate(end.getDate() + 1);
+  const start = new Date(`${dateKey}T00:00:00.000+07:00`);
+  const end = new Date(`${dateKey}T23:59:59.999+07:00`);
 
   const data = await prisma.session_summary.findMany({
     where: {
       user_id: { in: userIds },
-      session_start: { gte: start, lt: end },
+      session_start: { gte: start, lte: end },
     },
     orderBy: { session_start: 'desc' },
   });
@@ -138,13 +183,12 @@ Expected JSON format:
 export async function mapToDailySummaryDbInsert(
   gemini: GoogleGenAI,
   raw: ActivityData[],
+  dateKey: string,
 ): Promise<DailySummaryDbInsert[]> {
   const userIds = Array.from(new Set(raw.map((r) => r.user_id)));
 
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
   const startOfDayJakarta = formatInTimeZone(
-    yesterday,
+    new Date(`${dateKey}T00:00:00.000+07:00`),
     'Asia/Jakarta',
     'yyyy-MM-dd 00:00:00XXX',
   );

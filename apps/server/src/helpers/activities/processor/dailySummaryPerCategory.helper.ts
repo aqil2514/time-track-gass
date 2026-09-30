@@ -3,6 +3,62 @@ import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-repo
 import { DailySummaryPerCategory } from 'src/app/activities/interface/daily_summary_per_category.interface';
 import { GoogleGenAI } from '@google/genai';
 
+const APP_TIMEZONE = 'Asia/Jakarta';
+
+function toDateKey(date: Date): string {
+  return date.toLocaleDateString('en-CA', { timeZone: APP_TIMEZONE });
+}
+
+function dayBoundsUtc(dateKey: string): { start: Date; end: Date } {
+  // dateKey is a calendar day in Asia/Jakarta (UTC+7). Build UTC instants
+  // for that day's 00:00:00.000-07:00 .. 23:59:59.999-07:00.
+  const start = new Date(`${dateKey}T00:00:00.000+07:00`);
+  const end = new Date(`${dateKey}T23:59:59.999+07:00`);
+  return { start, end };
+}
+
+/**
+ * Returns the list of calendar days (Asia/Jakarta, oldest first) that still
+ * need a daily-category-summary run for this user: every day after the last
+ * one already saved, up to (and including) yesterday. If nothing was ever
+ * saved, only yesterday is returned so we don't try to backfill forever.
+ * The result is capped at `maxBackfillDays` (most recent days kept) so a
+ * very old gap doesn't trigger an unbounded number of AI calls in one run.
+ */
+export async function getPendingCategoryDates(
+  prisma: PrismaService,
+  userId: string,
+  maxBackfillDays = 14,
+): Promise<string[]> {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayKey = toDateKey(yesterday);
+
+  const lastRow = await prisma.daily_summary_per_categories.findFirst({
+    where: { user_id: userId },
+    orderBy: { date: 'desc' },
+    select: { date: true },
+  });
+
+  if (!lastRow?.date) return [yesterdayKey];
+
+  const lastKey = toDateKey(new Date(lastRow.date));
+  if (lastKey >= yesterdayKey) return [];
+
+  const pending: string[] = [];
+  const cursor = new Date(`${yesterdayKey}T00:00:00.000+07:00`);
+
+  while (true) {
+    const cursorKey = toDateKey(cursor);
+    if (cursorKey <= lastKey) break;
+
+    pending.unshift(cursorKey);
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return pending.slice(-maxBackfillDays);
+}
+
 export async function getCategoryByUser(
   prisma: PrismaService,
   userId: string,
@@ -26,14 +82,9 @@ export async function getCategoryByUser(
 export async function getUserDailyActivity(
   prisma: PrismaService,
   userIds: string[],
+  dateKey: string,
 ): Promise<AIScreenReportDb[]> {
-  const startOfDay = new Date();
-  startOfDay.setDate(startOfDay.getDate() - 1);
-  startOfDay.setHours(0, 0, 0, 0);
-
-  const endOfDay = new Date();
-  endOfDay.setDate(endOfDay.getDate() - 1);
-  endOfDay.setHours(23, 59, 59, 999);
+  const { start: startOfDay, end: endOfDay } = dayBoundsUtc(dateKey);
 
   const data = await prisma.ai_screen_report.findMany({
     where: {
@@ -63,6 +114,7 @@ export async function getDailyAiSummary(
   reports: AIScreenReportDb[],
   categories: string[],
   userId: string,
+  dateKey: string,
 ): Promise<DailySummaryPerCategory[]> {
   const simplifiedReports = reports.map((r) => ({
     activity: r.summary,
@@ -115,9 +167,6 @@ export async function getDailyAiSummary(
   });
 
   const content = JSON.parse(res.text);
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const dateKey = yesterday.toISOString().split('T')[0];
   const aiData = content.summaries || [];
 
   return aiData.map((item: any) => ({
@@ -132,13 +181,28 @@ export async function saveDailySummaryPerCategory(
   prisma: PrismaService,
   payloads: DailySummaryPerCategory[],
 ): Promise<void> {
-  await prisma.daily_summary_per_categories.createMany({
-    data: payloads.map((p) => ({
-      user_id: p.user_id,
-      category: p.category,
-      duration: p.duration,
-      summary: p.summary,
-      date: new Date(p.date),
-    })),
-  });
+  await Promise.all(
+    payloads.map((p) =>
+      prisma.daily_summary_per_categories.upsert({
+        where: {
+          user_id_date_category: {
+            user_id: p.user_id,
+            date: new Date(p.date),
+            category: p.category,
+          },
+        },
+        update: {
+          duration: p.duration,
+          summary: p.summary,
+        },
+        create: {
+          user_id: p.user_id,
+          category: p.category,
+          duration: p.duration,
+          summary: p.summary,
+          date: new Date(p.date),
+        },
+      }),
+    ),
+  );
 }

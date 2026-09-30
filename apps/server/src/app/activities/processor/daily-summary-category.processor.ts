@@ -5,6 +5,7 @@ import { PrismaService } from 'src/services/prisma/prisma.service';
 import { GoogleGenAI } from '@google/genai';
 import { QUERY_NAME } from 'src/constants/queue.constant';
 import {
+  getPendingCategoryDates,
   getCategoryByUser,
   getUserDailyActivity,
   getDailyAiSummary,
@@ -25,29 +26,49 @@ export class DailySummaryCategoryProcessor extends WorkerHost {
   async process(job: Job) {
     const { userId } = job.data;
 
-    // Step 1: Ambil aktivitas dan kategori relevan
-    const [relevantCategories, userActivities] = await Promise.all([
-      getCategoryByUser(this.prisma, userId),
-      getUserDailyActivity(this.prisma, [userId]),
-    ]);
-
-    if (!relevantCategories || userActivities.length === 0) {
+    // Step 1: Cari kategori yang relevan untuk user ini
+    const relevantCategories = await getCategoryByUser(this.prisma, userId);
+    if (!relevantCategories) {
       await job.updateProgress(100);
       return;
     }
 
-    // Step 2: Generate AI summary
-    const summary = await getDailyAiSummary(
-      this.gemini,
-      userActivities,
-      relevantCategories,
-      userId,
-    );
+    // Step 2: Cari tanggal-tanggal yang belum punya summary (termasuk
+    // backfill kalau ada hari yang bolong karena error/downtime sebelumnya)
+    const pendingDates = await getPendingCategoryDates(this.prisma, userId);
+    if (pendingDates.length === 0) {
+      await job.updateProgress(100);
+      return;
+    }
 
-    // Step 3: Simpan ke DB
-    await saveDailySummaryPerCategory(this.prisma, summary);
+    const results = [];
 
-    return { summary };
+    for (let i = 0; i < pendingDates.length; i++) {
+      const dateKey = pendingDates[i];
+
+      const userActivities = await getUserDailyActivity(
+        this.prisma,
+        [userId],
+        dateKey,
+      );
+
+      if (userActivities.length > 0) {
+        const summary = await getDailyAiSummary(
+          this.gemini,
+          userActivities,
+          relevantCategories,
+          userId,
+          dateKey,
+        );
+
+        await saveDailySummaryPerCategory(this.prisma, summary);
+        results.push({ date: dateKey, summary });
+      }
+
+      await job.updateProgress(Math.round(((i + 1) / pendingDates.length) * 100));
+    }
+
+    return { results };
   }
 
   @OnWorkerEvent('completed')
