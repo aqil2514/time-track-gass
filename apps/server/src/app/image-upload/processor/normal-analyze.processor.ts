@@ -12,8 +12,9 @@ import {
   computeImageHash,
   detectIdle,
 } from 'src/helpers/image-upload/normal-analyze-processor/detect-idle.helper';
-import { analyzeImage } from 'src/helpers/image-upload/normal-analyze-processor/gemini-analyze.helper';
+import { analyzeImageViaGateway } from 'src/helpers/image-upload/normal-analyze-processor/gemini-analyze.helper';
 import { PrismaService } from 'src/services/prisma/prisma.service';
+import { NineRouterService } from 'src/services/analyzer/services/nine-router/nine-router.service';
 
 interface ProcessData {
   userId: string;
@@ -31,6 +32,7 @@ export class NormalAnalyzeProcessor extends WorkerHost {
     private readonly prisma: PrismaService,
     @Inject('GEMINI_AI')
     private readonly gemini: GoogleGenAI,
+    private readonly nineRouter: NineRouterService,
   ) {
     super();
   }
@@ -68,8 +70,14 @@ export class NormalAnalyzeProcessor extends WorkerHost {
     );
 
     try {
-      // Step 4: Analisis gambar dengan Gemini
-      const res = await analyzeImage(this.gemini, model, prompt, imageUrl);
+      // Step 4: Analisis gambar via 9Router, fallback ke Gemini langsung bila gagal
+      const res = await analyzeImageViaGateway(
+        this.nineRouter,
+        this.gemini,
+        model,
+        prompt,
+        imageUrl,
+      );
       const analyzedData = JSON.parse(res.text);
 
       this.logger.log(

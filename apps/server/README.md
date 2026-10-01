@@ -76,7 +76,7 @@ Env berikut dipakai langsung oleh kode saat ini:
 | `S3_ACCESS_KEY_ID` | Access key object storage |
 | `S3_ACCES_SECRET_KEY` | Secret key object storage |
 | `GEMINI_API_KEY` | API key Gemini |
-| `Z_AI_API_KEY` | API key provider Zhipu/Z AI |
+| `NINEROUTER_API_KEY` | API key 9Router (proxy AI gateway, `https://9router.gass.web.id/v1`) — dipakai sebagai primary provider dengan fallback ke Gemini langsung bila gagal |
 | `SERVICE_KONEKWA_ENDPOINT` | Endpoint service reminder/message |
 | `SERVICE_KONEKWA_API_KEY` | API key service reminder/message |
 | `SERVICE_KONEKWA_SESSION_ID` | Session identifier service reminder/message |
