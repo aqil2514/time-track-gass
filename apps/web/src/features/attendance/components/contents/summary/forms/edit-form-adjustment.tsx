@@ -50,7 +50,7 @@ export function EditAdjustmentField({ form, existingImageUrl, onExistingImageRem
     const selected = data.find((d) => String(d.id) === String(selectedId));
 
     if (selected) {
-      form.setValue(`added_minutes`, selected.added_minutes);
+      form.setValue(`added_minutes`, Number(selected.added_minutes));
       form.setValue(`adjusment_name`, "");
     } else if (isCreateNewId) {
     }

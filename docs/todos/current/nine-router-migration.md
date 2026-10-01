@@ -76,7 +76,9 @@ Memudahkan `grep PROVIDER` di log untuk menghitung rasio sukses 9Router vs freku
   - `apps/server/src/helpers/image-upload/normal-analyze-processor/gemini-analyze.helper.ts` — tambah fungsi `analyzeImageViaGateway(nineRouter, gemini, model, prompt, imageUrl)`. Fungsi lama `analyzeImage` (native Gemini) dipertahankan sebagai fallback internal. Logic fetch+base64 image diekstrak ke helper lokal `fetchImageAsBase64` (dipakai bersama kedua jalur).
   - `apps/server/src/app/image-upload/processor/normal-analyze.processor.ts` — inject `NineRouterService`, ganti panggilan `analyzeImage(...)` → `analyzeImageViaGateway(...)`.
 - **Logging**: sudah ditambahkan sesuai pola di atas (sukses 9Router, gagal+fallback, sukses fallback).
-- **Status verifikasi**: ⏳ menunggu user coba di traffic nyata (upload screenshot → cek log) sebelum lanjut ke titik berikutnya.
+- **Status verifikasi**: ✅ **Terverifikasi sukses di traffic nyata** (2026-10-01, 08:32 WIB). Log menunjukkan `[PROVIDER=9ROUTER] model=ag/gemini-3.6-flash-low sukses` tanpa fallback — request langsung berhasil lewat 9Router, data ter-parse dan tersimpan ke DB normal, job completed.
+- **Observasi latensi**: ⚠️ Dari job mulai pakai model terpilih (08:32:07) sampai 9Router sukses (08:32:32) — **sekitar 25 detik** untuk satu vision call. Ini perlu dipantau lebih lanjut (bandingkan dengan latensi Gemini native langsung, dan cek apakah konsisten di request berikutnya) sebelum rollout ke titik lain, terutama titik yang sensitif ke waktu respons seperti Manual Analyze (pernah ada masalah timeout serial sebelumnya — lihat `docs/todos/done/features/manual-upload-async-validation.md`).
+- **Keputusan user**: pilot dibiarkan berjalan dulu di kondisi ini (hanya Normal Analyze) — **migrasi ke titik lain (2-7) ditahan sementara**, belum dilanjutkan.
 
 ### 2. Manual Analyze (`analyze-manual-image.helper.ts`) — ⬜ Belum dikerjakan
 
@@ -114,4 +116,4 @@ Sebagai bagian dari housekeeping sebelum migrasi ini dimulai, jalur **Zhipu AI/G
 
 ## Status
 
-🔄 **Sedang berjalan** — 1 dari 7 titik selesai (Normal Analyze, pilot). Menunggu verifikasi hasil pilot dari user sebelum lanjut ke titik berikutnya.
+⏸️ **Ditahan (paused)** — 1 dari 7 titik selesai & terverifikasi sukses (Normal Analyze, pilot). Atas keputusan user, migrasi ke 6 titik lainnya **belum dilanjutkan** — dibiarkan dulu di kondisi ini. Lanjutkan ke bagian "Progres per Titik" di atas saat user minta lanjut.

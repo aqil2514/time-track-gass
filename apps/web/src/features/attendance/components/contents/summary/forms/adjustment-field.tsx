@@ -144,7 +144,10 @@ const IDSelect: React.FC<{
     const selected = data.find((d) => String(d.id) === String(selectedId));
 
     if (selected) {
-      setValue(`adjustment.${index}.added_minutes`, selected.added_minutes);
+      setValue(
+        `adjustment.${index}.added_minutes`,
+        Number(selected.added_minutes),
+      );
       setValue(`adjustment.${index}.adjusment_name`, "");
     } else if (isCreateNewId) {
     }
