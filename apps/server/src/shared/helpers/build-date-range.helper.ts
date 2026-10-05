@@ -6,8 +6,12 @@ export interface DateRange {
 }
 
 // Keep in sync with APP_TIMEZONE in dailySummary.helper.ts / dailySummaryPerCategory.helper.ts —
-// daily_summary(_per_categories) rows are keyed by Asia/Jakarta calendar days, so reads must use
-// the same timezone when computing day boundaries, not the host process's local timezone.
+// daily_summary(_per_categories).date is a plain SQL `date` column. Prisma writes it from a
+// date-only string (e.g. "2026-10-03"), which JS parses as UTC midnight, and Postgres casts the
+// column back to timestamptz using UTC (the DB session timezone) when comparing — not the app's
+// Asia/Jakarta offset. So day boundaries for querying it must also be plain UTC midnight-to-
+// midnight for that same calendar-day key, not a +07:00-shifted range (that overlaps two UTC
+// calendar days and silently pulls in the adjacent day's rows).
 const APP_TIMEZONE = 'Asia/Jakarta';
 
 function toDateKey(date: Date): string {
@@ -16,8 +20,8 @@ function toDateKey(date: Date): string {
 
 function dayBoundsUtc(dateKey: string): DateRange {
   return {
-    start: new Date(`${dateKey}T00:00:00.000+07:00`),
-    end: new Date(`${dateKey}T23:59:59.999+07:00`),
+    start: new Date(`${dateKey}T00:00:00.000Z`),
+    end: new Date(`${dateKey}T23:59:59.999Z`),
   };
 }
 
