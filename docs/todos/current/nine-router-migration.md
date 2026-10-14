@@ -1,5 +1,23 @@
 # Migrasi LLM Call Sites ke 9Router (dengan Fallback Gemini)
 
+## Status & TODO saat ini (ringkas)
+
+⏸️ Ditahan (paused) atas keputusan user — lihat bagian "Status" di akhir
+dan "Progres per Titik" di bawah untuk detail tiap item.
+
+- [x] `NineRouterService` + interface dibuat, didaftarkan global via `AnalyzerModule`.
+- [x] Pola fallback (9Router → Gemini native) + pola logging `[PROVIDER=...]` ditetapkan.
+- [x] Titik 1 — Normal Analyze: migrasi selesai & terverifikasi sukses di traffic nyata.
+- [ ] Observasi latensi 9Router (~25 detik sekali vision call) — belum dibandingkan dengan latensi Gemini native, belum dicek konsistensinya di request berikutnya.
+- [ ] Titik 2 — Manual Analyze (`analyze-manual-image.helper.ts`).
+- [ ] Titik 3 — Extract Datetime (`extract-datetime.helper.ts`).
+- [ ] Titik 4 — Daily Summary (`dailySummary.helper.ts`) — butuh method text-only baru di `NineRouterService`.
+- [ ] Titik 5 — Daily Summary per Category (`dailySummaryPerCategory.helper.ts`) — butuh method text-only.
+- [ ] Titik 6 — Summary Session (`summarySession.helper.ts`), via `AnalyzerService`.
+- [ ] Titik 7 — Image Validation (`image-validation.processor.ts`), via `AnalyzerService`.
+- [ ] Keputusan desain method text-only di `NineRouterService` (generic `chatCompletion` vs method terpisah).
+- [ ] Keputusan apakah migrasi ke titik 6 & 7 jadi momentum konsolidasi 4 titik yang masih inject `GEMINI_AI` langsung ke satu orchestrator.
+
 ## Latar Belakang
 
 User diminta menggunakan [9Router](https://9router.com/) — AI gateway open source (OpenAI-compatible endpoint, 60+ provider, smart fallback) — sebagai proxy untuk panggilan LLM di project ini. Endpoint yang diberikan: `https://9router.gass.web.id/v1`.

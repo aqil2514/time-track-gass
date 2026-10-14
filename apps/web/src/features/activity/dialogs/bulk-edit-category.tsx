@@ -69,7 +69,7 @@ export function BulkEditCategoryDialog() {
 
     const merged = [...new Set([...generalCategories, ...divisionCategories])];
 
-    return ["unclassified", ...merged];
+    return ["unclassified", "idle", ...merged];
   }, [divisionData, userData, selectedData]);
 
   if (!items) return null;
