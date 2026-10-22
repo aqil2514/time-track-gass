@@ -1,5 +1,6 @@
 import { GenerateContentParameters, GoogleGenAI } from '@google/genai';
 import { Logger } from '@nestjs/common';
+import { AxiosError } from 'axios';
 import { NineRouterService } from 'src/services/analyzer/services/nine-router/nine-router.service';
 
 const logger = new Logger('GeminiAnalyzeHelper');
@@ -100,9 +101,14 @@ export async function analyzeImageViaGateway(
 
     return result;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const axiosError = error as AxiosError;
+    const detail = axiosError?.response?.data
+      ? JSON.stringify(axiosError.response.data)
+      : error instanceof Error
+        ? error.message
+        : String(error);
     logger.warn(
-      `[PROVIDER=9ROUTER] model=${NINE_ROUTER_MODEL} gagal, fallback ke Gemini langsung. Alasan: ${message}`,
+      `[PROVIDER=9ROUTER] model=${NINE_ROUTER_MODEL} gagal, fallback ke Gemini langsung. Alasan: ${detail}`,
     );
 
     const content: GenerateContentParameters['contents'] = [
