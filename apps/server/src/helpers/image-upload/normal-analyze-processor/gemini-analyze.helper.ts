@@ -5,7 +5,7 @@ import { NineRouterService } from 'src/services/analyzer/services/nine-router/ni
 
 const logger = new Logger('GeminiAnalyzeHelper');
 
-const NINE_ROUTER_MODEL = 'ag/gemini-3.6-flash-low';
+const NINE_ROUTER_MODEL = 'ag/gemini-3-flash';
 
 const jsonSchema = {
   type: 'object',

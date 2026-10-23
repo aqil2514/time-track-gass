@@ -23,6 +23,7 @@ export class NineRouterService {
       this.endpoint,
       {
         model,
+        stream: false,
         messages: [
           {
             role: 'user',
