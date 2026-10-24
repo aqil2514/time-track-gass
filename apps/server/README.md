@@ -75,8 +75,7 @@ Env berikut dipakai langsung oleh kode saat ini:
 | `S3_ENDPOINT` | Endpoint object storage |
 | `S3_ACCESS_KEY_ID` | Access key object storage |
 | `S3_ACCES_SECRET_KEY` | Secret key object storage |
-| `GEMINI_API_KEY` | API key Gemini |
-| `NINEROUTER_API_KEY` | API key 9Router (proxy AI gateway, `https://9router.gass.web.id/v1`) — dipakai sebagai primary provider dengan fallback ke Gemini langsung bila gagal |
+| `NINEROUTER_API_KEY` | API key 9Router (proxy AI gateway, `https://9router.gass.web.id/v1`) — satu-satunya provider AI yang dipakai di seluruh codebase |
 | `SERVICE_KONEKWA_ENDPOINT` | Endpoint service reminder/message |
 | `SERVICE_KONEKWA_API_KEY` | API key service reminder/message |
 | `SERVICE_KONEKWA_SESSION_ID` | Session identifier service reminder/message |
@@ -128,8 +127,7 @@ Relevant files:
 
 Relevant files:
 - [server/src/app/image-upload/](src/app/image-upload/)
-- [server/src/services/ai-gemini/](src/services/ai-gemini/)
-- [server/src/services/ai-z/](src/services/ai-z/)
+- [server/src/services/nine-router/](src/services/nine-router/)
 - [server/src/services/aws-s3/](src/services/aws-s3/)
 
 ## Important paths

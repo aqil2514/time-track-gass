@@ -1,5 +1,5 @@
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { GoogleGenAI } from '@google/genai';
+import { NineRouterService } from 'src/services/nine-router/nine-router.service';
 import { formatInTimeZone } from 'date-fns-tz';
 import { SessionSummaryDb } from 'src/app/activities/interface/session_summary.interface';
 import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
@@ -12,6 +12,7 @@ interface AiDailySummaryResult {
 }
 
 const APP_TIMEZONE = 'Asia/Jakarta';
+const NINE_ROUTER_MODEL = 'ag/gemini-3-flash';
 
 function toDateKey(date: Date): string {
   return date.toLocaleDateString('en-CA', { timeZone: APP_TIMEZONE });
@@ -126,7 +127,7 @@ export function mapToActivityData(
 }
 
 async function analyzeSummaryByAi(
-  gemini: GoogleGenAI,
+  nineRouter: NineRouterService,
   sessionActivities: ActivityData[],
 ): Promise<AiDailySummaryResult> {
   const summaries = sessionActivities.map(
@@ -160,20 +161,17 @@ Expected JSON format:
 }
   `;
 
-  const res = await gemini.models.generateContent({
-    model: 'gemini-flash-latest',
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    config: {
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: 'object',
-        properties: {
-          summary: { type: 'string' },
-          highlights: { type: 'array', items: { type: 'string' } },
-          productivity_description: { type: 'string' },
-        },
-        required: ['summary', 'highlights', 'productivity_description'],
+  const res = await nineRouter.chatCompletion({
+    model: NINE_ROUTER_MODEL,
+    prompt,
+    jsonSchema: {
+      type: 'object',
+      properties: {
+        summary: { type: 'string' },
+        highlights: { type: 'array', items: { type: 'string' } },
+        productivity_description: { type: 'string' },
       },
+      required: ['summary', 'highlights', 'productivity_description'],
     },
   });
 
@@ -181,7 +179,7 @@ Expected JSON format:
 }
 
 export async function mapToDailySummaryDbInsert(
-  gemini: GoogleGenAI,
+  nineRouter: NineRouterService,
   raw: ActivityData[],
   dateKey: string,
 ): Promise<DailySummaryDbInsert[]> {
@@ -206,7 +204,7 @@ export async function mapToDailySummaryDbInsert(
         if (!selectedData.length) return null;
 
         const { highlights, productivity_description, summary } =
-          await analyzeSummaryByAi(gemini, selectedData);
+          await analyzeSummaryByAi(nineRouter, selectedData);
 
         return {
           date: startOfDayJakarta,

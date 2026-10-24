@@ -1,6 +1,22 @@
-import { GenerateContentResponse } from '@google/genai';
 import sharp from 'sharp';
-import { AnalyzerService } from 'src/services/analyzer/services/analyzer.service';
+import { NineRouterService } from 'src/services/nine-router/nine-router.service';
+
+const NINE_ROUTER_MODEL = 'ag/gemini-3-flash';
+
+const jsonSchema = {
+  type: 'object',
+  properties: {
+    date: {
+      type: 'string',
+      description: 'date shown in the taskbar/screenshot image, format YYYY-MM-DD, empty string if not found',
+    },
+    time: {
+      type: 'string',
+      description: 'time shown in the taskbar/screenshot image, format HH:mm, empty string if not found',
+    },
+  },
+  required: ['date', 'time'],
+};
 
 export interface AIResult {
   date: string | null;
@@ -45,31 +61,18 @@ export async function adjustImage(file: Express.Multer.File, os: string) {
 
 export async function extractDateTime(
   image: Buffer<ArrayBufferLike>,
-  analyzerService: AnalyzerService,
+  nineRouter: NineRouterService,
 ): Promise<AIResult> {
-  const result = (await analyzerService.callAnalyzerProvider({
-    provider: 'gemini-ai',
-    model: 'gemini-flash-latest',
-    contents: [
-      {
-        text: `Extract the date and time shown in this taskbar/screenshot image.
-Return ONLY a raw JSON object, no markdown, no explanation:
-{"date": "YYYY-MM-DD", "time": "HH:mm"}
-If date or time not found, use null for that field.`,
-      },
-      {
-        inlineData: {
-          mimeType: 'image/png',
-          data: image.toString('base64'),
-        },
-      },
-    ],
-  })) as GenerateContentResponse;
-
   try {
-    const text = result.text;
-    const clean = text.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean);
+    const result = await nineRouter.analyzeImage({
+      model: NINE_ROUTER_MODEL,
+      prompt: 'Extract the date and time shown in this taskbar/screenshot image. If date or time not found, use an empty string for that field.',
+      imageBase64: image.toString('base64'),
+      mimeType: 'image/png',
+      jsonSchema,
+    });
+
+    return JSON.parse(result.text);
   } catch {
     return { date: null, time: null };
   }

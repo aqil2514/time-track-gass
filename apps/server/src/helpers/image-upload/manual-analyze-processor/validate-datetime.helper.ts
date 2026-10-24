@@ -14,7 +14,7 @@ export function validateDateTimeAgainstSlot(
   detectedDate: Date,
   expectedDate: string,
   slotId: number,
-  source: 'gemini' | 'filename' = 'gemini',
+  source: '9router' | 'filename' = '9router',
 ): DateTimeValidationResult {
   const localDetected = toZonedTime(detectedDate, TIMEZONE);
   const detectedDateString = format(localDetected, 'yyyy-MM-dd');

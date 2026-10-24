@@ -1,4 +1,6 @@
-import { GenerateContentParameters, GoogleGenAI } from '@google/genai';
+import { NineRouterService } from 'src/services/nine-router/nine-router.service';
+
+const NINE_ROUTER_MODEL = 'ag/gemini-3-flash';
 
 const jsonSchema = {
   type: 'object',
@@ -24,28 +26,16 @@ const jsonSchema = {
 };
 
 export async function analyzeManualImage(
-  gemini: GoogleGenAI,
-  model: string,
+  nineRouter: NineRouterService,
   prompt: string,
   base64Data: string,
   mimeType: string,
-) {
-  const content: GenerateContentParameters['contents'] = [
-    {
-      role: 'user',
-      parts: [
-        { text: prompt },
-        { inlineData: { mimeType, data: base64Data } },
-      ],
-    },
-  ];
-
-  return gemini.models.generateContent({
-    model,
-    contents: content,
-    config: {
-      responseMimeType: 'application/json',
-      responseJsonSchema: jsonSchema,
-    },
+): Promise<{ text: string }> {
+  return nineRouter.analyzeImage({
+    model: NINE_ROUTER_MODEL,
+    prompt,
+    imageBase64: base64Data,
+    mimeType,
+    jsonSchema,
   });
 }

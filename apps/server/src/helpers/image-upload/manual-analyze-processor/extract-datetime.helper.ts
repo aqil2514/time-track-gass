@@ -1,28 +1,44 @@
-import { GoogleGenAI } from '@google/genai';
 import { fromZonedTime } from 'date-fns-tz';
 import { Logger } from '@nestjs/common';
 import { TIMEZONE } from 'src/constants/timezone';
+import { NineRouterService } from 'src/services/nine-router/nine-router.service';
 
 const logger = new Logger('extractDateTimeFromImage');
 
+const NINE_ROUTER_MODEL = 'ag/gemini-3-flash';
+
+const jsonSchema = {
+  type: 'object',
+  properties: {
+    date: {
+      type: 'string',
+      description: 'system clock date in the taskbar, format YYYY-MM-DD, empty string if not visible',
+    },
+    time: {
+      type: 'string',
+      description: 'system clock time in the taskbar, format HH:mm, empty string if not visible',
+    },
+  },
+  required: ['date', 'time'],
+};
+
 export interface ExtractDateTimeResult {
   date: Date;
-  source: 'gemini' | 'filename';
+  source: '9router' | 'filename';
 }
 
 export async function extractDateTimeFromImage(
-  gemini: GoogleGenAI,
-  model: string,
+  nineRouter: NineRouterService,
   base64Data: string,
   mimeType: string,
   originalFilename?: string,
 ): Promise<ExtractDateTimeResult | null> {
-  const fromGemini = await tryGemini(gemini, model, base64Data, mimeType);
-  if (fromGemini) {
-    logger.log(`[gemini] datetime extracted: ${fromGemini.toISOString()}`);
-    return { date: fromGemini, source: 'gemini' };
+  const fromNineRouter = await tryNineRouter(nineRouter, base64Data, mimeType);
+  if (fromNineRouter) {
+    logger.log(`[9router] datetime extracted: ${fromNineRouter.toISOString()}`);
+    return { date: fromNineRouter, source: '9router' };
   }
-  logger.warn(`[gemini] gagal extract datetime, fallback ke filename: "${originalFilename}"`);
+  logger.warn(`[9router] gagal extract datetime, fallback ke filename: "${originalFilename}"`);
 
   if (originalFilename) {
     const fromFilename = tryParseFilename(originalFilename);
@@ -36,57 +52,44 @@ export async function extractDateTimeFromImage(
   return null;
 }
 
-async function tryGemini(
-  gemini: GoogleGenAI,
-  model: string,
+async function tryNineRouter(
+  nineRouter: NineRouterService,
   base64Data: string,
   mimeType: string,
 ): Promise<Date | null> {
   try {
-    const res = await gemini.models.generateContent({
-      model,
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              text: `Extract the current system date and time from the taskbar or system clock visible in this screenshot.
+    const res = await nineRouter.analyzeImage({
+      model: NINE_ROUTER_MODEL,
+      prompt: `Extract the current system date and time from the taskbar or system clock visible in this screenshot.
 Do NOT use dates or times shown in the page content, data tables, or documents.
-Return ONLY a raw JSON object, no markdown, no explanation:
-{"date": "YYYY-MM-DD", "time": "HH:mm"}
-If the system clock is not visible, use null for both fields.`,
-            },
-            { inlineData: { mimeType, data: base64Data } },
-          ],
-        },
-      ],
+If the system clock is not visible, use an empty string for both fields.`,
+      imageBase64: base64Data,
+      mimeType,
+      jsonSchema,
     });
-
-    const clean = res.text.replace(/```json|```/g, '').trim();
-    logger.debug(`[gemini] raw response: ${clean}`);
 
     let parsed: any;
     try {
-      parsed = JSON.parse(clean);
+      parsed = JSON.parse(res.text);
     } catch (parseErr) {
-      logger.warn(`[gemini] gagal parse JSON: ${parseErr instanceof Error ? parseErr.message : parseErr} | raw="${clean}"`);
+      logger.warn(`[9router] gagal parse JSON: ${parseErr instanceof Error ? parseErr.message : parseErr} | raw="${res.text}"`);
       return null;
     }
 
     if (!parsed.date || !parsed.time) {
-      logger.warn(`[gemini] date/time null di response: date=${parsed.date} time=${parsed.time}`);
+      logger.warn(`[9router] date/time null di response: date=${parsed.date} time=${parsed.time}`);
       return null;
     }
 
     const combined = fromZonedTime(`${parsed.date}T${parsed.time}:00`, TIMEZONE);
     if (isNaN(combined.getTime())) {
-      logger.warn(`[gemini] datetime tidak valid: "${parsed.date}T${parsed.time}:00"`);
+      logger.warn(`[9router] datetime tidak valid: "${parsed.date}T${parsed.time}:00"`);
       return null;
     }
 
     return combined;
   } catch (err) {
-    logger.warn(`[gemini] exception saat generate content: ${err instanceof Error ? err.message : err}`);
+    logger.warn(`[9router] exception saat generate content: ${err instanceof Error ? err.message : err}`);
     return null;
   }
 }

@@ -3,7 +3,6 @@ import { Job } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { QUERY_NAME } from 'src/constants/queue.constant';
 import { DeleteObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { GoogleGenAI } from '@google/genai';
 import Redis from 'ioredis';
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { fetchImageFromS3 } from 'src/helpers/image-upload/manual-analyze-processor/fetch-from-s3.helper';
@@ -14,8 +13,7 @@ import { extractDateTimeFromImage } from 'src/helpers/image-upload/manual-analyz
 import { validateDateTimeAgainstSlot } from 'src/helpers/image-upload/manual-analyze-processor/validate-datetime.helper';
 import { cropTaskbar } from 'src/helpers/image-upload/manual-analyze-processor/crop-taskbar.helper';
 import { appendSlotInvalid, SlotInvalidStatus } from 'src/helpers/image-upload/manual-slot-status/slot-status-redis.helper';
-
-const models = ['gemini-flash-latest', 'gemini-3.7-flash', 'gemini-3.1-pro-preview'];
+import { NineRouterService } from 'src/services/nine-router/nine-router.service';
 
 interface ImageJobItem {
   s3Key: string;
@@ -30,26 +28,22 @@ export class ManualAnalyzeProcessor extends WorkerHost {
     private readonly prisma: PrismaService,
     @Inject('AWS_S3_CLIENT')
     private readonly s3Client: S3Client,
-    @Inject('GEMINI_AI')
-    private readonly gemini: GoogleGenAI,
     @Inject('REDIS_CLIENT')
     private readonly redis: Redis,
+    private readonly nineRouter: NineRouterService,
   ) {
     super();
   }
 
   async process(job: Job) {
-    const { userId, slotId, date, images, model: jobModel } = job.data as {
+    const { userId, slotId, date, images } = job.data as {
       userId: string;
       slotId: number;
       date: string;
       images: ImageJobItem[];
-      model: string;
     };
 
-    const model = jobModel ?? models[0];
-
-    this.logger.log(`Mulai proses - user=${userId} slot=${slotId} model=${model} totalFiles=${images.length}`);
+    this.logger.log(`Mulai proses - user=${userId} slot=${slotId} totalFiles=${images.length}`);
 
     const prompt = await buildPrompt(this.prisma, userId);
 
@@ -72,8 +66,7 @@ export class ManualAnalyzeProcessor extends WorkerHost {
       // Step 2: Crop taskbar lalu extract datetime
       const taskbar = await cropTaskbar(base64Data, mimeType);
       const datetimeResult = await extractDateTimeFromImage(
-        this.gemini,
-        model,
+        this.nineRouter,
         taskbar.base64Data,
         taskbar.mimeType,
         originalFilename,
@@ -104,9 +97,9 @@ export class ManualAnalyzeProcessor extends WorkerHost {
 
       this.logger.log(`[VALID] user=${userId} file="${originalFilename}" - datetime valid, lanjut analisis`);
 
-      // Step 4: Analisis gambar dengan Gemini
-      this.logger.log(`[GEMINI] user=${userId} file="${originalFilename}" model=${model} - mengirim ke Gemini...`);
-      const res = await analyzeManualImage(this.gemini, model, prompt, base64Data, mimeType);
+      // Step 4: Analisis gambar dengan 9Router
+      this.logger.log(`[9ROUTER] user=${userId} file="${originalFilename}" - mengirim ke 9Router...`);
+      const res = await analyzeManualImage(this.nineRouter, prompt, base64Data, mimeType);
       const analyzedData = JSON.parse(res.text);
 
       validResults.push({

@@ -5,7 +5,7 @@ import { compareAsc } from 'date-fns/compareAsc';
 import { differenceInMinutes } from 'date-fns/differenceInMinutes';
 import { toZonedTime } from 'date-fns-tz';
 import { TIMEZONE } from 'src/constants/timezone';
-import { AnalyzerService } from 'src/services/analyzer/services/analyzer.service';
+import { NineRouterService } from 'src/services/nine-router/nine-router.service';
 import {
   isDuplicateImage,
   isReadableDate,
@@ -31,7 +31,7 @@ const MINIMUM_IMAGES = 8;
 
 @Injectable()
 export class ImageValidationService {
-  constructor(private readonly analyzerService: AnalyzerService) {}
+  constructor(private readonly nineRouter: NineRouterService) {}
 
   private async mapToImageWithDate(
     images: Array<Express.Multer.File>,
@@ -80,7 +80,7 @@ export class ImageValidationService {
         const adjustedImage = await adjustImage(image, os);
         const aiResult = await extractDateTime(
           adjustedImage,
-          this.analyzerService,
+          this.nineRouter,
         );
 
         // 4. Cek jam terbaca

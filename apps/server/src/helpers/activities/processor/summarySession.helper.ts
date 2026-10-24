@@ -4,11 +4,9 @@ import {
   SessionSummaryDb,
   SessionSummaryDbInsert,
 } from 'src/app/activities/interface/session_summary.interface';
-import { AnalyzerService } from 'src/services/analyzer/services/analyzer.service';
-import {
-  GenerateContentParameters,
-  GenerateContentResponse,
-} from '@google/genai';
+import { NineRouterService } from 'src/services/nine-router/nine-router.service';
+
+const NINE_ROUTER_MODEL = 'ag/gemini-3-flash';
 
 const SESSION_SUMMARY_SCHEMA = {
   type: 'object',
@@ -91,7 +89,7 @@ export function groupByHour(
 }
 
 async function getAiSessionSummaryTitleAndDescription(
-  analyzer: AnalyzerService,
+  nineRouter: NineRouterService,
   summaries: string[],
 ): Promise<{ title: string; description: string }> {
   const prompt = `
@@ -118,25 +116,17 @@ Expected format:
 }
   `;
 
-  const contents: GenerateContentParameters['contents'] = [
-    { role: 'user', parts: [{ text: prompt }] },
-  ];
-
-  const response = (await analyzer.callAnalyzerProvider({
-    provider: 'gemini-ai',
-    model: 'gemini-flash-latest',
-    contents,
-    config: {
-      responseMimeType: 'application/json',
-      responseJsonSchema: SESSION_SUMMARY_SCHEMA,
-    },
-  })) as GenerateContentResponse;
+  const response = await nineRouter.chatCompletion({
+    model: NINE_ROUTER_MODEL,
+    prompt,
+    jsonSchema: SESSION_SUMMARY_SCHEMA,
+  });
 
   return JSON.parse(response.text);
 }
 
 export async function mapToSessionSummaryDbInsert(
-  analyzer: AnalyzerService,
+  nineRouter: NineRouterService,
   userId: string,
   hourKey: string,
   data: AIScreenReportDb[],
@@ -173,7 +163,7 @@ export async function mapToSessionSummaryDbInsert(
       batch.map(async (r) => {
         const { summaries, ...rest } = r;
         const { title, description } =
-          await getAiSessionSummaryTitleAndDescription(analyzer, summaries);
+          await getAiSessionSummaryTitleAndDescription(nineRouter, summaries);
         return { ...rest, title, description };
       }),
     );

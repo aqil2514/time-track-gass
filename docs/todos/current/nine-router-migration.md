@@ -1,137 +1,112 @@
-# Migrasi LLM Call Sites ke 9Router (dengan Fallback Gemini)
+# Migrasi LLM Call Sites ke 9Router (Full Replace, Gemini Dihapus)
 
 ## Status & TODO saat ini (ringkas)
 
-⏸️ Ditahan (paused) atas keputusan user — lihat bagian "Status" di akhir
-dan "Progres per Titik" di bawah untuk detail tiap item.
+✅ **Selesai** — semua 7 titik panggilan LLM sudah dimigrasikan penuh ke 9Router. Gemini (`@google/genai`, provider `GEMINI_AI`, `AnalyzerService`) sudah dihapus total dari codebase — tidak ada fallback, 9Router jadi satu-satunya provider AI.
 
-- [x] `NineRouterService` + interface dibuat, didaftarkan global via `AnalyzerModule`.
-- [x] Pola fallback (9Router → Gemini native) + pola logging `[PROVIDER=...]` ditetapkan.
-- [x] Titik 1 — Normal Analyze: migrasi selesai & terverifikasi sukses di traffic nyata.
-- [ ] Observasi latensi 9Router (~25 detik sekali vision call) — belum dibandingkan dengan latensi Gemini native, belum dicek konsistensinya di request berikutnya.
-- [ ] Titik 2 — Manual Analyze (`analyze-manual-image.helper.ts`).
-- [ ] Titik 3 — Extract Datetime (`extract-datetime.helper.ts`).
-- [ ] Titik 4 — Daily Summary (`dailySummary.helper.ts`) — butuh method text-only baru di `NineRouterService`.
-- [ ] Titik 5 — Daily Summary per Category (`dailySummaryPerCategory.helper.ts`) — butuh method text-only.
-- [ ] Titik 6 — Summary Session (`summarySession.helper.ts`), via `AnalyzerService`.
-- [ ] Titik 7 — Image Validation (`image-validation.processor.ts`), via `AnalyzerService`.
-- [ ] Keputusan desain method text-only di `NineRouterService` (generic `chatCompletion` vs method terpisah).
-- [ ] Keputusan apakah migrasi ke titik 6 & 7 jadi momentum konsolidasi 4 titik yang masih inject `GEMINI_AI` langsung ke satu orchestrator.
+- [x] `NineRouterService` + interface, sekarang di module sendiri `NineRouterModule` (`@Global()`), menggantikan `AnalyzerModule` lama.
+- [x] Method text-only `chatCompletion` ditambahkan di `NineRouterService` (untuk titik 4, 5, 6 yang sebelumnya text-only).
+- [x] Titik 1 — Normal Analyze: migrasi awal (pilot, dengan fallback Gemini) sudah ada sejak sebelumnya; fallback Gemini-nya kini **dihapus** sebagai bagian full-replace ini.
+- [x] Titik 2 — Manual Analyze (`analyze-manual-image.helper.ts`): migrasi selesai.
+- [x] Titik 3 — Extract Datetime (`extract-datetime.helper.ts`): migrasi selesai, `jsonSchema` eksplisit `{date, time}` dipakai (lebih robust dari prompt-only sebelumnya). Fallback non-AI ke parsing nama file tetap dipertahankan (bukan bagian dari provider AI).
+- [x] Titik 4 — Daily Summary (`dailySummary.helper.ts`): migrasi selesai, pakai `chatCompletion`.
+- [x] Titik 5 — Daily Summary per Category (`dailySummaryPerCategory.helper.ts`): migrasi selesai, pakai `chatCompletion`.
+- [x] Titik 6 — Summary Session (`summarySession.helper.ts`): migrasi selesai, panggil `NineRouterService` langsung (sebelumnya lewat `AnalyzerService.callAnalyzerProvider` yang kini sudah dihapus).
+- [x] Titik 7 — Image Validation (`image-validation.processor.ts`): migrasi selesai, pakai `jsonSchema` eksplisit `{date, time}` (sebelumnya prompt-only).
+- [x] Housekeeping: `AnalyzerService`, `analyzer.interface.ts`, `AnalyzerModule`, `AIGeminiModule`, provider `GEMINI_AI`, dan dependency `@google/genai` dihapus total. `services/analyzer/` di-rename/diratakan jadi `services/nine-router/`.
+- [ ] Observasi latensi 9Router di titik-titik baru (sebelumnya hanya diamati di Titik 1, ~25 detik/vision call) — belum dipantau ulang pasca full rollout, terutama Titik 7 (Image Validation) yang berjalan **synchronous dalam HTTP request** (minimal 8x vision call per slot upload, blocking) — ini titik paling sensitif terhadap latensi dari semua titik yang ada.
+- [ ] Logging pola `[PROVIDER=...]` yang dipakai di Titik 1 untuk membandingkan rasio sukses/fallback sudah tidak relevan lagi (tidak ada fallback) — logging sukses masih ada tapi tidak perlu dibedakan provider lagi karena hanya 9Router.
 
 ## Latar Belakang
 
 User diminta menggunakan [9Router](https://9router.com/) — AI gateway open source (OpenAI-compatible endpoint, 60+ provider, smart fallback) — sebagai proxy untuk panggilan LLM di project ini. Endpoint yang diberikan: `https://9router.gass.web.id/v1`.
 
-Referensi lengkap seluruh titik pemanggilan LLM yang ada di codebase (sebelum migrasi ini): lihat [docs/references/llm-call-sites.md](../../references/llm-call-sites.md).
+Referensi lengkap seluruh titik pemanggilan LLM yang ada di codebase (sebelum migrasi ini): lihat [docs/references/llm-call-sites.md](../../references/llm-call-sites.md) — **catatan: dokumen ini mendeskripsikan kondisi sebelum migrasi, sudah stale pasca full-replace ini**.
 
-Keputusan desain (hasil diskusi dengan user):
-- **Semua 6 titik panggilan Gemini** ditarget untuk pindah ke 9Router, tapi dikerjakan **satu per satu** (pilot dulu, bukan sekaligus).
-- **Model**: `ag/gemini-3.6-flash-low` (lewat 9Router).
-- **Fallback**: kalau 9Router gagal (timeout/error/non-2xx), otomatis fallback ke Gemini native (`@google/genai`, SDK langsung) — bukan hard-switch tanpa jaring pengaman.
-- Pilot pertama dipilih: **Normal Analyze**, karena representatif (vision + structured JSON output) dan paling mudah dibuktikan berhasil/tidaknya secara langsung dari traffic nyata.
+Riwayat keputusan:
+- Migrasi awalnya direncanakan **satu per satu** dengan **fallback ke Gemini native** kalau 9Router gagal (lihat riwayat di bawah untuk pilot Titik 1).
+- Setelah pilot Titik 1 terverifikasi sukses di produksi, migrasi ke titik lain **ditahan (paused)** untuk sementara atas keputusan user.
+- **2026-10-24**: Daily Summary & Daily Summary per Category mulai mengalami error di produksi (Gemini sudah tidak dipakai lagi secara efektif). User memutuskan untuk **langsung full-replace semua titik sisa (2-7) ke 9Router, tanpa fallback ke Gemini sama sekali** — termasuk menghapus fallback Gemini yang masih ada di Titik 1 (pilot) demi konsistensi penuh. Keputusan ini final, bukan lagi pilot bertahap.
 
-## Kondisi Saat Ini (Sebelum Migrasi)
+## Kondisi Akhir (Setelah Migrasi)
 
-6 titik panggilan Gemini, semua di `apps/server`, native `@google/genai` SDK, non-streaming `generateContent`:
+Semua 7 titik panggilan LLM, semua di `apps/server`, sekarang murni lewat `NineRouterService` (OpenAI-compatible endpoint 9Router), model `ag/gemini-3-flash` untuk semua titik:
 
-| # | Titik | Jenis | Lewat `AnalyzerService`? |
+| # | Titik | Jenis | File |
 |---|---|---|---|
-| 1 | `summarySession.helper.ts` | text-only | ✅ Ya |
-| 2 | `image-validation.processor.ts` | vision | ✅ Ya |
-| 3 | `normal-analyze.processor.ts` → `gemini-analyze.helper.ts` | vision | ❌ Inject langsung |
-| 4 | `manual-analyze.processor.ts` → `analyze-manual-image.helper.ts` | vision | ❌ Inject langsung |
-| 5 | `manual-analyze.processor.ts` → `extract-datetime.helper.ts` | vision | ❌ Inject langsung |
-| 6 | `daily-summary.processor.ts` → `dailySummary.helper.ts` | text-only | ❌ Inject langsung |
-| 7 | `daily-summary-category.processor.ts` → `dailySummaryPerCategory.helper.ts` | text-only | ❌ Inject langsung |
+| 1 | Normal Analyze | vision | `analyze-image.helper.ts` (rename dari `gemini-analyze.helper.ts`) → `normal-analyze.processor.ts` |
+| 2 | Manual Analyze | vision | `analyze-manual-image.helper.ts` → `manual-analyze.processor.ts` |
+| 3 | Extract Datetime | vision | `extract-datetime.helper.ts` → dipanggil dari `manual-analyze.processor.ts` |
+| 4 | Daily Summary | text-only | `dailySummary.helper.ts` → `daily-summary.processor.ts` |
+| 5 | Daily Summary per Category | text-only | `dailySummaryPerCategory.helper.ts` → `daily-summary-category.processor.ts` |
+| 6 | Summary Session | text-only | `summarySession.helper.ts` → `summary-session.processor.ts` |
+| 7 | Image Validation | vision | `image-validation.processor.ts` (helper, bukan BullMQ processor) → dipanggil sync dari `image-validation.service.ts` |
 
-(Catatan: 7 call site fisik tapi dihitung "6 titik" di dokumen referensi karena pengelompokan per-fitur; detail persisnya ada di `llm-call-sites.md`.)
+Tidak ada satu chokepoint tunggal (`AnalyzerService` yang dulu jadi semi-chokepoint untuk titik 6 & 7 sudah dihapus) — tiap titik inject `NineRouterService` langsung lewat constructor (tersedia global via `NineRouterModule`).
 
-Tidak ada satu chokepoint — migrasi per titik dilakukan secara independen.
+## Arsitektur Final
 
-## Target Arsitektur
-
-Per titik yang dimigrasikan:
+Per titik, tidak ada lagi percabangan try/fallback — semua langsung:
 
 ```
 Caller (processor/helper)
-  → coba 9Router (OpenAI-compatible, model ag/gemini-3.6-flash-low)
-      ↓ sukses → return hasil, log [PROVIDER=9ROUTER] sukses
-      ↓ gagal (catch)
-  → fallback ke Gemini native (model yang sama seperti sebelum migrasi)
-      ↓ log [PROVIDER=9ROUTER] gagal + alasan
-      ↓ sukses → return hasil, log [PROVIDER=GEMINI-FALLBACK] sukses
+  → NineRouterService.analyzeImage(...)   [vision, titik 1/2/3/7]
+      atau
+  → NineRouterService.chatCompletion(...) [text-only, titik 4/5/6]
+      ↓ sukses → return hasil
+      ↓ gagal → throw (propagate ke BullMQ retry untuk titik queue-based,
+                 atau ke catch block lokal untuk Titik 3 & 7 yang punya
+                 fallback non-AI/toleransi null, lihat di bawah)
 ```
 
-Return shape ke caller **tidak berubah** (tetap `{ text: string }` atau bentuk yang sudah dikonsumsi `JSON.parse` di tempat lama) — supaya logic downstream (parsing, simpan DB, dll) tidak perlu disentuh.
+Return shape ke caller **tidak berubah** dari sebelum migrasi — tetap `{ text: string }` yang di-`JSON.parse` di tempat lama, supaya logic downstream (parsing, simpan DB, dll) tidak perlu disentuh.
 
-### Komponen Bersama (dibuat sekali, dipakai semua titik)
+### Pengecualian: fallback non-AI yang tetap dipertahankan
 
-- **`NineRouterService`** (`apps/server/src/services/analyzer/services/nine-router/nine-router.service.ts`)
+Dua titik punya fallback, tapi **bukan fallback antar-provider AI** — melainkan fallback ke sumber data non-AI yang sudah ada sebelum migrasi 9Router dimulai, dan tidak terkait dengan keputusan "full replace" ini:
+
+- **Titik 3 (Extract Datetime)**: kalau 9Router gagal mengekstrak jam dari gambar (`tryNineRouter` return `null`), sistem fallback ke parsing nama file (regex `YYYY-MM-DD_HH-mm-ss`). Ini sudah ada sejak awal, dipertahankan karena alasan robustness UX (tips nama file), bukan jaring pengaman provider.
+- **Titik 7 (Image Validation)**: kalau 9Router gagal atau response tidak bisa di-parse, `extractDateTime` return `{date: null, time: null}` (bukan throw) — downstream validator (`isReadableHour`/`isReadableDate`) akan menganggap gambar tidak valid dan menolaknya secara normal, bukan crash.
+
+### Komponen Bersama
+
+- **`NineRouterService`** (`apps/server/src/services/nine-router/nine-router.service.ts`)
   - POST ke `https://9router.gass.web.id/v1/chat/completions`
   - Auth: header `Authorization: Bearer ${process.env.NINEROUTER_API_KEY}`
-  - Body format OpenAI chat-completions: `messages` (role/content), vision via content part `image_url` (data URI base64), `response_format: { type: 'json_schema', json_schema: {...} }`
   - Timeout 30s
-  - Method saat ini: `analyzeImage(request: NineRouterVisionRequest)` — vision only. **Perlu ditambah method untuk text-only** (dipakai di titik Daily Summary, Daily Summary per Category, Summary Session) sebelum migrasi ke titik-titik tersebut.
-- **Interface**: `apps/server/src/services/analyzer/interfaces/nine-router.interface.ts`
-- Didaftarkan & diexport dari `AnalyzerModule` (`@Global()`) — otomatis tersedia di semua module tanpa import eksplisit.
-- **Env var baru**: `NINEROUTER_API_KEY` (didokumentasikan di `apps/server/README.md`).
+  - **`analyzeImage(request: NineRouterVisionRequest)`** — vision, menyisipkan `image_url` content part (data URI base64).
+  - **`chatCompletion(request: NineRouterTextRequest)`** — text-only, tanpa image part. Ditambahkan sebagai bagian migrasi ini untuk Titik 4, 5, 6.
+  - Body format OpenAI chat-completions: `messages`, `response_format: { type: 'json_schema', json_schema: {...} }`.
+- **Interface**: `apps/server/src/services/nine-router/nine-router.interface.ts` — `NineRouterVisionRequest`, `NineRouterTextRequest`, `NineRouterChatCompletionResponse`.
+- **`NineRouterModule`** (`apps/server/src/services/nine-router/nine-router.module.ts`) — `@Global()`, menggantikan `AnalyzerModule` lama. Didaftarkan di `THIRD_PARTY_REGISTRY` (`third-party-registry.ts`), menggantikan entry `AIGeminiModule` + `AnalyzerModule` yang sudah dihapus.
+- **Model**: `ag/gemini-3-flash` (const `NINE_ROUTER_MODEL` di tiap helper — belum dikonsolidasi ke satu tempat, lihat "Hal yang Belum Diputuskan" di bawah).
+- **Env var**: `NINEROUTER_API_KEY` — satu-satunya API key AI yang dipakai sekarang. `GEMINI_API_KEY` sudah dihapus dari dokumentasi (`apps/server/README.md`), tapi **perlu dicek manual apakah masih ada di `.env` aktual di server produksi** — tidak masalah kalau masih ada (tidak dibaca lagi oleh kode), tapi bisa dihapus saat sempat untuk kebersihan.
 
-### Pola Logging per Titik
+## Housekeeping yang Dilakukan
 
-Supaya bisa dibedakan di log server mana yang lewat 9Router vs fallback Gemini:
-```
-[PROVIDER=9ROUTER] model=ag/gemini-3.6-flash-low sukses
-[PROVIDER=9ROUTER] model=ag/gemini-3.6-flash-low gagal, fallback ke Gemini langsung. Alasan: <pesan>
-[PROVIDER=GEMINI-FALLBACK] model=<model-gemini-asli> sukses
-```
-Memudahkan `grep PROVIDER` di log untuk menghitung rasio sukses 9Router vs frekuensi fallback — jadi dasar keputusan apakah 9Router layak dilanjutkan/di-root-kan sebagai primary permanen.
+Sebagai bagian dari full-replace ini (bukan hanya migrasi call-site, tapi juga pembersihan dependency):
 
-## Progres per Titik
+- **Dihapus total**: `AnalyzerService` + `analyzer.interface.ts` (pass-through switch ke Gemini, sudah tidak dipakai setelah titik 6 & 7 migrasi), `AnalyzerModule` (diganti `NineRouterModule`), `AIGeminiModule` + provider `GEMINI_AI` (`apps/server/src/services/ai-gemini/`), dependency npm `@google/genai` (`npm uninstall`, ikut membersihkan 51 package transitive).
+- **Rename/reorganisasi**: folder `services/analyzer/` (berisi `AnalyzerService` lama + `NineRouterService` nested) diratakan jadi `services/nine-router/` (flat, isinya `nine-router.service.ts`, `nine-router.interface.ts`, `nine-router.module.ts`). File `gemini-analyze.helper.ts` (Titik 1) di-rename jadi `analyze-image.helper.ts` karena sudah tidak ada jejak Gemini di dalamnya.
+- **Dihapus logic yang jadi tidak relevan**: array model-tier retry (`['gemini-flash-latest', 'gemini-3.7-flash', 'gemini-3.1-pro-preview']`) di Titik 1 & 2 — sebelumnya dipakai untuk pilih model Gemini berdasarkan `job.attemptsMade`/`job.data.model`, sekarang tidak relevan karena 9Router pakai model fixed per helper. Dikonfirmasi tidak ada caller yang mengirim `job.data.model` secara eksternal sebelum dihapus.
+- **README** (`apps/server/README.md`): baris `GEMINI_API_KEY` dihapus dari tabel env vars, dead link `src/services/ai-z/` (sisa housekeeping Zhipu/GLM sebelumnya, sudah tidak ada di filesystem) juga dibersihkan, `src/services/ai-gemini/` diganti `src/services/nine-router/`.
 
-### 1. Normal Analyze — ✅ Selesai (Pilot)
+## Hal yang Belum Diputuskan / Perlu Ditindaklanjuti
 
-- **File diubah**:
-  - `apps/server/src/helpers/image-upload/normal-analyze-processor/gemini-analyze.helper.ts` — tambah fungsi `analyzeImageViaGateway(nineRouter, gemini, model, prompt, imageUrl)`. Fungsi lama `analyzeImage` (native Gemini) dipertahankan sebagai fallback internal. Logic fetch+base64 image diekstrak ke helper lokal `fetchImageAsBase64` (dipakai bersama kedua jalur).
-  - `apps/server/src/app/image-upload/processor/normal-analyze.processor.ts` — inject `NineRouterService`, ganti panggilan `analyzeImage(...)` → `analyzeImageViaGateway(...)`.
-- **Logging**: sudah ditambahkan sesuai pola di atas (sukses 9Router, gagal+fallback, sukses fallback).
-- **Status verifikasi**: ✅ **Terverifikasi sukses di traffic nyata** (2026-10-01, 08:32 WIB). Log menunjukkan `[PROVIDER=9ROUTER] model=ag/gemini-3.6-flash-low sukses` tanpa fallback — request langsung berhasil lewat 9Router, data ter-parse dan tersimpan ke DB normal, job completed.
-- **Observasi latensi**: ⚠️ Dari job mulai pakai model terpilih (08:32:07) sampai 9Router sukses (08:32:32) — **sekitar 25 detik** untuk satu vision call. Ini perlu dipantau lebih lanjut (bandingkan dengan latensi Gemini native langsung, dan cek apakah konsisten di request berikutnya) sebelum rollout ke titik lain, terutama titik yang sensitif ke waktu respons seperti Manual Analyze (pernah ada masalah timeout serial sebelumnya — lihat `docs/todos/done/features/manual-upload-async-validation.md`).
-- **Keputusan user**: pilot dibiarkan berjalan dulu di kondisi ini (hanya Normal Analyze) — **migrasi ke titik lain (2-7) ditahan sementara**, belum dilanjutkan.
+- **Konsolidasi `NINE_ROUTER_MODEL`**: const ini sekarang terduplikasi di 6 file helper berbeda (satu per titik). Belum dipindah ke satu tempat (misal `src/constants/` atau jadi default parameter di `NineRouterService`) — kalau model perlu diganti di masa depan, harus diubah di 6 tempat manual.
+- **Observasi latensi pasca full rollout**: belum ada data latensi 9Router untuk titik 2-7 di traffic nyata (hanya Titik 1 yang pernah diobservasi, ~25 detik/vision call, sebelum full-replace ini). Titik 7 (Image Validation) paling kritis untuk dipantau karena berjalan synchronous dalam request HTTP (blocking, minimal 8x vision call per slot upload) — risiko timeout/UX lambat kalau latensi 9Router konsisten tinggi.
+- **`GEMINI_API_KEY` di `.env` produksi**: sudah tidak dibaca kode, tapi belum dikonfirmasi apakah sudah dihapus dari environment variable server produksi/staging. Tidak mendesak (tidak berbahaya kalau dibiarkan), tapi perlu housekeeping saat sempat.
 
-### 2. Manual Analyze (`analyze-manual-image.helper.ts`) — ⬜ Belum dikerjakan
+## Riwayat
 
-- Pola sama dengan Normal Analyze (vision + JSON schema), tinggal terapkan `analyzeImageViaGateway`-style ke helper ini.
-- Model-tier array beda sumber (`job.data.model` kalau disuplai caller) — perlu dicek tidak merusak logic existing.
+### Pilot Awal — Normal Analyze (sebelum full-replace)
 
-### 3. Extract Datetime (`extract-datetime.helper.ts`, fungsi `tryGemini`) — ⬜ Belum dikerjakan
+Migrasi awal dimulai dengan pendekatan bertahap: pilot Titik 1 dengan pola fallback (9Router → Gemini native kalau gagal), terverifikasi sukses di traffic nyata 2026-10-01 (log `[PROVIDER=9ROUTER]` tanpa fallback, job completed normal). Setelah itu migrasi ke titik lain **ditahan** atas keputusan user, sampai akhirnya titik Daily Summary mulai gagal di produksi dan mendorong keputusan full-replace langsung ke semua titik sisa (lihat "Latar Belakang" di atas).
 
-- Vision call lain di Manual Analyze flow, client Gemini yang sama. Terapkan pola fallback yang sama.
+### Pembersihan Zhipu AI/GLM (sebelum migrasi 9Router dimulai)
 
-### 4. Daily Summary (`dailySummary.helper.ts`, fungsi `analyzeSummaryByAi`) — ⬜ Belum dikerjakan
-
-- Text-only. **Butuh method text-only baru di `NineRouterService`** (belum ada — service saat ini cuma punya `analyzeImage`).
-
-### 5. Daily Summary per Category (`dailySummaryPerCategory.helper.ts`, fungsi `getDailyAiSummary`) — ⬜ Belum dikerjakan
-
-- Text-only. Sama seperti di atas, butuh method text-only.
-
-### 6. Summary Session (`summarySession.helper.ts`) — ⬜ Belum dikerjakan
-
-- Text-only, saat ini lewat `AnalyzerService.callAnalyzerProvider`. Pertimbangkan migrasi sekaligus konsolidasi `AnalyzerService` jadi chokepoint tunggal untuk semua titik (bukan cuma 2 titik seperti sekarang).
-
-### 7. Image Validation (`image-validation.processor.ts`) — ⬜ Belum dikerjakan
-
-- Vision, juga lewat `AnalyzerService`. Sama seperti di atas.
-
-## Hal yang Perlu Diputuskan Sebelum Lanjut ke Titik Text-Only (4, 5, 6)
-
-- Desain method text-only di `NineRouterService` — apakah generic satu method `chatCompletion(messages, schema)` yang dipakai baik vision maupun text (vision tinggal tambah content part), atau tetap pisah `analyzeImage` vs `analyzeText`.
-- Apakah migrasi ke titik 6 & 7 (yang sudah lewat `AnalyzerService`) jadi momentum untuk **konsolidasi** 4 titik yang masih inject `GEMINI_AI` langsung (titik 2, 3, 4, 5) supaya semua akhirnya lewat satu service orchestrator — sesuai arah yang disebut di `llm-call-sites.md` bagian implikasi migrasi.
-
-## File yang Dihapus (Terkait, dari Pembersihan Sebelumnya)
-
-Sebagai bagian dari housekeeping sebelum migrasi ini dimulai, jalur **Zhipu AI/GLM** (provider lama yang tidak pernah punya live caller) sudah dihapus dari codebase atas permintaan user. Detail lengkap ada di `llm-call-sites.md` bagian "Riwayat". Tidak terkait langsung dengan migrasi 9Router, tapi menyederhanakan `AnalyzerService`/`AnalyzerModule` sebelum migrasi ini dimulai.
+Sebagai housekeeping sebelum migrasi 9Router dimulai, jalur **Zhipu AI/GLM** (provider lama yang tidak pernah punya live caller) sudah dihapus dari codebase atas permintaan user. Detail lengkap ada di `llm-call-sites.md` bagian "Riwayat".
 
 ## Status
 
-⏸️ **Ditahan (paused)** — 1 dari 7 titik selesai & terverifikasi sukses (Normal Analyze, pilot). Atas keputusan user, migrasi ke 6 titik lainnya **belum dilanjutkan** — dibiarkan dulu di kondisi ini. Lanjutkan ke bagian "Progres per Titik" di atas saat user minta lanjut.
+✅ **Selesai** — semua 7 titik panggilan LLM sudah pindah ke 9Router sebagai satu-satunya provider, Gemini dihapus total dari codebase (kode & dependency). Sisa pekerjaan hanya observasi latensi pasca rollout dan housekeeping kecil (konsolidasi const model, cek env var produksi) — lihat "Hal yang Belum Diputuskan" di atas.

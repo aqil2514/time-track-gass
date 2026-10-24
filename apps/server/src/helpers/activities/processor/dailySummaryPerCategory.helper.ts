@@ -1,9 +1,10 @@
 import { PrismaService } from 'src/services/prisma/prisma.service';
 import { AIScreenReportDb } from 'src/app/image-upload/interfaces/ai-screen-report.interface';
 import { DailySummaryPerCategory } from 'src/app/activities/interface/daily_summary_per_category.interface';
-import { GoogleGenAI } from '@google/genai';
+import { NineRouterService } from 'src/services/nine-router/nine-router.service';
 
 const APP_TIMEZONE = 'Asia/Jakarta';
+const NINE_ROUTER_MODEL = 'ag/gemini-3-flash';
 
 function toDateKey(date: Date): string {
   return date.toLocaleDateString('en-CA', { timeZone: APP_TIMEZONE });
@@ -110,7 +111,7 @@ export async function getUserDailyActivity(
 }
 
 export async function getDailyAiSummary(
-  gemini: GoogleGenAI,
+  nineRouter: NineRouterService,
   reports: AIScreenReportDb[],
   categories: string[],
   userId: string,
@@ -140,29 +141,26 @@ export async function getDailyAiSummary(
     }
   `;
 
-  const res = await gemini.models.generateContent({
-    model: 'gemini-flash-latest',
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    config: {
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: 'object',
-        properties: {
-          summaries: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                category: { type: 'string' },
-                duration: { type: 'number' },
-                summary: { type: 'string' },
-              },
-              required: ['category', 'duration', 'summary'],
+  const res = await nineRouter.chatCompletion({
+    model: NINE_ROUTER_MODEL,
+    prompt,
+    jsonSchema: {
+      type: 'object',
+      properties: {
+        summaries: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              category: { type: 'string' },
+              duration: { type: 'number' },
+              summary: { type: 'string' },
             },
+            required: ['category', 'duration', 'summary'],
           },
         },
-        required: ['summaries'],
       },
+      required: ['summaries'],
     },
   });
 

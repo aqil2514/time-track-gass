@@ -2,7 +2,7 @@ import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { AnalyzerService } from 'src/services/analyzer/services/analyzer.service';
+import { NineRouterService } from 'src/services/nine-router/nine-router.service';
 import { QUERY_NAME } from 'src/constants/queue.constant';
 import {
   getLatestSummary,
@@ -18,7 +18,7 @@ export class SummarySessionProcessor extends WorkerHost {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly analyzer: AnalyzerService,
+    private readonly nineRouter: NineRouterService,
   ) {
     super();
   }
@@ -47,7 +47,7 @@ export class SummarySessionProcessor extends WorkerHost {
     const finalData = [];
     for (const [hourKey, items] of Object.entries(groupedData)) {
       const mapped = await mapToSessionSummaryDbInsert(
-        this.analyzer,
+        this.nineRouter,
         userId,
         hourKey,
         items,

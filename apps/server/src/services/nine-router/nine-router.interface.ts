@@ -6,6 +6,12 @@ export interface NineRouterVisionRequest {
   jsonSchema: Record<string, unknown>;
 }
 
+export interface NineRouterTextRequest {
+  model: string;
+  prompt: string;
+  jsonSchema: Record<string, unknown>;
+}
+
 export interface NineRouterChatCompletionResponse {
   id: string;
   model: string;

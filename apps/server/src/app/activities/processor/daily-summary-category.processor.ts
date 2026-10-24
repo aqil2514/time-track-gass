@@ -1,8 +1,8 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { Inject, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { GoogleGenAI } from '@google/genai';
+import { NineRouterService } from 'src/services/nine-router/nine-router.service';
 import { QUERY_NAME } from 'src/constants/queue.constant';
 import {
   getPendingCategoryDates,
@@ -18,7 +18,7 @@ export class DailySummaryCategoryProcessor extends WorkerHost {
 
   constructor(
     private readonly prisma: PrismaService,
-    @Inject('GEMINI_AI') private readonly gemini: GoogleGenAI,
+    private readonly nineRouter: NineRouterService,
   ) {
     super();
   }
@@ -54,7 +54,7 @@ export class DailySummaryCategoryProcessor extends WorkerHost {
 
       if (userActivities.length > 0) {
         const summary = await getDailyAiSummary(
-          this.gemini,
+          this.nineRouter,
           userActivities,
           relevantCategories,
           userId,

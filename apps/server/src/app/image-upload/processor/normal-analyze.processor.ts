@@ -1,6 +1,5 @@
-import { GoogleGenAI } from '@google/genai';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
-import { Inject, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { QUERY_NAME } from 'src/constants/queue.constant';
 import { buildPrompt } from 'src/helpers/image-upload/normal-analyze-processor/build-prompt.helper';
@@ -12,9 +11,9 @@ import {
   computeImageHash,
   detectIdle,
 } from 'src/helpers/image-upload/normal-analyze-processor/detect-idle.helper';
-import { analyzeImageViaGateway } from 'src/helpers/image-upload/normal-analyze-processor/gemini-analyze.helper';
+import { analyzeImageViaGateway } from 'src/helpers/image-upload/normal-analyze-processor/analyze-image.helper';
 import { PrismaService } from 'src/services/prisma/prisma.service';
-import { NineRouterService } from 'src/services/analyzer/services/nine-router/nine-router.service';
+import { NineRouterService } from 'src/services/nine-router/nine-router.service';
 
 interface ProcessData {
   userId: string;
@@ -24,14 +23,10 @@ interface ProcessData {
   createdAt: string;
 }
 
-const models = ['gemini-flash-latest', 'gemini-3.7-flash', 'gemini-3.1-pro-preview'];
-
 @Processor(QUERY_NAME.NORMAL_ANALYZE)
 export class NormalAnalyzeProcessor extends WorkerHost {
   constructor(
     private readonly prisma: PrismaService,
-    @Inject('GEMINI_AI')
-    private readonly gemini: GoogleGenAI,
     private readonly nineRouter: NineRouterService,
   ) {
     super();
@@ -62,26 +57,14 @@ export class NormalAnalyzeProcessor extends WorkerHost {
 
     // Step 2: Build prompt berdasarkan divisi user
     const prompt = await buildPrompt(this.prisma, rest.userId);
-    // Step 3: Pilih model berdasarkan jumlah attempt
-    const model = models[Math.min(job.attemptsMade, models.length - 1)];
-
-    this.logger.log(
-      `User ${userId} using model ${model} on attempt ${attempt}/${maxAttempts}`,
-    );
 
     try {
-      // Step 4: Analisis gambar via 9Router, fallback ke Gemini langsung bila gagal
-      const res = await analyzeImageViaGateway(
-        this.nineRouter,
-        this.gemini,
-        model,
-        prompt,
-        imageUrl,
-      );
+      // Step 3: Analisis gambar via 9Router
+      const res = await analyzeImageViaGateway(this.nineRouter, prompt, imageUrl);
       const analyzedData = JSON.parse(res.text);
 
       this.logger.log(
-        `User ${userId} analyze succeeded with model ${model} on attempt ${attempt}/${maxAttempts}`,
+        `User ${userId} analyze succeeded on attempt ${attempt}/${maxAttempts}`,
       );
 
       const mappedData: ZImageAnalyzeData = {
@@ -108,7 +91,7 @@ export class NormalAnalyzeProcessor extends WorkerHost {
       const message = error instanceof Error ? error.message : String(error);
 
       this.logger.error(
-        `User ${userId} analyze failed with model ${model} on attempt ${attempt}/${maxAttempts}: ${message}`,
+        `User ${userId} analyze failed on attempt ${attempt}/${maxAttempts}: ${message}`,
       );
 
       throw error;
